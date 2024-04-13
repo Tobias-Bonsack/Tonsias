@@ -21,4 +21,8 @@
          id="de.tonsias.basis.ui"
          version="0.0.0"/>
 
+   <plugin
+         id="de.tonsias.basis.model"
+         version="0.0.0"/>
+
 </feature>
