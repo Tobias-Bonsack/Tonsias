@@ -12,7 +12,7 @@ public interface IInstanz {
 
 	Collection<String> getChildrenKeys();
 
-	Collection<String> getSingleValueKeys();
+	Collection<String> getAllSingleValueKeys();
 
-	Collection<String> getCollectionValueKeys();
+	Collection<String> getAllCollectionValueKeys();
 }
