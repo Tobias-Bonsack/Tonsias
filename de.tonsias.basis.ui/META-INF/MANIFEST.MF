@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Ui
+Bundle-SymbolicName: de.tonsias.basis.ui;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: TONSIAS
+Automatic-Module-Name: de.tonsias.basis.ui
+Bundle-RequiredExecutionEnvironment: JavaSE-19
