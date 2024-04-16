@@ -5,6 +5,10 @@ package de.tonsias.basis.model.interfaces;
  * single object
  * 
  */
-public interface ISingleValue extends IValue {
+public interface ISingleValue<T> extends IValue {
+	
+	T getValue();
+	
+	boolean setValue(T value);
 
 }
