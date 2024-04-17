@@ -3,6 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Model
 Bundle-SymbolicName: de.tonsias.basis.model
 Bundle-Version: 1.0.0.qualifier
+Require-Bundle: com.google.guava;bundle-version="33.1.0"
 Bundle-Vendor: TONSIAS
 Automatic-Module-Name: de.tonsias.basis.model
 Bundle-RequiredExecutionEnvironment: JavaSE-19
