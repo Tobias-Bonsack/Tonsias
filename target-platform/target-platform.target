@@ -7,5 +7,15 @@
 	  <unit id="org.eclipse.equinox.p2.sdk.feature.group" version="3.11.2300.v20240229-1022"/>
 	  <unit id="org.eclipse.sdk.feature.group" version="4.31.0.v20240229-1022"/>
   </location>
+	 <location includeDependencyDepth="none" includeSource="true" missingManifest="generate" type="Maven">
+		 <dependencies>
+			 <dependency>
+				 <groupId>com.google.guava</groupId>
+				 <artifactId>guava</artifactId>
+				 <version>33.1.0-jre</version>
+				 <type>jar</type>
+			 </dependency>
+		 </dependencies>
+	 </location>
  </locations>
 </target>
