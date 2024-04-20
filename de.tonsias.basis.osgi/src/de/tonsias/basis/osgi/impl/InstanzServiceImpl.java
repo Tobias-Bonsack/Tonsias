@@ -1,11 +1,11 @@
-package de.tonsias.basis.data.access.osgi.impl;
+package de.tonsias.basis.osgi.impl;
 
 import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 
-import de.tonsias.basis.data.access.osgi.interfaces.IInstanzService;
 import de.tonsias.basis.model.interfaces.IInstanz;
+import de.tonsias.basis.osgi.intf.IInstanzService;
 
 @Component
 public class InstanzServiceImpl implements IInstanzService {

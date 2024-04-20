@@ -5,8 +5,6 @@ Bundle-SymbolicName: de.tonsias.basis.data.access
 Bundle-Version: 1.0.0.qualifier
 Require-Bundle: de.tonsias.basis.model;bundle-version="0.0.0",
  org.osgi.service.component.annotations;bundle-version="1.5.1";resolution:=optional
-Service-Component: OSGI-INF/de.tonsias.basis.data.access.osgi.impl.InstanzServiceImpl.xml,
- OSGI-INF/de.tonsias.basis.data.access.osgi.impl.KeyServiceImpl.xml
 Bundle-Vendor: TONSIAS
 Automatic-Module-Name: de.tonsias.basis.data.access
 Bundle-ActivationPolicy: lazy

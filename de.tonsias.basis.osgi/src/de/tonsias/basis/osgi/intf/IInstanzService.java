@@ -1,4 +1,4 @@
-package de.tonsias.basis.data.access.osgi.interfaces;
+package de.tonsias.basis.osgi.intf;
 
 import java.util.Optional;
 

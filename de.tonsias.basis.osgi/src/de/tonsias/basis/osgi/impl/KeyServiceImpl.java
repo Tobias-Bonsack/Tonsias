@@ -1,8 +1,8 @@
-package de.tonsias.basis.data.access.osgi.impl;
+package de.tonsias.basis.osgi.impl;
 
 import org.osgi.service.component.annotations.Component;
 
-import de.tonsias.basis.data.access.osgi.interfaces.IKeyService;
+import de.tonsias.basis.osgi.intf.IKeyService;
 
 @Component
 public class KeyServiceImpl implements IKeyService {

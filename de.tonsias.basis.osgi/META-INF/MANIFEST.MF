@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Osgi
+Bundle-SymbolicName: de.tonsias.basis.osgi
+Bundle-Version: 1.0.0.qualifier
+Require-Bundle: de.tonsias.basis.model;bundle-version="1.0.0",
+ org.osgi.service.component.annotations;bundle-version="1.5.1"
+Service-Component: OSGI-INF/de.tonsias.basis.osgi.impl.InstanzServiceImpl.xml,
+ OSGI-INF/de.tonsias.basis.osgi.impl.KeyServiceImpl.xml
+Bundle-Vendor: TONSIAS
+Automatic-Module-Name: de.tonsias.basis.osgi
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-19
