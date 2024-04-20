@@ -1,8 +1,0 @@
-Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Bundle-Name: Osgi
-Bundle-SymbolicName: de.tonsias.basis.osgi
-Bundle-Version: 1.0.0.qualifier
-Bundle-Vendor: TONSIAS
-Automatic-Module-Name: de.tonsias.basis.osgi
-Bundle-RequiredExecutionEnvironment: JavaSE-19
