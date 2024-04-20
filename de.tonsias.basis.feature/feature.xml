@@ -25,4 +25,12 @@
          id="de.tonsias.basis.model"
          version="0.0.0"/>
 
+   <plugin
+         id="de.tonsias.basis.osgi"
+         version="0.0.0"/>
+
+   <plugin
+         id="de.tonsias.basis.data.access"
+         version="0.0.0"/>
+
 </feature>
