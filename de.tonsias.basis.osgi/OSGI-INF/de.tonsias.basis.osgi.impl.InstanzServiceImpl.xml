@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="de.tonsias.basis.osgi.impl.InstanzServiceImpl">
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" name="de.tonsias.basis.osgi.impl.InstanzServiceImpl">
    <service>
       <provide interface="de.tonsias.basis.osgi.intf.IInstanzService"/>
    </service>
+   <reference cardinality="1..1" field="_keyService" interface="de.tonsias.basis.osgi.intf.IKeyService" name="_keyService"/>
+   <reference cardinality="1..1" field="_loadService" interface="de.tonsias.basis.data.access.osgi.intf.LoadService" name="_loadService"/>
+   <reference cardinality="1..1" field="_saveService" interface="de.tonsias.basis.data.access.osgi.intf.SaveService" name="_saveService"/>
    <implementation class="de.tonsias.basis.osgi.impl.InstanzServiceImpl"/>
 </scr:component>

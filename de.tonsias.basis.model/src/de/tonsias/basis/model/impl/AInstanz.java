@@ -37,6 +37,14 @@ public abstract class AInstanz implements IInstanz {
 		this._parentKey = parent;
 	}
 
+	public AInstanz(String _parentKey, String _ownKey, Set<String> _childKeys,
+			BiMap<String, String> _singleStringKeyValueMap) {
+		this._parentKey = _parentKey;
+		this._ownKey = _ownKey;
+		this._childKeys = _childKeys;
+		this._singleStringKeyValueMap = _singleStringKeyValueMap;
+	}
+
 	@Override
 	public void setParentKey(String newParent) {
 		this._parentKey = newParent;

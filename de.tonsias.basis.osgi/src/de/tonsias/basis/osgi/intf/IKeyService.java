@@ -9,4 +9,11 @@ public interface IKeyService {
 	 */
 	String generateKey();
 
+	/**
+	 * Creates prefs for keygeneration
+	 * 
+	 * @return first key ever
+	 */
+	String initKey();
+
 }

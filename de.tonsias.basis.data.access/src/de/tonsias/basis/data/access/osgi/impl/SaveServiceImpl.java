@@ -1,6 +1,7 @@
 package de.tonsias.basis.data.access.osgi.impl;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -67,6 +68,8 @@ public class SaveServiceImpl implements SaveService {
 		String fileName = object.getOwnKey();
 		Path path = Paths.get(dir + File.separator + pathName + fileName + ".json");
 		try {
+			File file = new File(path.toString());
+			file.getParentFile().mkdirs();
 			Files.write(path, json.getBytes(), StandardOpenOption.CREATE);
 		} catch (IOException e) {
 			Platform.getLog(getClass()).error("Unable to Safe: " + path.toString(), e);
