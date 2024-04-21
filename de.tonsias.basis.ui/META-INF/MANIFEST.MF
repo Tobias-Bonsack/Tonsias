@@ -9,7 +9,9 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0",
  org.eclipse.e4.ui.workbench;bundle-version="1.15.300",
  org.eclipse.e4.ui.di;bundle-version="1.5.300",
  org.eclipse.e4.core.di.extensions;bundle-version="0.18.200",
- org.eclipse.e4.core.contexts;bundle-version="1.12.500"
+ org.eclipse.e4.core.contexts;bundle-version="1.12.500",
+ jakarta.inject.jakarta.inject-api;bundle-version="2.0.1",
+ jakarta.annotation-api;bundle-version="2.1.1"
 Bundle-Vendor: TONSIAS
 Automatic-Module-Name: de.tonsias.basis.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-19
