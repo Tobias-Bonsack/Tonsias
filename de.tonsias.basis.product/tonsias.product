@@ -13,6 +13,8 @@
       </vmArgsMac>
    </launcherArgs>
 
+   <windowImages/>
+
    <launcher name="Tonsias">
       <win useIco="false">
          <bmp/>
@@ -30,6 +32,8 @@
       <feature id="org.eclipse.e4.rcp" installMode="root"/>
       <feature id="org.eclipse.emf.ecore" installMode="root"/>
       <feature id="org.eclipse.emf.common" installMode="root"/>
+      <feature id="google" installMode="root"/>
+      <feature id="google.source" installMode="root"/>
    </features>
 
    <configurations>
@@ -39,5 +43,12 @@
       <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.simpleconfigurator" autoStart="true" startLevel="1" />
    </configurations>
+
+   <preferencesInfo>
+      <targetfile overwrite="false"/>
+   </preferencesInfo>
+
+   <cssInfo>
+   </cssInfo>
 
 </product>
