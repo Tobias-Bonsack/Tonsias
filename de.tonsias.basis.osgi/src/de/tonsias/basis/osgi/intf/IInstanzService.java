@@ -5,7 +5,7 @@ import java.util.Optional;
 import de.tonsias.basis.model.interfaces.IInstanz;
 
 public interface IInstanzService {
-
+	
 	/**
 	 * try to resolve the key into an {@link IInstanz}
 	 * 

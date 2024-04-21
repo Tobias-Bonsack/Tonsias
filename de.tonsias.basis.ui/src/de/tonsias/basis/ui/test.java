@@ -9,7 +9,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 
 public class test {
-	
+
 	@Inject
 	IInstanzService _instanzService;
 
@@ -19,6 +19,7 @@ public class test {
 	}
 
 	private void createRoot() {
+		_instanzService.getRoot();
 	}
 
 }

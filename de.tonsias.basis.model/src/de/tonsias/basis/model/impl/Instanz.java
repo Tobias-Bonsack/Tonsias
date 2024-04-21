@@ -18,6 +18,6 @@ public class Instanz extends AInstanz implements Serializable, Cloneable, ISaveP
 
 	@Override
 	public String getPath() {
-		return PATH;
+		return PATH + getOwnKey();
 	}
 }
