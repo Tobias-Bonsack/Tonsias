@@ -3,6 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Osgi
 Bundle-SymbolicName: de.tonsias.basis.osgi
 Bundle-Version: 1.0.0.qualifier
+Export-Package: de.tonsias.basis.osgi.intf
 Require-Bundle: de.tonsias.basis.model;bundle-version="0.0.0",
  org.osgi.service.component.annotations;bundle-version="1.5.1",
  org.eclipse.core.runtime;bundle-version="3.31.0"
