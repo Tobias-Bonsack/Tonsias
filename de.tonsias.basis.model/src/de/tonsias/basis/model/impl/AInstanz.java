@@ -52,7 +52,7 @@ public abstract class AInstanz implements IInstanz {
 
 	@Override
 	public void addChildKeys(Collection<String> children) {
-		children.stream().forEach(child -> _childKeys.add(child));
+		_childKeys.addAll(children);
 	}
 
 	@Override
@@ -62,7 +62,7 @@ public abstract class AInstanz implements IInstanz {
 
 	@Override
 	public void removeChildKeys(Collection<String> children) {
-		children.stream().forEach(child -> _childKeys.remove(child));
+		_childKeys.removeAll(children);
 	}
 
 	@Override

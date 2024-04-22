@@ -1,7 +1,6 @@
 package de.tonsias.basis.model.impl;
 
 import java.io.Serializable;
-import java.util.Collection;
 
 import de.tonsias.basis.model.interfaces.ISavePathOwner;
 
