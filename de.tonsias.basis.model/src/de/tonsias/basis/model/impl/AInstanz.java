@@ -132,4 +132,9 @@ public abstract class AInstanz implements IInstanz {
 		}
 	}
 
+	@Override
+	public Collection<String> getChildren() {
+		return _childKeys;
+	}
+
 }

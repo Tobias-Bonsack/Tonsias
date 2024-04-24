@@ -1,11 +1,12 @@
 package de.tonsias.basis.osgi.intf;
 
+import java.util.Collection;
 import java.util.Optional;
 
 import de.tonsias.basis.model.interfaces.IInstanz;
 
 public interface IInstanzService {
-	
+
 	/**
 	 * try to resolve the key into an {@link IInstanz}
 	 * 
@@ -21,5 +22,13 @@ public interface IInstanzService {
 	 * @return {@link IInstanz}
 	 */
 	IInstanz getRoot();
+
+	/**
+	 * try to resolve keys, ignores none resolvable keys
+	 * 
+	 * @param children: keys to resolve
+	 * @return collection of resolvable keys
+	 */
+	Collection<IInstanz> getInstanzes(Collection<String> children);
 
 }

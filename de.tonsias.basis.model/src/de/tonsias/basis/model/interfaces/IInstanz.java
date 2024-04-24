@@ -1,7 +1,6 @@
 package de.tonsias.basis.model.interfaces;
 
 import java.util.Collection;
-import java.util.Map;
 
 import com.google.common.collect.BiMap;
 
@@ -16,6 +15,8 @@ public interface IInstanz extends IObject {
 	void setParentKey(String newParent);
 
 	String getParentKey();
+	
+	Collection<String> getChildren();
 
 	void addChildKeys(String... children);
 

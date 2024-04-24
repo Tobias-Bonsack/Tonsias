@@ -1,7 +1,6 @@
 package de.tonsias.basis.data.access.osgi.impl;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

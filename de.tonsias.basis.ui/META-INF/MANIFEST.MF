@@ -13,7 +13,8 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0",
  jakarta.inject.jakarta.inject-api;bundle-version="2.0.1",
  jakarta.annotation-api;bundle-version="2.1.1",
  de.tonsias.basis.osgi;bundle-version="1.0.0",
- de.tonsias.basis.model;bundle-version="1.0.0"
+ de.tonsias.basis.model;bundle-version="1.0.0",
+ com.google.guava
 Bundle-Vendor: TONSIAS
 Automatic-Module-Name: de.tonsias.basis.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-19
