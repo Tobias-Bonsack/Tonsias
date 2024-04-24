@@ -10,10 +10,7 @@ import de.tonsias.basis.model.enums.SingleValueTypes;
 /**
  * top interface for each displayed object
  */
-public interface IInstanz {
-
-	String getOwnKey();
-
+public interface IInstanz extends IObject {
 	// Parent-Child section
 
 	void setParentKey(String newParent);
