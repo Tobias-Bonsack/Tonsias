@@ -1,7 +1,9 @@
 package de.tonsias.basis.osgi.impl;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,8 @@ public class InstanzServiceImpl implements IInstanzService {
 
 	@Reference
 	SaveService _saveService;
+
+	private Map<String, IInstanz> _cache = new HashMap<>();
 
 	@Override
 	public Optional<IInstanz> resolveKey(String key) {
