@@ -1,5 +1,6 @@
 package de.tonsias.basis.osgi.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -34,10 +35,11 @@ public class InstanzServiceImpl implements IInstanzService {
 	@Override
 	public Optional<IInstanz> resolveKey(String key) {
 		String path = "instanz/" + key;
-		Instanz root = _loadService.loadFromGson(path, Instanz.class);
+		Instanz instanz = _loadService.loadFromGson(path, Instanz.class);
 
-		if (root != null) {
-			return Optional.of(root);
+		if (instanz != null) {
+			_cache.put(key, instanz);
+			return Optional.of(instanz);
 		}
 
 		return Optional.empty();
@@ -49,20 +51,34 @@ public class InstanzServiceImpl implements IInstanzService {
 		Instanz root = _loadService.loadFromGson(path, Instanz.class);
 
 		if (root != null) {
+			_cache.put(root.getOwnKey(), root);
 			return root;
 		}
 
 		String key = _keyService.initKey();
 		root = new Instanz(key);
+		_cache.put(root.getOwnKey(), root);
 		_saveService.safeAsGson(root, root.getClass());
 		return root;
 	}
 
 	@Override
 	public Collection<IInstanz> getInstanzes(Collection<String> keys) {
-		List<IInstanz> children = keys.stream().map(key -> this.resolveKey(key)).filter(i -> i.isPresent())
-				.map(i -> i.get()).collect(Collectors.toUnmodifiableList());
-		return children;
+		List<IInstanz> result = new ArrayList<>();
+		for (String key : keys) {
+			if (_cache.containsKey(key)) {
+				result.add(_cache.get(key));
+				continue;
+			}
+
+			Optional<IInstanz> resolved = resolveKey(key);
+			if (resolved.isPresent()) {
+				IInstanz instanz = resolved.get();
+				result.add(instanz);
+			}
+		}
+		return result;
+
 	}
 
 }
