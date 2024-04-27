@@ -27,8 +27,20 @@ public interface IInstanzService {
 	 * try to resolve keys, ignores none resolvable keys
 	 * 
 	 * @param children: keys to resolve
-	 * @return collection of resolvable keys
+	 * @return collection of resolvable {@link IInstanz}
 	 */
 	Collection<IInstanz> getInstanzes(Collection<String> children);
+
+	/**
+	 * Creates a new {@link IInstanz}, but does not save it
+	 * 
+	 * @return a new {@link IInstanz}
+	 */
+	IInstanz createInstanz();
+
+	/**
+	 * saves all {@link IInstanz} that are currently in the cache.
+	 */
+	void saveAll();
 
 }

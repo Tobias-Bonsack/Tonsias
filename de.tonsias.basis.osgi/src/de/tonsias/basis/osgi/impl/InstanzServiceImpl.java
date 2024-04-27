@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -30,7 +29,7 @@ public class InstanzServiceImpl implements IInstanzService {
 	@Reference
 	SaveService _saveService;
 
-	private Map<String, IInstanz> _cache = new HashMap<>();
+	private final Map<String, IInstanz> _cache = new HashMap<>();
 
 	@Override
 	public Optional<IInstanz> resolveKey(String key) {
@@ -79,6 +78,19 @@ public class InstanzServiceImpl implements IInstanzService {
 		}
 		return result;
 
+	}
+
+	@Override
+	public IInstanz createInstanz() {
+		String key = _keyService.generateKey();
+		Instanz instanz = new Instanz(key);
+		_cache.put(key, instanz);
+		return instanz;
+	}
+
+	@Override
+	public void saveAll() {
+		_cache.values().forEach(t -> _saveService.safeAsGson(t, t.getClass()));
 	}
 
 }

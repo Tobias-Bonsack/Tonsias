@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import de.tonsias.basis.model.interfaces.ISavePathOwner;
 
-public class Instanz extends AInstanz implements Serializable, Cloneable, ISavePathOwner {
+public class Instanz extends AInstanz implements Serializable, Cloneable {
 
 	private static final String PATH = "instanz/";
 

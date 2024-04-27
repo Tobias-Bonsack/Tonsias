@@ -9,7 +9,7 @@ import de.tonsias.basis.model.enums.SingleValueTypes;
 /**
  * top interface for each displayed object
  */
-public interface IInstanz extends IObject {
+public interface IInstanz extends IObject, ISavePathOwner {
 	// Parent-Child section
 
 	void setParentKey(String newParent);
