@@ -7,6 +7,8 @@ import de.tonsias.basis.model.interfaces.ISingleValue;
 
 public abstract class ASingleValue<T> implements ISingleValue<T> {
 
+	private static final String PATH = "instanz/";
+
 	private Collection<String> _connectedInstanzes = Collections.emptyList();
 
 	private final String _ownKey;
@@ -46,6 +48,11 @@ public abstract class ASingleValue<T> implements ISingleValue<T> {
 	@Override
 	public Collection<String> getConnectedInstanzKeys() {
 		return _connectedInstanzes;
+	}
+
+	@Override
+	public String getPath() {
+		return PATH;
 	}
 
 }

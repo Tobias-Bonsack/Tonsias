@@ -13,5 +13,4 @@ public class SingleStringValue extends ASingleValue<String> {
 	public SingleStringValue(String key, String value, Collection<String> connectedInstanzes) {
 		super(key, value, connectedInstanzes);
 	}
-
 }
