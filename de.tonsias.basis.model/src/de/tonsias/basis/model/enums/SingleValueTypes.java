@@ -1,5 +1,8 @@
 package de.tonsias.basis.model.enums;
 
+import java.util.Arrays;
+import java.util.Optional;
+
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 
@@ -15,5 +18,12 @@ public enum SingleValueTypes {
 
 	public Class<? extends ISingleValue<?>> getClazz() {
 		return _clazz;
+	}
+
+	public static Optional<SingleValueTypes> getByClass(Class<? extends ISingleValue<?>> clazz) {
+		if (clazz == null) {
+			return Optional.empty();
+		}
+		return Arrays.stream(SingleValueTypes.values()).filter(e -> clazz == e.getClazz()).findFirst();
 	}
 }

@@ -39,7 +39,7 @@ public interface IInstanzService {
 	IInstanz createInstanz();
 
 	/**
-	 * saves all {@link IInstanz} that are currently in the cache.
+	 * saves all {@link IInstanz}, that are currently in the cache.
 	 */
 	void saveAll();
 
