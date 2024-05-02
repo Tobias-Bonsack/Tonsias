@@ -28,7 +28,8 @@ public class KeyServiceImpl implements IKeyService {
 		char[] keyArray = key.toCharArray();
 
 		boolean isExcess = false;
-		for (char c : keyArray) {
+		for (int i = 0; i < keyArray.length; i++) {
+			char c = keyArray[i];
 			if (c == KEYCHARS[KEYCHARS.length - 1]) {
 				isExcess = true;
 				c = KEYCHARS[0];
@@ -42,13 +43,13 @@ public class KeyServiceImpl implements IKeyService {
 					c = KEYCHARS[0];
 					continue;
 				}
-				c = KEYCHARS[Arrays.binarySearch(keyArray, c) + 1];
 			}
+			keyArray[i] = KEYCHARS[Arrays.binarySearch(KEYCHARS, c) + 1];
 		}
 
 		String result = String.valueOf(keyArray);
 		if (isExcess) {
-			result += Character.MIN_VALUE;
+			result += KEYCHARS[0];
 		}
 		saveKey(result);
 
@@ -74,6 +75,8 @@ public class KeyServiceImpl implements IKeyService {
 		IEclipsePreferences node = InstanceScope.INSTANCE.getNode(KEY_KEY);
 		node.put(KEY_KEY, newKey);
 		flush(node);
+		
+		_key = newKey;
 	}
 
 	private void flush(IEclipsePreferences node) {

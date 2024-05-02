@@ -2,6 +2,8 @@ package de.tonsias.basis.model.impl;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import de.tonsias.basis.model.interfaces.ISingleValue;
 
@@ -9,7 +11,7 @@ public abstract class ASingleValue<T> implements ISingleValue<T> {
 
 	private static final String PATH = "instanz/";
 
-	private Collection<String> _connectedInstanzes = Collections.emptyList();
+	private Set<String> _connectedInstanzes = new HashSet<>();
 
 	private final String _ownKey;
 
@@ -19,7 +21,7 @@ public abstract class ASingleValue<T> implements ISingleValue<T> {
 		_ownKey = key;
 	}
 
-	public ASingleValue(String key, T value, Collection<String> connectedInstanzes) {
+	public ASingleValue(String key, T value, Set<String> connectedInstanzes) {
 		_ownKey = key;
 		_value = value;
 		_connectedInstanzes = connectedInstanzes;
@@ -53,6 +55,11 @@ public abstract class ASingleValue<T> implements ISingleValue<T> {
 	@Override
 	public String getPath() {
 		return PATH;
+	}
+
+	@Override
+	public void addConnectedInstanzKey(String key) {
+		_connectedInstanzes.add(key);
 	}
 
 }
