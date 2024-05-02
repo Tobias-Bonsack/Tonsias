@@ -1,5 +1,6 @@
 package de.tonsias.basis.ui;
 
+import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -15,9 +16,16 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
+
+import com.google.common.collect.BiMap;
+
 import de.tonsias.basis.model.enums.SingleValueTypes;
 import de.tonsias.basis.model.interfaces.IInstanz;
+import de.tonsias.basis.model.interfaces.IObject;
+import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.model.interfaces.IValue;
 import de.tonsias.basis.osgi.intf.IInstanzService;
+import de.tonsias.basis.osgi.intf.ISingleValueService;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 
@@ -26,7 +34,10 @@ public class test {
 	@Inject
 	IInstanzService _instanzService;
 
-	Map<IInstanz, TreeItem> _objectToTreeItem = new HashMap<>();
+	@Inject
+	ISingleValueService _singleService;
+
+	Map<IObject, TreeItem> _objectToTreeItem = new HashMap<>();
 
 	@PostConstruct
 	public void postConstruct(Composite parent) {
@@ -41,37 +52,65 @@ public class test {
 			IInstanz pollFirst = objectToConvert.pollFirst();
 			createItem(pollFirst, tree);
 
-			_instanzService.getInstanzes(pollFirst.getChildren());
+			Collection<IInstanz> instanzes = _instanzService.getInstanzes(pollFirst.getChildren());
+			objectToConvert.addAll(instanzes);
 		}
 
 		tree.pack();
 
 		Menu menu = new Menu(tree);
 
-		MenuItem menuItem = new MenuItem(menu, 0);
-		menuItem.setText("create child");
-		menuItem.addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> {
-			TreeItem treeItem = tree.getSelection()[0];
-			TreeItem treeItem2 = new TreeItem(treeItem, SWT.None);
-			treeItem2.setText("child - not an instanz right now");
-			tree.pack();
-			parent.requestLayout();
-		}));
+		createContextMenu(parent, tree, menu);
 
 		tree.setMenu(menu);
 		parent.requestLayout();
 
 	}
 
+	private void createContextMenu(Composite parent, Tree tree, Menu menu) {
+		MenuItem menuItem = new MenuItem(menu, 0);
+		menuItem.setText("create child");
+		menuItem.addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> {
+			IInstanz instanz = _instanzService.createInstanz();
+			TreeItem treeItem = tree.getSelection()[0];
+			TreeItem treeItem2 = new TreeItem(treeItem, SWT.None);
+			_objectToTreeItem.put(instanz, treeItem2);
+			treeItem2.setText("Instanzkey:" + instanz.getOwnKey());
+			tree.pack();
+			parent.requestLayout();
+		}));
+
+		MenuItem createStringValue = new MenuItem(menu, SWT.None);
+		createStringValue.setText("CreateStringValue");
+		createStringValue.addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> {
+			ISingleValue<?> singleValue = _singleService.createNew(SingleValueTypes.SINGLE_STRING.getClazz());
+
+			TreeItem treeItem = tree.getSelection()[0];
+			TreeItem treeItem2 = new TreeItem(treeItem, SWT.None);
+			treeItem2.setText(singleValue.getOwnKey() + "-" + singleValue.getValue());
+			
+			_objectToTreeItem.put(singleValue, treeItem2);
+			tree.pack();
+			parent.requestLayout();
+		}));
+		
+		MenuItem save = new MenuItem(menu, SWT.None);
+		save.setText("Save all");
+		save.addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> {
+			_instanzService.saveAll();
+			_singleService.saveAll();
+		}));
+	}
+
 	private TreeItem createItem(IInstanz object, Tree parent) {
 		TreeItem treeItem = new TreeItem(parent, SWT.None);
-		treeItem.setText("key: "+object.getOwnKey());
+		treeItem.setText("key: " + object.getOwnKey());
 		_objectToTreeItem.put(object, treeItem);
 
-		Set<String> keys = object.getSingleValues(SingleValueTypes.SINGLE_STRING).keySet();
-		keys.stream().forEach(k -> {
+		BiMap<String, String> keysToName = object.getSingleValues(SingleValueTypes.SINGLE_STRING);
+		keysToName.entrySet().stream().forEach(k -> {
 			TreeItem tI = new TreeItem(parent, SWT.None);
-			tI.setText(k);
+			tI.setText(k.getKey() + "-" + k.getValue());
 		});
 		return treeItem;
 	}
