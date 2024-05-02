@@ -48,12 +48,21 @@ public class test {
 		IInstanz root = _instanzService.getRoot();
 
 		objectToConvert.add(root);
+		TreeItem oldItem = null;
 		while (!objectToConvert.isEmpty()) {
 			IInstanz pollFirst = objectToConvert.pollFirst();
-			createItem(pollFirst, tree);
+
+			TreeItem item = null;
+			if (oldItem == null) {
+				item = createItem(pollFirst, tree);
+			} else {
+				item = createItem(pollFirst, oldItem);
+			}
 
 			Collection<IInstanz> instanzes = _instanzService.getInstanzes(pollFirst.getChildren());
 			objectToConvert.addAll(instanzes);
+
+			oldItem = item;
 		}
 
 		tree.pack();
@@ -98,7 +107,9 @@ public class test {
 
 			_objectToTreeItem.put(singleValue, treeItem2);
 			IInstanz parentI = (IInstanz) _objectToTreeItem.inverse().get(treeItem);
-			parentI.addChildKeys(singleValue.getOwnKey());
+			BiMap<String, String> keyToName = HashBiMap.create();
+			keyToName.put(singleValue.getOwnKey(), "Name: " + singleValue.getValue());
+			parentI.addValuekeys(SingleValueTypes.SINGLE_STRING, keyToName);
 			singleValue.addConnectedInstanzKey(parentI.getOwnKey());
 
 			tree.pack();
@@ -123,7 +134,25 @@ public class test {
 			Optional<SingleStringValue> value = _singleService.resolveKey(object.getPath(), k.getKey(),
 					SingleStringValue.class);
 			if (value.isPresent()) {
-				TreeItem tI = new TreeItem(parent, SWT.None);
+				TreeItem tI = new TreeItem(treeItem, SWT.None);
+				tI.setText(value.get().getOwnKey() + "-" + value.get().getValue());
+				_objectToTreeItem.put(value.get(), tI);
+			}
+		});
+		return treeItem;
+	}
+
+	private TreeItem createItem(IInstanz object, TreeItem parent) {
+		TreeItem treeItem = new TreeItem(parent, SWT.None);
+		treeItem.setText("key: " + object.getOwnKey());
+		_objectToTreeItem.put(object, treeItem);
+
+		BiMap<String, String> keysToName = object.getSingleValues(SingleValueTypes.SINGLE_STRING);
+		keysToName.entrySet().stream().forEach(k -> {
+			Optional<SingleStringValue> value = _singleService.resolveKey(object.getPath(), k.getKey(),
+					SingleStringValue.class);
+			if (value.isPresent()) {
+				TreeItem tI = new TreeItem(treeItem, SWT.None);
 				tI.setText(value.get().getOwnKey() + "-" + value.get().getValue());
 				_objectToTreeItem.put(value.get(), tI);
 			}
