@@ -6,6 +6,7 @@ package de.tonsias.basis.model.impl;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -82,10 +83,10 @@ public abstract class AInstanz implements IInstanz {
 	}
 
 	@Override
-	public void addValuekeys(SingleValueTypes type, BiMap<String, String> keyToName) {
+	public void addValuekeys(SingleValueTypes type, Entry<String, Object> keyToName) {
 		switch (type) {
 		case SINGLE_STRING: {
-			_singleStringKeyValueMap.putAll(keyToName);
+			_singleStringKeyValueMap.put(keyToName.getKey(), (String) keyToName.getValue());
 			break;
 		}
 		default:

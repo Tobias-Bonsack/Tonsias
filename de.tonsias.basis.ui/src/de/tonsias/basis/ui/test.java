@@ -1,10 +1,13 @@
 package de.tonsias.basis.ui;
 
+import java.util.AbstractMap;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 
 import org.eclipse.swt.SWT;
@@ -80,17 +83,15 @@ public class test {
 		MenuItem menuItem = new MenuItem(menu, 0);
 		menuItem.setText("create child");
 		menuItem.addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> {
-			IInstanz instanz = _instanzService.createInstanz();
-
 			TreeItem treeItem = tree.getSelection()[0];
-			TreeItem treeItem2 = new TreeItem(treeItem, SWT.None);
-			treeItem2.setText("Instanzkey:" + instanz.getOwnKey());
-
-			_objectToTreeItem.put(instanz, treeItem2);
 			IInstanz parentI = (IInstanz) _objectToTreeItem.inverse().get(treeItem);
+			IInstanz instanz = _instanzService.createInstanz(parentI);
 			parentI.addChildKeys(instanz.getOwnKey());
 			instanz.setParentKey(parentI.getOwnKey());
 
+			TreeItem treeItem2 = new TreeItem(treeItem, SWT.None);
+			treeItem2.setText("Instanzkey:" + instanz.getOwnKey());
+			_objectToTreeItem.put(instanz, treeItem2);
 			tree.pack();
 			parent.requestLayout();
 		}));
@@ -98,17 +99,18 @@ public class test {
 		MenuItem createStringValue = new MenuItem(menu, SWT.None);
 		createStringValue.setText("CreateStringValue");
 		createStringValue.addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> {
-			ISingleValue<String> singleValue = (ISingleValue<String>) _singleService.createNew(SingleStringValue.class);
-			singleValue.setValue("Value: " + singleValue.getOwnKey());
-
 			TreeItem treeItem = tree.getSelection()[0];
+			IInstanz parentI = (IInstanz) _objectToTreeItem.inverse().get(treeItem);
+
+			ISingleValue<String> singleValue = (ISingleValue<String>) _singleService.createNew(SingleStringValue.class,
+					parentI, "Name");
+			singleValue.setValue("Value: " + singleValue.getOwnKey());
 			TreeItem treeItem2 = new TreeItem(treeItem, SWT.None);
 			treeItem2.setText(singleValue.getOwnKey() + "-" + singleValue.getValue());
 
 			_objectToTreeItem.put(singleValue, treeItem2);
-			IInstanz parentI = (IInstanz) _objectToTreeItem.inverse().get(treeItem);
-			BiMap<String, String> keyToName = HashBiMap.create();
-			keyToName.put(singleValue.getOwnKey(), "Name: " + singleValue.getValue());
+			SimpleEntry<String, Object> keyToName = new AbstractMap.SimpleEntry<String, Object>(singleValue.getOwnKey(),
+					"Name: " + singleValue.getValue());
 			parentI.addValuekeys(SingleValueTypes.SINGLE_STRING, keyToName);
 			singleValue.addConnectedInstanzKey(parentI.getOwnKey());
 

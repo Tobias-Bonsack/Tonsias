@@ -23,9 +23,11 @@ public interface ISingleValueService {
 	 * 
 	 * @param <E>   created class
 	 * @param clazz identification
+	 * @param parent of the new singlevalue
+	 * @param name of the new variables
 	 * @return new instance of {@link ISingleValue}
 	 */
-	<E extends ISingleValue<?>> E createNew(Class<E> clazz);
+	<E extends ISingleValue<?>> E createNew(Class<E> clazz, IInstanz parent, String name);
 
 	/**
 	 * saves all {@link ISingleValue}, that are currently in the cache.

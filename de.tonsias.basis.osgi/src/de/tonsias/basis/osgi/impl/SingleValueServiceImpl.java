@@ -1,8 +1,10 @@
 package de.tonsias.basis.osgi.impl;
 
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.AbstractMap.SimpleEntry;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -11,6 +13,7 @@ import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
 import de.tonsias.basis.model.enums.SingleValueTypes;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
+import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
@@ -46,13 +49,16 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	}
 
 	@Override
-	public <E extends ISingleValue<?>> E createNew(Class<E> clazz) {
+	public <E extends ISingleValue<?>> E createNew(Class<E> clazz, IInstanz parent, String name) {
 		Optional<SingleValueTypes> type = SingleValueTypes.getByClass(clazz);
 		if (type.isEmpty()) {
 			return null;
 		}
 
 		E singleValue = create(clazz, type.get());
+		SimpleEntry<String, Object> keyToName = new AbstractMap.SimpleEntry<String, Object>(singleValue.getOwnKey(),
+				name);
+		parent.addValuekeys(type.get(), keyToName);
 		_cache.put(singleValue.getOwnKey(), singleValue);
 		return singleValue;
 	}

@@ -9,9 +9,10 @@ import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-
+import com.google.common.collect.BiMap;
 import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
+import de.tonsias.basis.model.enums.SingleValueTypes;
 import de.tonsias.basis.model.impl.Instanz;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IInstanzService;
@@ -81,9 +82,11 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public IInstanz createInstanz() {
+	public IInstanz createInstanz(IInstanz parent) {
 		String key = _keyService.generateKey();
 		Instanz instanz = new Instanz(key);
+		instanz.setParentKey(parent.getOwnKey());
+		parent.addChildKeys(instanz.getOwnKey());
 		_cache.put(key, instanz);
 		return instanz;
 	}
@@ -91,6 +94,16 @@ public class InstanzServiceImpl implements IInstanzService {
 	@Override
 	public void saveAll() {
 		_cache.values().forEach(t -> _saveService.safeAsGson(t, t.getClass()));
+	}
+
+	@Override
+	public void changeAttributeName(String instanzKey, SingleValueTypes type, String key, String newName) {
+		Optional<IInstanz> instanz = resolveKey(instanzKey);
+		if (instanz.isEmpty() || type == null || key.isBlank() || newName.isBlank()) {
+			return;
+		}
+
+		instanz.get().getSingleValues(type).put(key, newName);
 	}
 
 }

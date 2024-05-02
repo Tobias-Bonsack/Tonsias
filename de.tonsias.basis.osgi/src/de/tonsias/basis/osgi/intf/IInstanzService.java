@@ -3,6 +3,7 @@ package de.tonsias.basis.osgi.intf;
 import java.util.Collection;
 import java.util.Optional;
 
+import de.tonsias.basis.model.enums.SingleValueTypes;
 import de.tonsias.basis.model.interfaces.IInstanz;
 
 public interface IInstanzService {
@@ -34,13 +35,24 @@ public interface IInstanzService {
 	/**
 	 * Creates a new {@link IInstanz}, but does not save it
 	 * 
+	 * @param parent of the new instance
 	 * @return a new {@link IInstanz}
 	 */
-	IInstanz createInstanz();
+	IInstanz createInstanz(IInstanz parent);
 
 	/**
 	 * saves all {@link IInstanz}, that are currently in the cache.
 	 */
 	void saveAll();
+
+	/**
+	 * Will change a attribute name
+	 * 
+	 * @param instanzKey of the instance to change a attribute
+	 * @param type       of the attribute to change
+	 * @param key        of the attribute to change
+	 * @param newName    of the attribute
+	 */
+	void changeAttributeName(String instanzKey, SingleValueTypes type, String key, String newName);
 
 }

@@ -1,6 +1,7 @@
 package de.tonsias.basis.model.interfaces;
 
 import java.util.Collection;
+import java.util.Map.Entry;
 
 import com.google.common.collect.BiMap;
 
@@ -15,7 +16,7 @@ public interface IInstanz extends IObject, ISavePathOwner {
 	void setParentKey(String newParent);
 
 	String getParentKey();
-	
+
 	Collection<String> getChildren();
 
 	void addChildKeys(String... children);
@@ -27,10 +28,10 @@ public interface IInstanz extends IObject, ISavePathOwner {
 	void removeChildKeys(Collection<String> children);
 
 	// single value section
-	
+
 	BiMap<String, String> getSingleValues(SingleValueTypes type);
-	
-	void addValuekeys(SingleValueTypes type, BiMap<String, String> keyToName);
+
+	void addValuekeys(SingleValueTypes type, Entry<String, Object> keyToName);
 
 	void deleteKeys(SingleValueTypes type, String... keys);
 
