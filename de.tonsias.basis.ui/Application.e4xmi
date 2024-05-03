@@ -3,7 +3,7 @@
   <children xsi:type="basic:TrimmedWindow" xmi:id="_mbuagPmbEe6DqPOwG-kyMA" elementId="de.tonsias.basis.ui.trimmedwindow.tonsias" label="Tonsias" x="0" y="0" width="800" height="1024">
     <children xsi:type="basic:PartSashContainer" xmi:id="_VOvKQPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.partsashcontainer.0" horizontal="true">
       <children xsi:type="basic:PartStack" xmi:id="_8i4fEPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.partstack.0">
-        <children xsi:type="basic:Part" xmi:id="_WOG8kPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.part.test" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.test" label="Test"/>
+        <children xsi:type="basic:Part" xmi:id="_WOG8kPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.part.test" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.part.ModelView" label="Model View"/>
       </children>
     </children>
     <mainMenu xmi:id="_gZoVYPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.menu.0"/>

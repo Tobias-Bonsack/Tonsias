@@ -138,4 +138,12 @@ public abstract class AInstanz implements IInstanz {
 		return _childKeys;
 	}
 
+	@Override
+	public int getChildCount() {
+		int result = 0;
+		result += this.getChildren().size();
+		result += Arrays.stream(SingleValueTypes.values()).mapToInt(s -> this.getSingleValues(s).size()).sum();
+		return result;
+	}
+
 }

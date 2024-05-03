@@ -10,10 +10,12 @@ import org.eclipse.swt.widgets.TreeItem;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
+import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.IObject;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.ui.provider.TreeContentProvider;
+import de.tonsias.basis.ui.provider.TreeLabelProvider;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 
@@ -34,7 +36,13 @@ public class ModelView {
 		Tree tree = new Tree(parent, SWT.BORDER | SWT.VIRTUAL);
 		TreeViewer treeViewer = new TreeViewer(tree);
 
-		treeViewer.setContentProvider(new TreeContentProvider());
+		treeViewer.setContentProvider(new TreeContentProvider(treeViewer));
+		treeViewer.setLabelProvider(new TreeLabelProvider());
+		treeViewer.setUseHashlookup(true);
+
+		IInstanz root = _instanzService.getRoot();
+		treeViewer.setInput(root);
+		treeViewer.setChildCount(root, root.getChildCount());
 
 	}
 

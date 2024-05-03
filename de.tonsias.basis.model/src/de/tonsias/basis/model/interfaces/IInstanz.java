@@ -36,4 +36,6 @@ public interface IInstanz extends IObject, ISavePathOwner {
 	void deleteKeys(SingleValueTypes type, String... keys);
 
 	void deleteParam(SingleValueTypes type, String... names);
+
+	int getChildCount();
 }
