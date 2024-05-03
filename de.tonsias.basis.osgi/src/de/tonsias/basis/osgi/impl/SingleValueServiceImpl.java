@@ -1,10 +1,13 @@
 package de.tonsias.basis.osgi.impl;
 
 import java.util.AbstractMap;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.AbstractMap.SimpleEntry;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -46,6 +49,17 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		E singleValue = _loadService.loadFromGson(path + key, clazz);
 		_cache.put(key, singleValue);
 		return Optional.ofNullable(singleValue);
+	}
+
+	@Override
+	public <E extends ISingleValue<?>> Collection<E> resolveKeys(Class<E> clazz, String path, String... keys) {
+		Collection<E> result = new ArrayList<E>();
+		Arrays.stream(keys)//
+				.map(key -> resolveKey(path, key, clazz))//
+				.filter(o -> o.isPresent())//
+				.map(o -> o.get())//
+				.forEach(ssv -> result.add(ssv));
+		return result;
 	}
 
 	@Override
