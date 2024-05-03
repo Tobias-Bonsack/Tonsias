@@ -10,10 +10,10 @@ import org.eclipse.swt.widgets.TreeItem;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
-import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.IObject;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
+import de.tonsias.basis.ui.node.TreeNodeWrapper;
 import de.tonsias.basis.ui.provider.TreeContentProvider;
 import de.tonsias.basis.ui.provider.TreeLabelProvider;
 import jakarta.annotation.PostConstruct;
@@ -40,7 +40,7 @@ public class ModelView {
 		treeViewer.setLabelProvider(new TreeLabelProvider());
 		treeViewer.setUseHashlookup(true);
 
-		IInstanz root = _instanzService.getRoot();
+		TreeNodeWrapper root = new TreeNodeWrapper(_instanzService.getRoot());
 		treeViewer.setInput(root);
 		treeViewer.setChildCount(root, root.getChildCount());
 
