@@ -40,7 +40,7 @@ public class ModelView {
 		treeViewer.setLabelProvider(new TreeLabelProvider());
 		treeViewer.setUseHashlookup(true);
 
-		TreeNodeWrapper root = new TreeNodeWrapper(_instanzService.getRoot());
+		TreeNodeWrapper root = new TreeNodeWrapper(_instanzService.getRoot(), null);
 		treeViewer.setInput(root);
 		treeViewer.setChildCount(root, root.getChildCount());
 

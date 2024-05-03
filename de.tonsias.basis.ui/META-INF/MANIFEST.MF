@@ -14,7 +14,9 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0",
  jakarta.annotation-api;bundle-version="2.1.1",
  de.tonsias.basis.osgi;bundle-version="1.0.0",
  de.tonsias.basis.model;bundle-version="1.0.0",
- com.google.guava
+ com.google.guava,
+ org.osgi.service.component;bundle-version="1.5.1"
 Bundle-Vendor: TONSIAS
 Automatic-Module-Name: de.tonsias.basis.ui
+Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-19

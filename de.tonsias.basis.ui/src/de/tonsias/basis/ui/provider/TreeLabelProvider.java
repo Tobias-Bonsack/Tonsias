@@ -4,6 +4,8 @@ import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.swt.graphics.Image;
 
+import de.tonsias.basis.ui.node.TreeNodeWrapper;
+
 public class TreeLabelProvider implements ILabelProvider {
 
 	@Override
@@ -38,8 +40,7 @@ public class TreeLabelProvider implements ILabelProvider {
 
 	@Override
 	public String getText(Object element) {
-		// TODO Auto-generated method stub
-		return null;
+		return ((TreeNodeWrapper) element).toString();
 	}
 
 }
