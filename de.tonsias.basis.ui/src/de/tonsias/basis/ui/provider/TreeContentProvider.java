@@ -3,11 +3,13 @@ package de.tonsias.basis.ui.provider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Set;
 
 import org.eclipse.jface.viewers.ITreeContentProvider;
 
 import de.tonsias.basis.model.enums.SingleValueTypes;
 import de.tonsias.basis.model.interfaces.IInstanz;
+import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import jakarta.inject.Inject;
@@ -36,14 +38,21 @@ public class TreeContentProvider implements ITreeContentProvider {
 		Collection<Object> children = new ArrayList<>();
 		children.addAll(_instanzService.getInstanzes(iInstanz.getChildren()));
 		Arrays.stream(SingleValueTypes.values()).forEach(s -> {
-			// TODO: singleservice needs resolve keys...
+			Set<String> valueKeys = iInstanz.getSingleValues(s).keySet();
+			Collection<? extends ISingleValue<?>> resolvedValues = _singleService.resolveKeys(s.getClazz(),
+					iInstanz.getPath(), valueKeys);
+
+			children.addAll(resolvedValues);
 		});
-		return null;
+		return children.toArray();
 	}
 
 	@Override
 	public Object getParent(Object element) {
-		// TODO Auto-generated method stub
+		if (!(element instanceof IInstanz) || !(element instanceof ISingleValue<?>)) {
+			return new Object[0];
+		}
+		// TODO rework model (getparentkey into own interface)
 		return null;
 	}
 

@@ -3,7 +3,6 @@ package de.tonsias.basis.osgi.impl;
 import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,9 +51,9 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	}
 
 	@Override
-	public <E extends ISingleValue<?>> Collection<E> resolveKeys(Class<E> clazz, String path, String... keys) {
+	public <E extends ISingleValue<?>> Collection<E> resolveKeys(Class<E> clazz, String path, Collection<String> keys) {
 		Collection<E> result = new ArrayList<E>();
-		Arrays.stream(keys)//
+		keys.stream()//
 				.map(key -> resolveKey(path, key, clazz))//
 				.filter(o -> o.isPresent())//
 				.map(o -> o.get())//

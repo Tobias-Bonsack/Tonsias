@@ -28,7 +28,7 @@ public interface ISingleValueService {
 	 * @param keys  of .json file
 	 * @return {@link Collection} of {@link ISingleValue} implementation
 	 */
-	<E extends ISingleValue<?>> Collection<E> resolveKeys(Class<E> clazz, String path, String... keys);
+	<E extends ISingleValue<?>> Collection<E> resolveKeys(Class<E> clazz, String path, Collection<String> keys);
 
 	/**
 	 * Creates a new {@link ISingleValue}, but it will not be saved
