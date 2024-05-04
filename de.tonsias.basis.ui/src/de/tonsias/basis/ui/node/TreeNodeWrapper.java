@@ -3,9 +3,7 @@ package de.tonsias.basis.ui.node;
 import java.util.Arrays;
 import java.util.Optional;
 
-import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceReference;
 
 import de.tonsias.basis.model.enums.SingleValueTypes;
 import de.tonsias.basis.model.interfaces.IInstanz;
@@ -17,23 +15,13 @@ import jakarta.inject.Inject;
 
 public class TreeNodeWrapper {
 
-	static IInstanzService _instanzService;
+	static final IInstanzService _instanzService = FrameworkUtil.getBundle(TreeNodeWrapper.class).getBundleContext()
+			.getService(FrameworkUtil.getBundle(TreeNodeWrapper.class).getBundleContext()
+					.getServiceReference(IInstanzService.class));
 
-	static ISingleValueService _singleService;
-
-	{
-		BundleContext bundleContext = FrameworkUtil.getBundle(TreeNodeWrapper.class).getBundleContext();
-		ServiceReference<IInstanzService> instanzServiceRef = bundleContext.getServiceReference(IInstanzService.class);
-		if (instanzServiceRef != null) {
-			_instanzService = bundleContext.getService(instanzServiceRef);
-		}
-
-		ServiceReference<ISingleValueService> singleServiceRef = bundleContext
-				.getServiceReference(ISingleValueService.class);
-		if (singleServiceRef != null) {
-			_singleService = bundleContext.getService(singleServiceRef);
-		}
-	}
+	static final ISingleValueService _singleService = FrameworkUtil.getBundle(TreeNodeWrapper.class).getBundleContext()
+			.getService(FrameworkUtil.getBundle(TreeNodeWrapper.class).getBundleContext()
+					.getServiceReference(ISingleValueService.class));;
 
 	// TODO ueberleg ob nicht der key hier besser waere
 	private final IObject _object;
