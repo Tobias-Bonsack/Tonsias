@@ -5,12 +5,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeItem;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-
-import de.tonsias.basis.model.interfaces.IObject;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.ui.node.TreeNodeWrapper;
@@ -27,8 +22,6 @@ public class ModelView {
 	@Inject
 	ISingleValueService _singleService;
 
-	BiMap<IObject, TreeItem> _objectToTreeItem = HashBiMap.create();
-
 	@PostConstruct
 	void postConstruct(Composite parent) {
 		parent.setLayout(new FillLayout());
@@ -43,7 +36,6 @@ public class ModelView {
 		TreeNodeWrapper root = new TreeNodeWrapper(_instanzService.getRoot(), null);
 		treeViewer.setInput(root);
 		treeViewer.setChildCount(root, root.getChildCount());
-
 	}
 
 }
