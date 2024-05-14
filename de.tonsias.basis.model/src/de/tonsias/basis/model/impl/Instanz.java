@@ -2,7 +2,7 @@ package de.tonsias.basis.model.impl;
 
 import java.io.Serializable;
 
-import de.tonsias.basis.model.interfaces.ISavePathOwner;
+import de.tonsias.basis.model.interfaces.IObject;
 
 public class Instanz extends AInstanz implements Serializable, Cloneable {
 
@@ -20,5 +20,27 @@ public class Instanz extends AInstanz implements Serializable, Cloneable {
 	@Override
 	public String getPath() {
 		return PATH;
+	}
+
+	@Override
+	public int hashCode() {
+		return getOwnKey().hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof IObject)) {
+			return false;
+		}
+		IObject object = (IObject) obj;
+		return this.getOwnKey().equals(object.getOwnKey());
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append(this.getOwnKey()).append(" ");
+		builder.append(this.getClass().toString());
+		return builder.toString();
 	}
 }
