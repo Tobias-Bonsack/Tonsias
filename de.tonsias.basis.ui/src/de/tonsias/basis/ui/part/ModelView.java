@@ -71,7 +71,7 @@ public class ModelView {
 				if (selection.length == 1) {
 					TreeNodeWrapper selectedItem = (TreeNodeWrapper) selection[0].getData();
 					Class<? extends IObject> objectClass = selectedItem.getObjectClass();
-					_menuItems.values().stream().flatMap(i -> i.stream()).forEach(i -> i.set(false));
+					_menuItems.values().stream().flatMap(i -> i.stream()).forEach(i -> i.setEnabled(false));
 					_menuItems.getOrDefault(objectClass, Collections.emptyList()).stream()
 							.forEach(i -> i.setEnabled(true));
 				} else {
