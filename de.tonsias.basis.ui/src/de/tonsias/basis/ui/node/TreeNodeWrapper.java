@@ -89,4 +89,11 @@ public class TreeNodeWrapper {
 		return _object.toString();
 	}
 
+	public Class<? extends IObject> getObjectClass() {
+		if (_object instanceof IInstanz) {
+			return IInstanz.class;
+		}
+		return IObject.class;
+	}
+
 }
