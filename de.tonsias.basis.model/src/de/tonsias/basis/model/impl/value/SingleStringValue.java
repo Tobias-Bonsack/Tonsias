@@ -13,4 +13,13 @@ public class SingleStringValue extends ASingleValue<String> {
 	public SingleStringValue(String key, String value, Set<String> connectedInstanzes) {
 		super(key, value, connectedInstanzes);
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append(this.getOwnKey()).append(" ");
+		builder.append(this.getValue()).append(" ");
+		builder.append(this.getClass().toString());
+		return builder.toString();
+	}
 }
