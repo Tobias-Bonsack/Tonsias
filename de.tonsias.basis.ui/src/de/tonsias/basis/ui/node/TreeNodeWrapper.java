@@ -86,7 +86,7 @@ public class TreeNodeWrapper {
 
 	@Override
 	public String toString() {
-		return _object.getOwnKey();
+		return _object.toString();
 	}
 
 }

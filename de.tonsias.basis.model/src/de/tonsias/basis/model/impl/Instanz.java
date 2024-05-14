@@ -40,7 +40,8 @@ public class Instanz extends AInstanz implements Serializable, Cloneable {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append(this.getOwnKey()).append(" ");
-		builder.append(this.getClass().toString());
+		String[] string = this.getClass().toString().split("\\.");
+		builder.append(": ").append(string[string.length - 1]);
 		return builder.toString();
 	}
 }
