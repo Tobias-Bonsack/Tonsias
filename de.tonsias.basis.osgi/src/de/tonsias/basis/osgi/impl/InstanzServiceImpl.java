@@ -9,7 +9,7 @@ import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import com.google.common.collect.BiMap;
+
 import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
 import de.tonsias.basis.model.enums.SingleValueTypes;
@@ -34,6 +34,10 @@ public class InstanzServiceImpl implements IInstanzService {
 
 	@Override
 	public Optional<IInstanz> resolveKey(String key) {
+		if (_cache.containsKey(key)) {
+			return Optional.of(_cache.get(key));
+		}
+
 		String path = "instanz/" + key;
 		Instanz instanz = _loadService.loadFromGson(path, Instanz.class);
 

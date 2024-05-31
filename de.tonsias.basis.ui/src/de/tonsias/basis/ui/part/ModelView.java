@@ -39,21 +39,23 @@ public class ModelView {
 
 	private final Map<Class<? extends IObject>, Collection<MenuItem>> _menuItems = new HashMap<>();
 
+	private TreeViewer _treeViewer;
+
 	private
 
 	@PostConstruct void postConstruct(Composite parent) {
 		parent.setLayout(new FillLayout());
 
 		Tree tree = new Tree(parent, SWT.BORDER | SWT.VIRTUAL);
-		TreeViewer treeViewer = new TreeViewer(tree);
+		_treeViewer = new TreeViewer(tree);
 
-		treeViewer.setContentProvider(new TreeContentProvider(treeViewer));
-		treeViewer.setLabelProvider(new TreeLabelProvider());
-		treeViewer.setUseHashlookup(true);
+		_treeViewer.setContentProvider(new TreeContentProvider(_treeViewer));
+		_treeViewer.setLabelProvider(new TreeLabelProvider());
+		_treeViewer.setUseHashlookup(true);
 
 		TreeNodeWrapper root = new TreeNodeWrapper(_instanzService.getRoot(), null);
-		treeViewer.setInput(root);
-		treeViewer.setChildCount(root, root.getChildCount());
+		_treeViewer.setInput(root);
+		_treeViewer.setChildCount(root, root.getChildCount());
 
 		createMenu(tree);
 	}
@@ -92,7 +94,11 @@ public class ModelView {
 			public void widgetSelected(SelectionEvent e) {
 				TreeItem[] selection = tree.getSelection();
 				if (selection.length > 0) {
-					TreeNodeWrapper selectedItem = (TreeNodeWrapper) selection[0].getData();
+					TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
+					IInstanz parentObject = (IInstanz) parent.getObject();
+					IInstanz instanz = _instanzService.createInstanz(parentObject);
+					new TreeNodeWrapper(instanz, parent);
+					_treeViewer.refresh(parent);
 				}
 			}
 		});

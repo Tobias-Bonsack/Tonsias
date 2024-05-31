@@ -23,7 +23,6 @@ public class TreeNodeWrapper {
 			.getService(FrameworkUtil.getBundle(TreeNodeWrapper.class).getBundleContext()
 					.getServiceReference(ISingleValueService.class));;
 
-	// TODO ueberleg ob nicht der key hier besser waere
 	private final IObject _object;
 
 	private final TreeNodeWrapper _parent;
@@ -94,6 +93,10 @@ public class TreeNodeWrapper {
 			return IInstanz.class;
 		}
 		return IObject.class;
+	}
+
+	public IObject getObject() {
+		return _object;
 	}
 
 }
