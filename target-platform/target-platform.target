@@ -53,5 +53,15 @@
 			 </dependency>
 		 </dependencies>
 	 </location>
+	 <location includeDependencyDepth="infinite" includeDependencyScopes="compile,test" includeSource="true" missingManifest="generate" type="Maven">
+		 <dependencies>
+			 <dependency>
+				 <groupId>org.mockito</groupId>
+				 <artifactId>mockito-core</artifactId>
+				 <version>5.12.0</version>
+				 <type>jar</type>
+			 </dependency>
+		 </dependencies>
+	 </location>
  </locations>
 </target>

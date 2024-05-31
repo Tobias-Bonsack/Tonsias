@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Test
+Bundle-SymbolicName: de.tonsias.basis.osgi.test
+Bundle-Version: 1.0.0.qualifier
+Require-Bundle: junit-jupiter-api;bundle-version="5.10.2",
+ org.mockito.mockito-core;bundle-version="5.12.0",
+ de.tonsias.basis.osgi;bundle-version="1.0.0"
+Automatic-Module-Name: de.tonsias.basis.osgi.test
+Bundle-RequiredExecutionEnvironment: JavaSE-19
