@@ -32,7 +32,7 @@ public class KeyServiceImpl implements IKeyService {
 			char c = keyArray[i];
 			if (c == KEYCHARS[KEYCHARS.length - 1]) {
 				isExcess = true;
-				c = KEYCHARS[0];
+				keyArray[i] = KEYCHARS[0];
 				continue;
 			}
 
@@ -40,7 +40,7 @@ public class KeyServiceImpl implements IKeyService {
 				isExcess = false;
 				if (c == KEYCHARS[KEYCHARS.length - 1]) {
 					isExcess = true;
-					c = KEYCHARS[0];
+					keyArray[i] = KEYCHARS[0];
 					continue;
 				}
 			}
@@ -75,7 +75,7 @@ public class KeyServiceImpl implements IKeyService {
 		IEclipsePreferences node = InstanceScope.INSTANCE.getNode(KEY_KEY);
 		node.put(KEY_KEY, newKey);
 		flush(node);
-		
+
 		_key = newKey;
 	}
 
