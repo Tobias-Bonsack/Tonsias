@@ -20,7 +20,12 @@ public class KeyServiceImpl implements IKeyService {
 
 	private static final String KEY_KEY = "CurrentKey";
 
-	private String _key;
+	protected String _key;
+
+	@Override
+	public String initKey() {
+		return getCurrentKey();
+	}
 
 	@Override
 	public String generateKey() {
@@ -36,15 +41,9 @@ public class KeyServiceImpl implements IKeyService {
 				continue;
 			}
 
-			if (isExcess) {
-				isExcess = false;
-				if (c == KEYCHARS[KEYCHARS.length - 1]) {
-					isExcess = true;
-					keyArray[i] = KEYCHARS[0];
-					continue;
-				}
-			}
+			isExcess = false;
 			keyArray[i] = KEYCHARS[Arrays.binarySearch(KEYCHARS, c) + 1];
+			break;
 		}
 
 		String result = String.valueOf(keyArray);
@@ -61,7 +60,7 @@ public class KeyServiceImpl implements IKeyService {
 			return _key;
 		}
 
-		IEclipsePreferences node = InstanceScope.INSTANCE.getNode(KEY_KEY);
+		IEclipsePreferences node = getNode();
 		String key = node.get(KEY_KEY, "");
 		if (key.isBlank()) {
 			key = String.valueOf(KEYCHARS[0]);
@@ -72,14 +71,14 @@ public class KeyServiceImpl implements IKeyService {
 	}
 
 	private void saveKey(String newKey) {
-		IEclipsePreferences node = InstanceScope.INSTANCE.getNode(KEY_KEY);
+		IEclipsePreferences node = getNode();
 		node.put(KEY_KEY, newKey);
 		flush(node);
 
 		_key = newKey;
 	}
 
-	private void flush(IEclipsePreferences node) {
+	protected void flush(IEclipsePreferences node) {
 		try {
 			node.flush();
 		} catch (BackingStoreException e) {
@@ -87,9 +86,7 @@ public class KeyServiceImpl implements IKeyService {
 		}
 	}
 
-	@Override
-	public String initKey() {
-		return getCurrentKey();
+	protected IEclipsePreferences getNode() {
+		return InstanceScope.INSTANCE.getNode(KEY_KEY);
 	}
-
 }
