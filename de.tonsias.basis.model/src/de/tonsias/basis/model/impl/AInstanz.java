@@ -83,10 +83,10 @@ public abstract class AInstanz implements IInstanz {
 	}
 
 	@Override
-	public void addValuekeys(SingleValueTypes type, Entry<String, Object> keyToName) {
+	public void addValuekeys(SingleValueTypes type, Entry<String, String> keyToName) {
 		switch (type) {
 		case SINGLE_STRING: {
-			_singleStringKeyValueMap.put(keyToName.getKey(), (String) keyToName.getValue());
+			_singleStringKeyValueMap.put(keyToName.getKey(), keyToName.getValue());
 			break;
 		}
 		default:

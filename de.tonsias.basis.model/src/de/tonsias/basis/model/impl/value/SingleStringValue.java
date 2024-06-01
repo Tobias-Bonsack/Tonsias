@@ -8,6 +8,7 @@ public class SingleStringValue extends ASingleValue<String> {
 
 	public SingleStringValue(String key) {
 		super(key);
+		this.setValue("");
 	}
 
 	public SingleStringValue(String key, String value, Set<String> connectedInstanzes) {

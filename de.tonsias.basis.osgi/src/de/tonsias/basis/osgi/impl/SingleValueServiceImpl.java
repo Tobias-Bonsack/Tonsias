@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -68,16 +69,16 @@ public class SingleValueServiceImpl implements ISingleValueService {
 			return null;
 		}
 
-		E singleValue = create(clazz, type.get());
-		SimpleEntry<String, Object> keyToName = new AbstractMap.SimpleEntry<String, Object>(singleValue.getOwnKey(),
-				name);
+		E singleValue = create(type.get());
+		SimpleEntry<String, String> keyToName = new AbstractMap.SimpleEntry<String, String>(singleValue.getOwnKey(),
+				name == null ? singleValue.getOwnKey() : name);
 		parent.addValuekeys(type.get(), keyToName);
 		_cache.put(singleValue.getOwnKey(), singleValue);
 		return singleValue;
 	}
 
 	@SuppressWarnings("unchecked") // is checked in reality
-	private <E extends ISingleValue<?>> E create(Class<E> clazz, SingleValueTypes type) {
+	private <E extends ISingleValue<?>> E create(SingleValueTypes type) {
 		String key = _keyService.generateKey();
 		switch (type) {
 		case SINGLE_STRING: {
@@ -91,6 +92,11 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	@Override
 	public void saveAll() {
 		_cache.values().stream().forEach(i -> _saveService.safeAsGson(i, i.getClass()));
+	}
+
+	@Override
+	public boolean removeFromCache(String... keys) {
+		return !Stream.of(keys).map(key -> _cache.remove(key)).anyMatch(removedValue -> removedValue == null);
 	}
 
 }

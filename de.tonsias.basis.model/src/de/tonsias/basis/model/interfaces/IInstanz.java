@@ -31,7 +31,7 @@ public interface IInstanz extends IObject, ISavePathOwner {
 
 	BiMap<String, String> getSingleValues(SingleValueTypes type);
 
-	void addValuekeys(SingleValueTypes type, Entry<String, Object> keyToName);
+	void addValuekeys(SingleValueTypes type, Entry<String, String> keyToName);
 
 	void deleteKeys(SingleValueTypes type, String... keys);
 

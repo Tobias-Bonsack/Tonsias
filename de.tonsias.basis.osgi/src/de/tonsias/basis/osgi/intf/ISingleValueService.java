@@ -36,7 +36,7 @@ public interface ISingleValueService {
 	 * @param <E>    created class
 	 * @param clazz  identification
 	 * @param parent of the new singlevalue
-	 * @param name   of the new variables
+	 * @param name   of the new variables, can be {@code null}
 	 * @return new instance of {@link ISingleValue}
 	 */
 	<E extends ISingleValue<?>> E createNew(Class<E> clazz, IInstanz parent, String name);
@@ -45,5 +45,13 @@ public interface ISingleValueService {
 	 * saves all {@link ISingleValue}, that are currently in the cache.
 	 */
 	void saveAll();
+
+	/**
+	 * Remove SingleValues from the cache
+	 * 
+	 * @param keys to remove from the cache
+	 * @return if all keys are removed
+	 */
+	boolean removeFromCache(String... keys);
 
 }
