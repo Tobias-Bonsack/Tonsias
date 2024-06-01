@@ -1,6 +1,7 @@
 package de.tonsias.basis.ui.dialog;
 
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.widgets.LabelFactory;
@@ -8,9 +9,12 @@ import org.eclipse.jface.widgets.TextFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
+import com.google.common.collect.BiMap;
 
 import de.tonsias.basis.model.enums.SingleValueTypes;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
@@ -59,8 +63,20 @@ public class StringValueDialog extends Dialog {
 		Label nameLabel = LabelFactory.newLabel(SWT.None).text("Name").create(composite);
 		GridDataFactory.fillDefaults().applyTo(nameLabel);
 		String name = _instanz.getSingleValues(SingleValueTypes.SINGLE_STRING).get(_value.getOwnKey());
-		_nameText = TextFactory.newText(SWT.None).text(name).enabled(true).create(composite);
+		_nameText = TextFactory.newText(SWT.SEARCH).text(name).enabled(true).create(composite);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(_nameText);
+		_nameText.addModifyListener(modifyEvent -> {
+			BiMap<String, String> biMap = _instanz.getSingleValues(SingleValueTypes.SINGLE_STRING);
+			if (biMap.inverse().containsKey(_nameText.getText())) {
+				_nameText.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_RED));
+				_nameText.setMessage("Name bereits genutzt!");
+				getButton(IDialogConstants.OK_ID).setEnabled(false);
+			} else {
+				_nameText.setBackground(null);
+				_nameText.setMessage("");
+				getButton(IDialogConstants.OK_ID).setEnabled(true);
+			}
+		});
 	}
 
 	private void createSingleValuePart(Composite composite) {
