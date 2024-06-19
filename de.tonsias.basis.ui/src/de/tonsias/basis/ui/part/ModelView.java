@@ -6,6 +6,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.e4.core.di.annotations.Optional;
+import org.eclipse.e4.core.services.events.IEventBroker;
+import org.eclipse.e4.ui.di.UIEventTopic;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
@@ -27,6 +30,7 @@ import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.IObject;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
+import de.tonsias.basis.osgi.intf.InstanzEventConstants;
 import de.tonsias.basis.ui.dialog.StringValueDialog;
 import de.tonsias.basis.ui.node.TreeNodeWrapper;
 import de.tonsias.basis.ui.provider.TreeContentProvider;
@@ -41,6 +45,9 @@ public class ModelView {
 
 	@Inject
 	ISingleValueService _singleService;
+
+	@Inject
+	IEventBroker _broker;
 
 	private final Map<Class<? extends IObject>, Collection<MenuItem>> _menuItems = new HashMap<>();
 
@@ -105,6 +112,8 @@ public class ModelView {
 					IInstanz instanz = _instanzService.createInstanz(parentObject);
 					new TreeNodeWrapper(instanz, parent);
 					_treeViewer.refresh(parent);
+
+					_broker.post(InstanzEventConstants.INSTANZ_NEW, instanz);
 				}
 			}
 		});
@@ -150,5 +159,11 @@ public class ModelView {
 
 			}
 		});
+	}
+
+	@Inject
+	@Optional
+	private void newInstanzListener(@UIEventTopic(InstanzEventConstants.INSTANZ_NEW) IInstanz instanz) {
+		_treeViewer.refresh();
 	}
 }

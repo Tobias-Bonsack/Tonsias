@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="ASCII"?>
-<application:Application xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:application="http://www.eclipse.org/ui/2010/UIModel/application" xmlns:basic="http://www.eclipse.org/ui/2010/UIModel/application/ui/basic" xmi:id="_k4GEkPmbEe6DqPOwG-kyMA" elementId="de.tonsias.basis.ui.application">
+<application:Application xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:application="http://www.eclipse.org/ui/2010/UIModel/application" xmlns:basic="http://www.eclipse.org/ui/2010/UIModel/application/ui/basic" xmlns:menu="http://www.eclipse.org/ui/2010/UIModel/application/ui/menu" xmi:id="_k4GEkPmbEe6DqPOwG-kyMA" elementId="de.tonsias.basis.ui.application">
   <children xsi:type="basic:TrimmedWindow" xmi:id="_mbuagPmbEe6DqPOwG-kyMA" elementId="de.tonsias.basis.ui.trimmedwindow.tonsias" label="Tonsias" x="0" y="0" width="800" height="1024">
     <children xsi:type="basic:PartSashContainer" xmi:id="_VOvKQPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.partsashcontainer.0" horizontal="true">
       <children xsi:type="basic:PartStack" xmi:id="_8i4fEPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.partstack.0">
-        <children xsi:type="basic:Part" xmi:id="_WOG8kPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.part.test" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.part.ModelView" label="Model View"/>
+        <children xsi:type="basic:Part" xmi:id="_WOG8kPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.part.test" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.part.ModelView" label="Model View">
+          <toolbar xmi:id="_lPzQQC5cEe-DY8FvUxmb2A" elementId="de.tonsias.basis.ui.toolbar.0">
+            <children xsi:type="menu:DirectToolItem" xmi:id="_mspBsC5cEe-DY8FvUxmb2A" elementId="de.tonsias.basis.ui.directtoolitem.newinstanz" label="New Instanz" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.AddNewInstanzToRoot"/>
+          </toolbar>
+        </children>
       </children>
     </children>
     <mainMenu xmi:id="_gZoVYPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.menu.0"/>

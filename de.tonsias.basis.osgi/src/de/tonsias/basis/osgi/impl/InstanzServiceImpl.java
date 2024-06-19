@@ -51,7 +51,13 @@ public class InstanzServiceImpl implements IInstanzService {
 
 	@Override
 	public IInstanz getRoot() {
-		String path = "instanz/" + String.valueOf(KeyServiceImpl.KEYCHARS[0]);
+		String rootID = String.valueOf(KeyServiceImpl.KEYCHARS[0]);
+		String path = "instanz/" + rootID;
+
+		if (_cache.containsKey(rootID)) {
+			return _cache.get(rootID);
+		}
+
 		Instanz root = _loadService.loadFromGson(path, Instanz.class);
 
 		if (root != null) {
