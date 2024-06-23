@@ -57,7 +57,7 @@ public class SaveServiceImpl implements SaveService {
 
 	@Override
 	public <E> void safeAsGson(ISavePathOwner object, Class<E> objectType) {
-		Gson gson = new Gson();
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
 		var type = TypeToken.getParameterized(objectType).getType();
 		String json = gson.toJson(object, type);

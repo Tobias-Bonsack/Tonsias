@@ -4,7 +4,8 @@ Bundle-Name: Osgi
 Bundle-SymbolicName: de.tonsias.basis.osgi
 Bundle-Version: 1.0.0.qualifier
 Export-Package: de.tonsias.basis.osgi.impl;x-friends:="de.tonsias.basis.osgi.test",
- de.tonsias.basis.osgi.intf
+ de.tonsias.basis.osgi.intf,
+ de.tonsias.basis.osgi.util
 Require-Bundle: org.osgi.service.component.annotations;bundle-version="1.5.1",
  org.eclipse.e4.core.services;bundle-version="2.4.300",
  org.eclipse.core.runtime;bundle-version="3.31.0",

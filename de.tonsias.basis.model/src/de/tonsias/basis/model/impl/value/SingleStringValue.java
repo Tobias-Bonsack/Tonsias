@@ -2,6 +2,7 @@ package de.tonsias.basis.model.impl.value;
 
 import java.util.Set;
 
+import de.tonsias.basis.model.enums.SingleValueTypes;
 import de.tonsias.basis.model.impl.ASingleValue;
 
 public class SingleStringValue extends ASingleValue<String> {
@@ -13,6 +14,11 @@ public class SingleStringValue extends ASingleValue<String> {
 
 	public SingleStringValue(String key, String value, Set<String> connectedInstanzes) {
 		super(key, value, connectedInstanzes);
+	}
+
+	@Override
+	public String getPath() {
+		return SingleValueTypes.SINGLE_STRING.getPath();
 	}
 
 	@Override

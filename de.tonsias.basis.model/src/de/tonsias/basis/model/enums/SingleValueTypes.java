@@ -8,16 +8,23 @@ import de.tonsias.basis.model.interfaces.ISingleValue;
 
 public enum SingleValueTypes {
 
-	SINGLE_STRING(SingleStringValue.class);
+	SINGLE_STRING(SingleStringValue.class, "single_value/string/");
 
 	private final Class<? extends ISingleValue<?>> _clazz;
 
-	SingleValueTypes(Class<? extends ISingleValue<?>> clazz) {
+	private final String _path;
+
+	SingleValueTypes(Class<? extends ISingleValue<?>> clazz, String path) {
 		_clazz = clazz;
+		_path = path;
 	}
 
 	public Class<? extends ISingleValue<?>> getClazz() {
 		return _clazz;
+	}
+
+	public final String getPath() {
+		return _path;
 	}
 
 	public static Optional<SingleValueTypes> getByClass(Class<? extends ISingleValue<?>> clazz) {

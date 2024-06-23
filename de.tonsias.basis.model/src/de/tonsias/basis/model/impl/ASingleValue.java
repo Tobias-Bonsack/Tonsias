@@ -1,15 +1,12 @@
 package de.tonsias.basis.model.impl;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 import de.tonsias.basis.model.interfaces.ISingleValue;
 
 public abstract class ASingleValue<T> implements ISingleValue<T> {
-
-	private static final String PATH = "instanz/";
 
 	private Set<String> _connectedInstanzes = new HashSet<>();
 
@@ -50,11 +47,6 @@ public abstract class ASingleValue<T> implements ISingleValue<T> {
 	@Override
 	public Collection<String> getConnectedInstanzKeys() {
 		return _connectedInstanzes;
-	}
-
-	@Override
-	public String getPath() {
-		return PATH;
 	}
 
 	@Override

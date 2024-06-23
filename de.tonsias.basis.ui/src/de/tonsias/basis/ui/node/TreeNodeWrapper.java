@@ -66,7 +66,7 @@ public class TreeNodeWrapper {
 		for (SingleValueTypes type : SingleValueTypes.values()) {
 			for (String singleValueKey : instanz.getSingleValues(type).keySet()) {
 				if (cIndex == index) {
-					Optional<? extends ISingleValue<?>> singleValue = _singleService.resolveKey(instanz.getPath(),
+					Optional<? extends ISingleValue<?>> singleValue = _singleService.resolveKey(type.getPath(),
 							singleValueKey, type.getClazz());
 					if (singleValue.isPresent()) {
 						return new TreeNodeWrapper(singleValue.get(), this);
