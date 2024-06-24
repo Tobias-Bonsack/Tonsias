@@ -6,7 +6,9 @@ public interface InstanzEventConstants {
 
 	// this key can only be used for event registration, you cannot
 	// send out generic events
-	String INSTANZ_ALL_TOPIC = INSTANZ + "/*";
+	String ALL_TOPIC = INSTANZ + "/*";
 
-	String INSTANZ_NEW = INSTANZ + "/new";
+	String NEW = INSTANZ + "/new";
+
+	String SELECTED = INSTANZ + "/selected";
 }

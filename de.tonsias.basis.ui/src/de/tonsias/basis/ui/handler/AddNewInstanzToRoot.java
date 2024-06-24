@@ -20,7 +20,7 @@ public class AddNewInstanzToRoot {
 		IInstanz root = instanzS.getRoot();
 		IInstanz instanz = instanzS.createInstanz(root);
 
-		broker.post(InstanzEventConstants.INSTANZ_NEW, instanz);
+		broker.post(InstanzEventConstants.NEW, instanz);
 	}
 
 	@CanExecute

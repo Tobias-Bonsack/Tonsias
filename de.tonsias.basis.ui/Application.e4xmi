@@ -9,6 +9,12 @@
           </toolbar>
         </children>
       </children>
+      <children xsi:type="basic:PartSashContainer" xmi:id="_zUcSwDJZEe-dKNMEZRImXw" elementId="de.tonsias.basis.ui.partsashcontainer.1">
+        <children xsi:type="basic:PartStack" xmi:id="_0zzzwDJZEe-dKNMEZRImXw" elementId="de.tonsias.basis.ui.partstack.1"/>
+        <children xsi:type="basic:PartStack" xmi:id="_1mDJADJZEe-dKNMEZRImXw" elementId="de.tonsias.basis.ui.partstack.2">
+          <children xsi:type="basic:Part" xmi:id="_2DLJ4DJZEe-dKNMEZRImXw" elementId="de.tonsias.basis.ui.part.instanzansicht" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.part.InstanzView" label="Instanz Ansicht"/>
+        </children>
+      </children>
     </children>
     <mainMenu xmi:id="_gZoVYPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.menu.0">
       <children xsi:type="menu:Menu" xmi:id="_okuaEDGQEe-osN1KarNnQg" elementId="de.tonsias.basis.ui.menu.file" label="File">

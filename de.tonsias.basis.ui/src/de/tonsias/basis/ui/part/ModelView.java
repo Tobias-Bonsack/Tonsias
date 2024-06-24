@@ -14,6 +14,8 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.FillLayout;
@@ -59,6 +61,17 @@ public class ModelView {
 		parent.setLayout(new FillLayout());
 
 		Tree tree = new Tree(parent, SWT.BORDER | SWT.VIRTUAL);
+		tree.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseDown(MouseEvent e) {
+				TreeItem[] selection = ((Tree) e.widget).getSelection();
+				TreeNodeWrapper node = (TreeNodeWrapper) selection[0].getData();
+				if (node.getObject() instanceof IInstanz) {
+					_broker.send(InstanzEventConstants.SELECTED, IInstanz.class.cast(node.getObject()));
+				}
+			}
+		});
+
 		_treeViewer = new TreeViewer(tree);
 
 		_treeViewer.setContentProvider(new TreeContentProvider(_treeViewer));
@@ -113,7 +126,7 @@ public class ModelView {
 					new TreeNodeWrapper(instanz, parent);
 					_treeViewer.refresh(parent);
 
-					_broker.post(InstanzEventConstants.INSTANZ_NEW, instanz);
+					_broker.post(InstanzEventConstants.NEW, instanz);
 				}
 			}
 		});
@@ -163,7 +176,7 @@ public class ModelView {
 
 	@Inject
 	@Optional
-	private void newInstanzListener(@UIEventTopic(InstanzEventConstants.INSTANZ_NEW) IInstanz instanz) {
+	private void newInstanzListener(@UIEventTopic(InstanzEventConstants.NEW) IInstanz instanz) {
 		_treeViewer.refresh();
 	}
 }
