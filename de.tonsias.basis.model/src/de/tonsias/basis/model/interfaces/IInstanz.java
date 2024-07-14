@@ -17,6 +17,11 @@ public interface IInstanz extends IObject, ISavePathOwner {
 
 	String getParentKey();
 
+	/**
+	 * Get all available {@link IInstanz} children, no values!
+	 * 
+	 * @return Collection of Keys
+	 */
 	Collection<String> getChildren();
 
 	void addChildKeys(String... children);
@@ -29,6 +34,13 @@ public interface IInstanz extends IObject, ISavePathOwner {
 
 	// single value section
 
+	/**
+	 * Get all {@link ISingleValue} available of this {@link IInstanz}
+	 * 
+	 * @param type from {@link SingleValueTypes} to search for
+	 * @return {@link BiMap} Key is the Key of the {@link ISingleValue}, Value is
+	 *         the Name of the Parameter
+	 */
 	BiMap<String, String> getSingleValues(SingleValueTypes type);
 
 	void addValuekeys(SingleValueTypes type, Entry<String, String> keyToName);
