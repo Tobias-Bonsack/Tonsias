@@ -30,4 +30,12 @@ public class SingleStringValue extends ASingleValue<String> {
 		builder.append(": ").append(string[string.length - 1]);
 		return builder.toString();
 	}
+
+	@Override
+	public boolean tryToSetValue(Object value) {
+		if (!String.class.isInstance(value)) {
+			return false;
+		}
+		return setValue((String) value);
+	}
 }

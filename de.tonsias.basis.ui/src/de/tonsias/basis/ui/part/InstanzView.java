@@ -132,23 +132,26 @@ public class InstanzView {
 			GridLayoutFactory.fillDefaults().numColumns(3).applyTo(typeGroup);
 
 			BiMap<String, String> singleValues = _shownInstanz.getSingleValues(type);
-			for (Entry<String, String> entry : singleValues.entrySet()) {
+			for (Entry<String, String> attribute : singleValues.entrySet()) {
 				LabelFactory.newLabel(SWT.None)//
-						.text(entry.getValue())//
+						.text(attribute.getValue())//
 						.data(GridDataFactory.fillDefaults().create())//
 						.create(typeGroup);
 
-				java.util.Optional<? extends ISingleValue<?>> key = _singleService.resolveKey(type.getPath(),
-						entry.getKey(), type.getClazz());
-				if (key.isPresent()) {
+				java.util.Optional<? extends ISingleValue<?>> singleValue = _singleService.resolveKey(type.getPath(),
+						attribute.getKey(), type.getClazz());
+				if (singleValue.isPresent()) {
 					TextFactory.newText(SWT.None)//
-							.text(key.get().getValue().toString())//
-							.data(GridDataFactory.fillDefaults().create())//
+							.text(singleValue.get().getValue().toString())//
+							.onModify(event -> {
+								String text = ((Text) event.widget).getText();
+								singleValue.get().tryToSetValue(text);
+							}).data(GridDataFactory.fillDefaults().create())//
 							.create(typeGroup);
 
 					TextFactory.newText(SWT.None)//
 							.enabled(false)//
-							.text("Key of SingleValue: " + key.get().getOwnKey())//
+							.text("Key: " + singleValue.get().getOwnKey())//
 							.data(GridDataFactory.fillDefaults().create())//
 							.create(typeGroup);
 				}

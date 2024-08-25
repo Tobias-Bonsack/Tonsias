@@ -8,13 +8,15 @@ import java.util.Collection;
  * 
  */
 public interface ISingleValue<T> extends IValue {
-	
+
 	T getValue();
-	
+
 	boolean setValue(T value);
-	
+
+	boolean tryToSetValue(Object value);
+
 	Collection<String> getConnectedInstanzKeys();
-	
+
 	void addConnectedInstanzKey(String key);
 
 }
