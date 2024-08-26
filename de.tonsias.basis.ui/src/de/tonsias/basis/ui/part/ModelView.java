@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.e4.core.di.annotations.Optional;
-import org.eclipse.e4.core.services.events.IEventBroker;
 import org.eclipse.e4.ui.di.UIEventTopic;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.window.Window;
@@ -30,6 +29,7 @@ import de.tonsias.basis.model.enums.SingleValueTypes;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.IObject;
+import de.tonsias.basis.osgi.intf.IEventBrokerBride;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.InstanzEventConstants;
@@ -43,13 +43,13 @@ import jakarta.inject.Inject;
 public class ModelView {
 
 	@Inject
+	IEventBrokerBride _broker;
+
+	@Inject
 	IInstanzService _instanzService;
 
 	@Inject
 	ISingleValueService _singleService;
-
-	@Inject
-	IEventBroker _broker;
 
 	private final Map<Class<? extends IObject>, Collection<MenuItem>> _menuItems = new HashMap<>();
 
@@ -125,8 +125,6 @@ public class ModelView {
 					IInstanz instanz = _instanzService.createInstanz(parentObject);
 					new TreeNodeWrapper(instanz, parent);
 					_treeViewer.refresh(parent);
-
-					_broker.post(InstanzEventConstants.NEW, instanz);
 				}
 			}
 		});

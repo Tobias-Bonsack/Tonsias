@@ -15,8 +15,10 @@ import de.tonsias.basis.data.access.osgi.intf.SaveService;
 import de.tonsias.basis.model.enums.SingleValueTypes;
 import de.tonsias.basis.model.impl.Instanz;
 import de.tonsias.basis.model.interfaces.IInstanz;
+import de.tonsias.basis.osgi.intf.IEventBrokerBride;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.IKeyService;
+import de.tonsias.basis.osgi.intf.InstanzEventConstants;
 
 @Component
 public class InstanzServiceImpl implements IInstanzService {
@@ -29,6 +31,9 @@ public class InstanzServiceImpl implements IInstanzService {
 
 	@Reference
 	SaveService _saveService;
+
+	@Reference
+	IEventBrokerBride _broker;
 
 	private final Map<String, IInstanz> _cache = new HashMap<>();
 
@@ -98,6 +103,7 @@ public class InstanzServiceImpl implements IInstanzService {
 		instanz.setParentKey(parent.getOwnKey());
 		parent.addChildKeys(instanz.getOwnKey());
 		_cache.put(key, instanz);
+		_broker.post(InstanzEventConstants.NEW, instanz);
 		return instanz;
 	}
 
