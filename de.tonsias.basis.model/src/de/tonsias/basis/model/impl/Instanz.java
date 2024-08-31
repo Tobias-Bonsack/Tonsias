@@ -15,7 +15,7 @@ public class Instanz extends AInstanz implements Serializable, Cloneable {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 
 	@Override
 	public String getPath() {

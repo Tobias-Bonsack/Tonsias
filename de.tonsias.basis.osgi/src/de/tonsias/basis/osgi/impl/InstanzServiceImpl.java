@@ -121,5 +121,4 @@ public class InstanzServiceImpl implements IInstanzService {
 
 		instanz.get().getSingleValues(type).put(key, newName);
 	}
-
 }

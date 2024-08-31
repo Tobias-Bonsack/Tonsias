@@ -7,7 +7,6 @@ import org.osgi.framework.FrameworkUtil;
 
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IInstanzService;
-import de.tonsias.basis.osgi.intf.InstanzEventConstants;
 import de.tonsias.basis.ui.node.TreeNodeWrapper;
 
 public class AddNewInstanzToRoot {
@@ -18,9 +17,7 @@ public class AddNewInstanzToRoot {
 				.getService(FrameworkUtil.getBundle(TreeNodeWrapper.class).getBundleContext()
 						.getServiceReference(IInstanzService.class));
 		IInstanz root = instanzS.getRoot();
-		IInstanz instanz = instanzS.createInstanz(root);
-
-		broker.post(InstanzEventConstants.NEW, instanz);
+		instanzS.createInstanz(root);
 	}
 
 	@CanExecute

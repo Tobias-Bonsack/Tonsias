@@ -15,6 +15,7 @@ import org.osgi.service.component.annotations.Reference;
 import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
 import de.tonsias.basis.model.enums.SingleValueTypes;
+import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
@@ -81,9 +82,10 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	private <E extends ISingleValue<?>> E create(SingleValueTypes type) {
 		String key = _keyService.generateKey();
 		switch (type) {
-		case SINGLE_STRING: {
+		case SINGLE_STRING:
 			return (E) new SingleStringValue(key);
-		}
+		case SINGLE_INTEGER:
+			return (E) new SingleIntegerValue(key);
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + type);
 		}

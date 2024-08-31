@@ -29,6 +29,8 @@ public abstract class AInstanz implements IInstanz {
 
 	private BiMap<String, String> _singleStringKeyValueMap = HashBiMap.create();
 
+	private BiMap<String, String> _singleIntegerKeyValueMap = HashBiMap.create();
+
 	public AInstanz(String key) {
 		this._ownKey = key;
 	}
@@ -39,11 +41,12 @@ public abstract class AInstanz implements IInstanz {
 	}
 
 	public AInstanz(String _parentKey, String _ownKey, Set<String> _childKeys,
-			BiMap<String, String> _singleStringKeyValueMap) {
+			BiMap<String, String> _singleStringKeyValueMap, BiMap<String, String> _singleIntegerKeyValueMap) {
 		this._parentKey = _parentKey;
 		this._ownKey = _ownKey;
 		this._childKeys = _childKeys;
 		this._singleStringKeyValueMap = _singleStringKeyValueMap;
+		this._singleIntegerKeyValueMap = _singleIntegerKeyValueMap;
 	}
 
 	@Override
@@ -85,10 +88,12 @@ public abstract class AInstanz implements IInstanz {
 	@Override
 	public void addValuekeys(SingleValueTypes type, Entry<String, String> keyToName) {
 		switch (type) {
-		case SINGLE_STRING: {
+		case SINGLE_STRING:
 			_singleStringKeyValueMap.put(keyToName.getKey(), keyToName.getValue());
 			break;
-		}
+		case SINGLE_INTEGER:
+			_singleIntegerKeyValueMap.put(keyToName.getKey(), keyToName.getValue());
+			break;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + type);
 		}
@@ -98,10 +103,12 @@ public abstract class AInstanz implements IInstanz {
 	@Override
 	public void deleteKeys(SingleValueTypes type, String... keys) {
 		switch (type) {
-		case SINGLE_STRING: {
+		case SINGLE_STRING:
 			Arrays.stream(keys).forEach(key -> _singleStringKeyValueMap.remove(key));
 			break;
-		}
+		case SINGLE_INTEGER:
+			Arrays.stream(keys).forEach(key -> _singleIntegerKeyValueMap.remove(key));
+			break;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + type);
 		}
@@ -110,12 +117,16 @@ public abstract class AInstanz implements IInstanz {
 
 	@Override
 	public void deleteParam(SingleValueTypes type, String... names) {
+		BiMap<String, String> inverse;
 		switch (type) {
-		case SINGLE_STRING: {
-			BiMap<String, String> inverse = _singleStringKeyValueMap.inverse();
+		case SINGLE_STRING:
+			inverse = _singleStringKeyValueMap.inverse();
 			Arrays.stream(names).forEach(name -> inverse.remove(name));
 			break;
-		}
+		case SINGLE_INTEGER:
+			inverse = _singleIntegerKeyValueMap.inverse();
+			Arrays.stream(names).forEach(name -> inverse.remove(name));
+			break;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + type);
 		}
@@ -125,9 +136,10 @@ public abstract class AInstanz implements IInstanz {
 	@Override
 	public BiMap<String, String> getSingleValues(SingleValueTypes type) {
 		switch (type) {
-		case SINGLE_STRING: {
+		case SINGLE_STRING:
 			return _singleStringKeyValueMap;
-		}
+		case SINGLE_INTEGER:
+			return _singleIntegerKeyValueMap;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + type);
 		}

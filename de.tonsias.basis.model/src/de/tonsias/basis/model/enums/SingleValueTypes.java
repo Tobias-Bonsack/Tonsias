@@ -3,12 +3,14 @@ package de.tonsias.basis.model.enums;
 import java.util.Arrays;
 import java.util.Optional;
 
+import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 
 public enum SingleValueTypes {
 
-	SINGLE_STRING(SingleStringValue.class, "single_value/string/");
+	SINGLE_STRING(SingleStringValue.class, "single_value/string/"),
+	SINGLE_INTEGER(SingleIntegerValue.class, "single_value/integer/");
 
 	private final Class<? extends ISingleValue<?>> _clazz;
 

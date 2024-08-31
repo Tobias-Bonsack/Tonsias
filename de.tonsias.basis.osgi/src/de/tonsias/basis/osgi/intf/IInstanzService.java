@@ -54,5 +54,4 @@ public interface IInstanzService {
 	 * @param newName    of the attribute
 	 */
 	void changeAttributeName(String instanzKey, SingleValueTypes type, String key, String newName);
-
 }

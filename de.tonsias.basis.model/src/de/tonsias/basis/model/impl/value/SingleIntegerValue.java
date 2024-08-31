@@ -4,20 +4,25 @@ import java.util.Set;
 
 import de.tonsias.basis.model.enums.SingleValueTypes;
 
-public class SingleStringValue extends ASingleValue<String> {
+public class SingleIntegerValue extends ASingleValue<Integer> {
 
-	public SingleStringValue(String key) {
+	public SingleIntegerValue(String key) {
 		super(key);
-		this.setValue("");
+		this.setValue(0);
 	}
 
-	public SingleStringValue(String key, String value, Set<String> connectedInstanzes) {
+	public SingleIntegerValue(String key, int value, Set<String> connectedInstanzes) {
 		super(key, value, connectedInstanzes);
 	}
 
 	@Override
+	public boolean tryToSetValue(Object value) {
+		return (value instanceof Integer) && setValue((Integer) value);
+	}
+
+	@Override
 	public String getPath() {
-		return SingleValueTypes.SINGLE_STRING.getPath();
+		return SingleValueTypes.SINGLE_INTEGER.getPath();
 	}
 
 	@Override
@@ -30,8 +35,4 @@ public class SingleStringValue extends ASingleValue<String> {
 		return builder.toString();
 	}
 
-	@Override
-	public boolean tryToSetValue(Object value) {
-		return (value instanceof String) && setValue((String) value);
-	}
 }

@@ -26,6 +26,7 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
 import de.tonsias.basis.model.enums.SingleValueTypes;
+import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.IObject;
@@ -33,6 +34,7 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBride;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.InstanzEventConstants;
+import de.tonsias.basis.ui.dialog.IntegerValueDialog;
 import de.tonsias.basis.ui.dialog.StringValueDialog;
 import de.tonsias.basis.ui.node.TreeNodeWrapper;
 import de.tonsias.basis.ui.provider.TreeContentProvider;
@@ -154,6 +156,39 @@ public class ModelView {
 				SingleStringValue stringValue = _singleService.createNew(SingleStringValue.class, parentObject, null);
 
 				StringValueDialog dialog = new StringValueDialog(new Shell(), stringValue, parentObject);
+				int open = dialog.open();
+				switch (open) {
+				case Window.OK:
+					new TreeNodeWrapper(stringValue, parent);
+					_treeViewer.refresh(parent);
+					break;
+				case Window.CANCEL:
+					parentObject.deleteKeys(SingleValueTypes.SINGLE_STRING, stringValue.getOwnKey());
+					_singleService.removeFromCache(stringValue.getOwnKey());
+					break;
+				default:
+					throw new IllegalArgumentException("Unexpected value: " + open);
+				}
+
+			}
+		});
+
+		MenuItem createStringIntegerValueItem = new MenuItem(singleValueMenu, SWT.None);
+		createStringIntegerValueItem.setText("Integer");
+
+		createStringIntegerValueItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				TreeItem[] selection = tree.getSelection();
+				if (selection.length != 1) {
+					return;
+				}
+
+				TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
+				IInstanz parentObject = (IInstanz) parent.getObject();
+				SingleIntegerValue stringValue = _singleService.createNew(SingleIntegerValue.class, parentObject, null);
+
+				IntegerValueDialog dialog = new IntegerValueDialog(new Shell(), stringValue, parentObject);
 				int open = dialog.open();
 				switch (open) {
 				case Window.OK:

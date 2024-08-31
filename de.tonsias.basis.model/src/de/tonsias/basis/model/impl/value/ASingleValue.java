@@ -1,4 +1,4 @@
-package de.tonsias.basis.model.impl;
+package de.tonsias.basis.model.impl.value;
 
 import java.util.Collection;
 import java.util.HashSet;
