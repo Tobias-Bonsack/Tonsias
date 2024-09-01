@@ -33,6 +33,13 @@ public class KeyServiceImpl implements IKeyService {
 		String key = getCurrentKey();
 		char[] keyArray = key.toCharArray();
 
+		String result = countKeyUp(keyArray);
+		saveKey(result);
+
+		return getCurrentKey();
+	}
+
+	private String countKeyUp(char[] keyArray) {
 		boolean isExcess = false;
 		for (int i = 0; i < keyArray.length; i++) {
 			char c = keyArray[i];
@@ -51,9 +58,7 @@ public class KeyServiceImpl implements IKeyService {
 		if (isExcess) {
 			result += KEYCHARS[0];
 		}
-		saveKey(result);
-
-		return getCurrentKey();
+		return result;
 	}
 
 	private String getCurrentKey() {
@@ -89,5 +94,10 @@ public class KeyServiceImpl implements IKeyService {
 
 	protected IEclipsePreferences getNode() {
 		return InstanceScope.INSTANCE.getNode(KEY_KEY);
+	}
+
+	@Override
+	public String previewNextKey() {
+		return countKeyUp(getCurrentKey().toCharArray());
 	}
 }
