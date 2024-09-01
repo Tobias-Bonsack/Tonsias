@@ -121,7 +121,7 @@ public class InstanzView {
 		Group parent = new Group(_parent, SWT.None);
 		parent.setText("SingleValues");
 		GridDataFactory.fillDefaults().applyTo(parent);
-		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(parent);
+		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(parent);
 		_groups.add(parent);
 
 		SingleValueTypes[] values = SingleValueTypes.values();
