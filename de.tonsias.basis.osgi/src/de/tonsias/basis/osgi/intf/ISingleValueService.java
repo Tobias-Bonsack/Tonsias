@@ -54,4 +54,13 @@ public interface ISingleValueService {
 	 */
 	boolean removeFromCache(String... keys);
 
+	/**
+	 * Try to change the value of a single value
+	 * 
+	 * @param ownKey   Key of the single value
+	 * @param newValue Possible new value
+	 * @return boolean if the change was successful or not
+	 */
+	boolean changeValue(String ownKey, Object newValue);
+
 }

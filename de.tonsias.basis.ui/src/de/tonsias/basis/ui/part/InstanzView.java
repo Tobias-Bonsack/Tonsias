@@ -3,9 +3,11 @@ package de.tonsias.basis.ui.part;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map.Entry;
+import java.util.Optional;
 
-import org.eclipse.e4.core.di.annotations.Optional;
 import org.eclipse.e4.ui.di.UIEventTopic;
+import org.eclipse.e4.ui.model.application.ui.basic.MPart;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.widgets.LabelFactory;
@@ -13,6 +15,8 @@ import org.eclipse.jface.widgets.TextFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import com.google.common.collect.BiMap;
@@ -30,11 +34,14 @@ public class InstanzView {
 
 	private IInstanz _shownInstanz = null;
 
-	private Text _ownKeyText;
+	private Label _ownKeyLabel;
 
 	private Collection<Group> _groups = new ArrayList<Group>();
 
 	private Composite _parent;
+
+	@Inject
+	private MPart _part;
 
 	@Inject
 	private IInstanzService _instanzService;
@@ -86,10 +93,10 @@ public class InstanzView {
 	}
 
 	private void updateView() {
-		if (_ownKeyText == null) {
+		if (_ownKeyLabel == null) {
 			createInstanzInfos();
 		}
-		_ownKeyText.setText(_shownInstanz.getOwnKey());
+		_ownKeyLabel.setText(_shownInstanz.getOwnKey());
 
 		_groups.forEach(group -> group.dispose());
 		createSingleValueGroup();
@@ -109,8 +116,7 @@ public class InstanzView {
 				.text("Key")//
 				.data(GridDataFactory.fillDefaults().create())//
 				.create(parent);
-		_ownKeyText = TextFactory.newText(SWT.None)//
-				.enabled(false)//
+		_ownKeyLabel = LabelFactory.newLabel(SWT.None)//
 				.text(_shownInstanz.getOwnKey())//
 				.data(GridDataFactory.fillDefaults().create())//
 				.create(parent);
@@ -120,7 +126,7 @@ public class InstanzView {
 	private void createSingleValueGroup() {
 		Group parent = new Group(_parent, SWT.None);
 		parent.setText("SingleValues");
-		GridDataFactory.fillDefaults().applyTo(parent);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(parent);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(parent);
 		_groups.add(parent);
 
@@ -128,44 +134,66 @@ public class InstanzView {
 		for (SingleValueTypes type : values) {
 			Group typeGroup = new Group(parent, SWT.None);
 			typeGroup.setText(type.name());
-			GridDataFactory.fillDefaults().applyTo(typeGroup);
-			GridLayoutFactory.fillDefaults().numColumns(3).applyTo(typeGroup);
+			GridDataFactory.fillDefaults().grab(true, false).applyTo(typeGroup);
+			GridLayoutFactory.fillDefaults().numColumns(3).equalWidth(true).applyTo(typeGroup);
 
 			BiMap<String, String> singleValues = _shownInstanz.getSingleValues(type);
 			for (Entry<String, String> attribute : singleValues.entrySet()) {
-				LabelFactory.newLabel(SWT.None)//
-						.text(attribute.getValue())//
-						.data(GridDataFactory.fillDefaults().create())//
-						.create(typeGroup);
+				createSingleValueNameText(typeGroup, attribute, type);
 
-				java.util.Optional<? extends ISingleValue<?>> singleValue = _singleService.resolveKey(type.getPath(),
+				Optional<? extends ISingleValue<?>> singleValue = _singleService.resolveKey(type.getPath(),
 						attribute.getKey(), type.getClazz());
 				if (singleValue.isPresent()) {
-					TextFactory.newText(SWT.None)//
-							.text(singleValue.get().getValue().toString())//
-							.onModify(event -> {
-								String text = ((Text) event.widget).getText();
-								singleValue.get().tryToSetValue(text);
-							}).data(GridDataFactory.fillDefaults().create())//
-							.create(typeGroup);
-
-					TextFactory.newText(SWT.None)//
-							.enabled(false)//
-							.text("Key: " + singleValue.get().getOwnKey())//
-							.data(GridDataFactory.fillDefaults().create())//
-							.create(typeGroup);
+					createSinlgeValueTexts(typeGroup, singleValue);
 				}
 			}
 		}
 	}
 
+	private void createSinlgeValueTexts(Group typeGroup, Optional<? extends ISingleValue<?>> singleValue) {
+		TextFactory.newText(SWT.None)//
+				.text(singleValue.get().getValue().toString())//
+				.onModify(event -> {
+					String text = ((Text) event.widget).getText();
+					_singleService.changeValue(singleValue.get().getOwnKey(), text);
+					_part.setDirty(true);
+				}).data(GridDataFactory.fillDefaults().grab(true, false).create())//
+				.create(typeGroup);
+
+		LabelFactory.newLabel(SWT.None)//
+				.text("Key: " + singleValue.get().getOwnKey())//
+				.data(GridDataFactory.fillDefaults().create())//
+				.create(typeGroup);
+	}
+
+	private void createSingleValueNameText(Group parent, Entry<String, String> attribute, SingleValueTypes type) {
+		TextFactory.newText(SWT.None)//
+				.enabled(true)//
+				.data(GridDataFactory.fillDefaults().create())//
+				.text(attribute.getValue())//
+				.onModify(event -> {
+					_instanzService.changeAttributeName(_shownInstanz.getOwnKey(), type, attribute.getKey(),
+							((Text) event.widget).getText());
+					_part.setDirty(true);
+				})//
+				.create(parent);
+	}
+
 	@Inject
-	@Optional
+	@org.eclipse.e4.core.di.annotations.Optional
 	private void selectionEventListener(@UIEventTopic(InstanzEventConstants.SELECTED) IInstanz instanz) {
 		if (instanz == null || instanz.equals(_shownInstanz)) {
 			return;
 		}
+
+		if (_part.isDirty() && MessageDialog.openQuestion(new Shell(), "Ist noch dirty hier",
+				"Sollen die Änderungen gespeichert werden?")) {
+			_instanzService.saveAll();
+			_singleService.saveAll();
+		}
+
 		_shownInstanz = instanz;
+		_part.setDirty(false);
 		updateView();
 	}
 }

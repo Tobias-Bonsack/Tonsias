@@ -16,7 +16,8 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0",
  de.tonsias.basis.model;bundle-version="1.0.0",
  com.google.guava,
  org.osgi.service.component;bundle-version="1.5.1",
- org.eclipse.e4.core.services
+ org.eclipse.e4.core.services,
+ org.eclipse.e4.ui.model.workbench;bundle-version="2.4.200"
 Bundle-Vendor: TONSIAS
 Automatic-Module-Name: de.tonsias.basis.ui
 Bundle-ActivationPolicy: lazy

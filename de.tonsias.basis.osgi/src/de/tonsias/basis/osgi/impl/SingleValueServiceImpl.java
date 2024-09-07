@@ -101,4 +101,10 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		return !Stream.of(keys).map(key -> _cache.remove(key)).anyMatch(removedValue -> removedValue == null);
 	}
 
+	@Override
+	public boolean changeValue(String ownKey, Object newValue) {
+		ISingleValue<?> value = _cache.get(ownKey);
+		return value.tryToSetValue(value);
+	}
+
 }
