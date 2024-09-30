@@ -46,6 +46,17 @@ public class KeyServiceImplTest {
 	}
 
 	@Test
+	void testPreviewKey_notRealChange() {
+		_keyService.setKey("aa");
+		var key = _keyService.initKey();
+		var previewNextKey = _keyService.previewNextKey();
+		var key2 = _keyService.initKey();
+
+		assertThat(key2, is(key));
+		assertThat(previewNextKey, is("ba"));
+	}
+
+	@Test
 	void testInitKey_withKey() {
 		_keyService.setKey("a");
 

@@ -24,8 +24,7 @@ public class KeyServiceImpl implements IKeyService {
 
 	@Override
 	public String initKey() {
-		getCurrentKey();
-		return String.valueOf(KEYCHARS[0]);
+		return getCurrentKey();
 	}
 
 	@Override
