@@ -15,17 +15,29 @@ import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
 @Component
 public class BasicPreferenceServiceImpl implements IBasicPreferenceService {
 
+	public static final String REGEX = "-_-";
+
 	@Override
 	public <T> List<T> getAsList(String key, Class<T> type) {
 		String value = getNode().get(key, "");
-
-		List<T> result = Arrays.stream(value.split(",")).map(type::cast).collect(Collectors.toList());
+		String[] split = value.split(REGEX);
+		List<T> result = Arrays.stream(split).map(i -> castToType(i, type)).collect(Collectors.toList());
 		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> T castToType(String i, Class<T> type) {
+		if (type == String.class) {
+			return (T) i;
+		} else if (type == Integer.class) {
+			return (T) Integer.valueOf(i);
+		}
+		throw new UnsupportedOperationException("Class " + type.toGenericString() + " not supported");
 	}
 
 	@Override
 	public void saveAsList(String key, List<?> list) throws BackingStoreException {
-		String value = list.stream().map(i -> i.toString()).collect(Collectors.joining(","));
+		String value = list.stream().map(i -> i.toString()).collect(Collectors.joining(REGEX));
 		IEclipsePreferences node = getNode();
 		node.put(key, value);
 		node.flush();
@@ -34,7 +46,7 @@ public class BasicPreferenceServiceImpl implements IBasicPreferenceService {
 	@Override
 	public <T> Optional<T> getValue(String key, Class<T> type) {
 		String value = getNode().get(key, null);
-		return value == null ? Optional.empty() : Optional.of(type.cast(value));
+		return value == null ? Optional.empty() : Optional.of(castToType(value, type));
 
 	}
 

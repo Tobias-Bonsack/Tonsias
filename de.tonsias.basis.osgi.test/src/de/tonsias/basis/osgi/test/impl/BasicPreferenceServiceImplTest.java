@@ -1,5 +1,6 @@
 package de.tonsias.basis.osgi.test.impl;
 
+import static de.tonsias.basis.osgi.impl.BasicPreferenceServiceImpl.REGEX;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isA;
@@ -40,13 +41,34 @@ public class BasicPreferenceServiceImplTest {
 		List<?> asList = _basicPref.getAsList("any", type);
 		assertThat(asList.isEmpty(), is(false));
 		assertThat(asList.iterator().next(), isA(type));
-		assertThat(asList.size(), is(value.split(",").length));
+		assertThat(asList.size(), is(value.split(REGEX).length));
 	}
 
 	private static Stream<Arguments> testGetAsList() {
 		List<Arguments> arguments = new ArrayList<>();
 
-		arguments.add(arguments("test", String.class));
+		arguments.add(arguments(String.format("t%sDD%sAA", REGEX, REGEX, REGEX), String.class));
+		arguments.add(arguments(String.format("1%s2%s3", REGEX, REGEX, REGEX), Integer.class));
+
+		return arguments.stream();
+	}
+
+	@ParameterizedTest
+	@MethodSource
+	void testGetValue(String value, Class<?> type) {
+		doReturn(value).when(_node).get(anyString(), any());
+
+		List<?> asList = _basicPref.getAsList("any", type);
+		assertThat(asList.isEmpty(), is(false));
+		assertThat(asList.iterator().next(), isA(type));
+		assertThat(asList.size(), is(value.split(REGEX).length));
+	}
+
+	private static Stream<Arguments> testGetValue() {
+		List<Arguments> arguments = new ArrayList<>();
+
+		arguments.add(arguments(String.format("tttt", REGEX, REGEX, REGEX), String.class));
+		arguments.add(arguments(String.format("1235", REGEX, REGEX, REGEX), Integer.class));
 
 		return arguments.stream();
 	}
