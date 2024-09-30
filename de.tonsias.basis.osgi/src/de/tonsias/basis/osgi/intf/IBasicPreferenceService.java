@@ -7,6 +7,8 @@ import org.osgi.service.prefs.BackingStoreException;
 
 public interface IBasicPreferenceService {
 
+	String MODEL_VIEW_TEXT = "ModelViewText";
+
 	/**
 	 * Get value of preference as an list of type T. Can crash if it can´t cast to T
 	 * 
