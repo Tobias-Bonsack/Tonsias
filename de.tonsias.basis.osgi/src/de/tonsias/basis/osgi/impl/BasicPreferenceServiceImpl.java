@@ -31,6 +31,8 @@ public class BasicPreferenceServiceImpl implements IBasicPreferenceService {
 			return (T) i;
 		} else if (type == Integer.class) {
 			return (T) Integer.valueOf(i);
+		} else if (type == Boolean.class) {
+			return (T) Boolean.valueOf(i);
 		}
 		throw new UnsupportedOperationException("Class " + type.toGenericString() + " not supported");
 	}

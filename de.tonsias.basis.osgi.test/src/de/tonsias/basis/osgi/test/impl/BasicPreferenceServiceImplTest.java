@@ -49,6 +49,7 @@ public class BasicPreferenceServiceImplTest {
 
 		arguments.add(arguments(String.format("t%sDD%sAA", REGEX, REGEX, REGEX), String.class));
 		arguments.add(arguments(String.format("1%s2%s3", REGEX, REGEX, REGEX), Integer.class));
+		arguments.add(arguments(String.format("true%sfalse%strue", REGEX, REGEX, REGEX), Boolean.class));
 
 		return arguments.stream();
 	}
@@ -67,8 +68,9 @@ public class BasicPreferenceServiceImplTest {
 	private static Stream<Arguments> testGetValue() {
 		List<Arguments> arguments = new ArrayList<>();
 
-		arguments.add(arguments(String.format("tttt", REGEX, REGEX, REGEX), String.class));
-		arguments.add(arguments(String.format("1235", REGEX, REGEX, REGEX), Integer.class));
+		arguments.add(arguments("tttt", String.class));
+		arguments.add(arguments("1235", Integer.class));
+		arguments.add(arguments("true", Boolean.class));
 
 		return arguments.stream();
 	}
