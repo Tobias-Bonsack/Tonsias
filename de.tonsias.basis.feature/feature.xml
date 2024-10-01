@@ -33,4 +33,8 @@
          id="de.tonsias.basis.osgi"
          version="0.0.0"/>
 
+   <plugin
+         id="de.tonsias.basis.logic"
+         version="0.0.0"/>
+
 </feature>
