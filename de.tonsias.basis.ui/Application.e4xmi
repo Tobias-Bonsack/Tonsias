@@ -20,6 +20,9 @@
       <children xsi:type="menu:Menu" xmi:id="_okuaEDGQEe-osN1KarNnQg" elementId="de.tonsias.basis.ui.menu.file" label="File">
         <children xsi:type="menu:DirectMenuItem" xmi:id="_kARM4DGPEe-osN1KarNnQg" elementId="de.tonsias.basis.ui.directmenuitem.save" label="Save" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.SaveHandler"/>
       </children>
+      <children xsi:type="menu:Menu" xmi:id="_RaXJQH_REe-yVaOg3SKHrg" elementId="de.tonsias.basis.ui.menu.window" label="Window">
+        <children xsi:type="menu:DirectMenuItem" xmi:id="_TMcx8H_REe-yVaOg3SKHrg" elementId="de.tonsias.basis.ui.directmenuitem.preferences" label="Preferences" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.PreferencesHandler"/>
+      </children>
     </mainMenu>
   </children>
   <addons xmi:id="_k4GEkfmbEe6DqPOwG-kyMA" elementId="org.eclipse.e4.core.commands.service" contributionURI="bundleclass://org.eclipse.e4.core.commands/org.eclipse.e4.core.commands.CommandServiceAddon"/>
