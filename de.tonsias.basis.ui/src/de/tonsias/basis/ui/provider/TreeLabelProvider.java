@@ -58,7 +58,8 @@ public class TreeLabelProvider implements ILabelProvider {
 	public String getText(Object element) {
 		TreeNodeWrapper treeNodeWrapper = (TreeNodeWrapper) element;
 		IObject object = treeNodeWrapper.getObject();
-		Optional<String> textValue = _prefService.getValue(IBasicPreferenceService.MODEL_VIEW_TEXT, String.class);
+		Optional<String> textValue = _prefService.getValue(IBasicPreferenceService.Key.MODEL_VIEW_TEXT.getKey(),
+				String.class);
 		if (!(object instanceof IInstanz) || textValue.isEmpty()) {
 			return treeNodeWrapper.toString();
 		}

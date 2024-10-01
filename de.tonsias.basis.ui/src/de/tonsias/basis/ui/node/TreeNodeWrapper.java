@@ -42,7 +42,7 @@ public class TreeNodeWrapper {
 		int result = 0;
 		result += instanz.getChildren().size();
 
-		if (_prefService.getValue(IBasicPreferenceService.SHOW_VALUES, Boolean.class).orElse(false)) {
+		if (_prefService.getValue(IBasicPreferenceService.Key.SHOW_VALUES.getKey(), Boolean.class).orElse(false)) {
 			result += Arrays.stream(SingleValueTypes.values()).mapToInt(s -> instanz.getSingleValues(s).size()).sum();
 		}
 		return result;

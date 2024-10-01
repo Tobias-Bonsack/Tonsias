@@ -7,11 +7,22 @@ import org.osgi.service.prefs.BackingStoreException;
 
 public interface IBasicPreferenceService {
 
+	enum Key {
+		MODEL_VIEW_TEXT("ModelViewText"), //
+		SHOW_VALUES("EnableValues");
+
+		private final String _key;
+
+		Key(String key) {
+			_key = key;
+		}
+
+		public final String getKey() {
+			return _key;
+		}
+	}
+
 	String REGEX = "-_-";
-
-	String MODEL_VIEW_TEXT = "ModelViewText";
-
-	String SHOW_VALUES = "EnableValues";
 
 	/**
 	 * Get value of preference as an list of type T. Can crash if it can´t cast to T
