@@ -3,25 +3,23 @@ package de.tonsias.basis.ui.node;
 import java.util.Arrays;
 import java.util.Optional;
 
-import org.osgi.framework.FrameworkUtil;
-
 import de.tonsias.basis.model.enums.SingleValueTypes;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.IObject;
 import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
+import de.tonsias.basis.osgi.util.OsgiUtil;
 import jakarta.inject.Inject;
 
 public class TreeNodeWrapper {
 
-	static final IInstanzService _instanzService = FrameworkUtil.getBundle(TreeNodeWrapper.class).getBundleContext()
-			.getService(FrameworkUtil.getBundle(TreeNodeWrapper.class).getBundleContext()
-					.getServiceReference(IInstanzService.class));
+	static final IInstanzService _instanzService = OsgiUtil.getService(IInstanzService.class);
 
-	static final ISingleValueService _singleService = FrameworkUtil.getBundle(TreeNodeWrapper.class).getBundleContext()
-			.getService(FrameworkUtil.getBundle(TreeNodeWrapper.class).getBundleContext()
-					.getServiceReference(ISingleValueService.class));;
+	static final ISingleValueService _singleService = OsgiUtil.getService(ISingleValueService.class);
+
+	static final IBasicPreferenceService _prefService = OsgiUtil.getService(IBasicPreferenceService.class);
 
 	private final IObject _object;
 
@@ -43,7 +41,10 @@ public class TreeNodeWrapper {
 	private int getChildCount(IInstanz instanz) {
 		int result = 0;
 		result += instanz.getChildren().size();
-		result += Arrays.stream(SingleValueTypes.values()).mapToInt(s -> instanz.getSingleValues(s).size()).sum();
+
+		if (_prefService.getValue(IBasicPreferenceService.SHOW_VALUES, Boolean.class).orElse(false)) {
+			result += Arrays.stream(SingleValueTypes.values()).mapToInt(s -> instanz.getSingleValues(s).size()).sum();
+		}
 		return result;
 	}
 

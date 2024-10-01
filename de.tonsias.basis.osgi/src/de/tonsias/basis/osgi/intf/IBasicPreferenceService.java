@@ -7,7 +7,11 @@ import org.osgi.service.prefs.BackingStoreException;
 
 public interface IBasicPreferenceService {
 
+	String REGEX = "-_-";
+
 	String MODEL_VIEW_TEXT = "ModelViewText";
+
+	String SHOW_VALUES = "EnableValues";
 
 	/**
 	 * Get value of preference as an list of type T. Can crash if it can´t cast to T

@@ -15,8 +15,6 @@ import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
 @Component
 public class BasicPreferenceServiceImpl implements IBasicPreferenceService {
 
-	public static final String REGEX = "-_-";
-
 	@Override
 	public <T> List<T> getAsList(String key, Class<T> type) {
 		String value = getNode().get(key, "");
