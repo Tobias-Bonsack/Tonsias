@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Logic
+Bundle-SymbolicName: de.tonsias.basis.logic
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: de.tonsias.basis.logic
+Bundle-RequiredExecutionEnvironment: JavaSE-22
