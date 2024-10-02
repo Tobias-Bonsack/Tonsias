@@ -57,7 +57,8 @@ public class BasicPreferenceServiceImpl implements IBasicPreferenceService {
 		node.flush();
 	}
 
-	protected IEclipsePreferences getNode() {
+	@Override
+	public IEclipsePreferences getNode() {
 		return InstanceScope.INSTANCE.getNode("BasicPreference");
 	}
 }

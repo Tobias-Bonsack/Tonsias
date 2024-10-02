@@ -5,7 +5,9 @@ import java.util.Optional;
 
 import org.osgi.service.prefs.BackingStoreException;
 
-public interface IBasicPreferenceService {
+import de.tonsias.basis.osgi.intf.non.service.IPreferences;
+
+public interface IBasicPreferenceService extends IPreferences {
 
 	enum Key {
 		MODEL_VIEW_TEXT("ModelViewText"), //

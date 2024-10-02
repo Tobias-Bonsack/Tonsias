@@ -91,7 +91,8 @@ public class KeyServiceImpl implements IKeyService {
 		}
 	}
 
-	protected IEclipsePreferences getNode() {
+	@Override
+	public IEclipsePreferences getNode() {
 		return InstanceScope.INSTANCE.getNode(KEY_KEY);
 	}
 

@@ -1,6 +1,8 @@
 package de.tonsias.basis.osgi.intf;
 
-public interface IKeyService {
+import de.tonsias.basis.osgi.intf.non.service.IPreferences;
+
+public interface IKeyService extends IPreferences {
 
 	/**
 	 * Creates a new key and saves state

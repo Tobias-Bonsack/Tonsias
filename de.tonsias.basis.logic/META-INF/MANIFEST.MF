@@ -5,3 +5,6 @@ Bundle-SymbolicName: de.tonsias.basis.logic
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: de.tonsias.basis.logic
 Bundle-RequiredExecutionEnvironment: JavaSE-22
+Export-Package: de.tonsias.basis.logic.dialog
+Require-Bundle: de.tonsias.basis.osgi,
+ org.eclipse.equinox.preferences

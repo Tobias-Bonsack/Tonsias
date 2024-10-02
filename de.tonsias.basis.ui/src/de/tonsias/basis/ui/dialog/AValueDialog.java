@@ -15,9 +15,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceReference;
 
 import com.google.common.collect.BiMap;
 
@@ -26,12 +23,13 @@ import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
+import de.tonsias.basis.osgi.util.OsgiUtil;
 
 public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 
-	IKeyService _keyService;
+	IKeyService _keyService = OsgiUtil.getService(IKeyService.class);
 
-	ISingleValueService _sVService;
+	ISingleValueService _sVService = OsgiUtil.getService(ISingleValueService.class);
 
 	Optional<T> _value;
 
@@ -48,15 +46,6 @@ public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 		_value = Optional.ofNullable(singleValue);
 		_instanz = parent;
 		_type = getType();
-
-		// Manually retrieve the OSGi service
-		BundleContext bundleContext = FrameworkUtil.getBundle(AValueDialog.class).getBundleContext();
-		ServiceReference<IKeyService> serviceReference = bundleContext.getServiceReference(IKeyService.class);
-		_keyService = bundleContext.getService(serviceReference);
-
-		ServiceReference<ISingleValueService> serviceReference2 = bundleContext
-				.getServiceReference(ISingleValueService.class);
-		_sVService = bundleContext.getService(serviceReference2);
 	}
 
 	abstract SingleValueTypes getType();
