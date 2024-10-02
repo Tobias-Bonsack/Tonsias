@@ -1,6 +1,6 @@
 package de.tonsias.basis.osgi.test.impl;
 
-import static de.tonsias.basis.osgi.impl.BasicPreferenceServiceImpl.REGEX;
+import static de.tonsias.basis.osgi.intf.IBasicPreferenceService.REGEX;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isA;
@@ -84,7 +84,7 @@ public class BasicPreferenceServiceImplTest {
 		}
 
 		@Override
-		protected IEclipsePreferences getNode() {
+		public IEclipsePreferences getNode() {
 			return _node;
 		}
 

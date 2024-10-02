@@ -106,7 +106,7 @@ public class KeyServiceImplTest {
 		}
 
 		@Override
-		protected IEclipsePreferences getNode() {
+		public IEclipsePreferences getNode() {
 			return _node;
 		}
 	}
