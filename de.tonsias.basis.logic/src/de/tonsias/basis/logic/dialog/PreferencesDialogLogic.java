@@ -43,4 +43,9 @@ public class PreferencesDialogLogic {
 		}
 	}
 
+	public void savePreference(Map<String, String> _texts) {
+		// TODO Auto-generated method stub
+
+	}
+
 }
