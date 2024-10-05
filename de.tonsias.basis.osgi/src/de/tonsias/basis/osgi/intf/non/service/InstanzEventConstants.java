@@ -1,4 +1,4 @@
-package de.tonsias.basis.osgi.intf;
+package de.tonsias.basis.osgi.intf.non.service;
 
 public interface InstanzEventConstants {
 	// topic identifier for all topics

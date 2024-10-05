@@ -18,7 +18,7 @@ import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IEventBrokerBride;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.IKeyService;
-import de.tonsias.basis.osgi.intf.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 
 @Component
 public class InstanzServiceImpl implements IInstanzService {

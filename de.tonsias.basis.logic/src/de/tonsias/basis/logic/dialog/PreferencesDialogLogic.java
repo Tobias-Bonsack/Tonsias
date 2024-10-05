@@ -43,9 +43,14 @@ public class PreferencesDialogLogic {
 		}
 	}
 
-	public void savePreference(Map<String, String> _texts) {
-		// TODO Auto-generated method stub
-
+	public void savePreference(Map<String, String> texts) {
+		texts.entrySet().stream().forEach(pair -> {
+			try {
+				_basicPrefService.saveAsToString(pair.getKey(), pair.getValue());
+			} catch (BackingStoreException e) {
+				e.printStackTrace();
+			}
+		});
 	}
 
 }

@@ -6,9 +6,13 @@ import java.util.Optional;
 import org.osgi.service.prefs.BackingStoreException;
 
 import de.tonsias.basis.osgi.intf.non.service.IPreferences;
+import de.tonsias.basis.osgi.intf.non.service.PreferenceEventConstants;
 
 public interface IBasicPreferenceService extends IPreferences {
 
+	/**
+	 * WARNING: if you change a key, change in {@link PreferenceEventConstants} too
+	 */
 	enum Key {
 		MODEL_VIEW_TEXT("ModelViewText"), //
 		SHOW_VALUES("EnableValues");

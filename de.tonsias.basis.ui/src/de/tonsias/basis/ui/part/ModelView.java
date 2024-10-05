@@ -32,7 +32,8 @@ import de.tonsias.basis.model.interfaces.IObject;
 import de.tonsias.basis.osgi.intf.IEventBrokerBride;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
-import de.tonsias.basis.osgi.intf.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.PreferenceEventConstants;
 import de.tonsias.basis.ui.dialog.IntegerValueDialog;
 import de.tonsias.basis.ui.dialog.StringValueDialog;
 import de.tonsias.basis.ui.node.TreeNodeWrapper;
@@ -192,6 +193,20 @@ public class ModelView {
 	@Inject
 	@Optional
 	private void newInstanzListener(@UIEventTopic(InstanzEventConstants.NEW) IInstanz instanz) {
+		_treeViewer.refresh();
+	}
+
+	@Inject
+	@Optional
+	private void basicShowValueListener(
+			@UIEventTopic(PreferenceEventConstants.SHOW_VALUE_TOPIC) Map<String, Object> instanz) {
+		_treeViewer.refresh();
+	}
+
+	@Inject
+	@Optional
+	private void basicLabelListener(
+			@UIEventTopic(PreferenceEventConstants.MODEL_VIEW_TEXT_TOPIC) Map<String, Object> instanz) {
 		_treeViewer.refresh();
 	}
 }

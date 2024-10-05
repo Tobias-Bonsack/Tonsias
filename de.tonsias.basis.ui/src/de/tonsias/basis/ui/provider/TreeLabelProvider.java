@@ -64,14 +64,11 @@ public class TreeLabelProvider implements ILabelProvider {
 			return treeNodeWrapper.toString();
 		}
 
-		if (textValue.isPresent()) {
-			String nameKey = ((IInstanz) object).getSingleValues(SingleValueTypes.SINGLE_STRING).inverse()
-					.get(textValue.get());
-			Optional<SingleStringValue> nameValue = _singleServise.resolveKey(SingleValueTypes.SINGLE_STRING.getPath(),
-					nameKey, SingleStringValue.class);
-			return nameValue.isEmpty() ? treeNodeWrapper.toString() : nameValue.get().getValue();
-		}
-		return treeNodeWrapper.toString();
+		String nameKey = ((IInstanz) object).getSingleValues(SingleValueTypes.SINGLE_STRING).inverse()
+				.get(textValue.get());
+		Optional<SingleStringValue> nameValue = _singleServise.resolveKey(SingleValueTypes.SINGLE_STRING.getPath(),
+				nameKey, SingleStringValue.class);
+		return nameValue.isEmpty() ? treeNodeWrapper.toString() : nameValue.get().getValue();
 	}
 
 }

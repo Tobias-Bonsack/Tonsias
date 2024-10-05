@@ -26,7 +26,7 @@ import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
-import de.tonsias.basis.osgi.intf.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 
