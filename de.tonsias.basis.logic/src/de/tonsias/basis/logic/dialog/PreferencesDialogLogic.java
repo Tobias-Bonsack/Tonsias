@@ -3,7 +3,6 @@ package de.tonsias.basis.logic.dialog;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -20,7 +19,7 @@ public class PreferencesDialogLogic {
 
 	IBasicPreferenceService _basicPrefService = OsgiUtil.getService(IBasicPreferenceService.class);
 
-	Map<String, IPreferences> _map = new HashMap<>();
+	Map<String, IPreferences> _map;
 
 	public PreferencesDialogLogic() {
 		if (_keyPrefService == null || _basicPrefService == null) {
