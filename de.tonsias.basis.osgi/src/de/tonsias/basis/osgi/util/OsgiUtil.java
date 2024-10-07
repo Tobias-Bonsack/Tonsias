@@ -8,6 +8,9 @@ public class OsgiUtil {
 	public static <T> T getService(Class<T> clazz) {
 		BundleContext context = FrameworkUtil.getBundle(clazz).getBundleContext();
 		ServiceReference<T> serviceReference = context.getServiceReference(clazz);
+		if (context == null || serviceReference == null) {
+			return null;
+		}
 		return context.getService(serviceReference);
 	}
 }
