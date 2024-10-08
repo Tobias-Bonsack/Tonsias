@@ -67,6 +67,9 @@ public class ModelView {
 			@Override
 			public void mouseDown(MouseEvent e) {
 				TreeItem[] selection = ((Tree) e.widget).getSelection();
+				if (selection.length <= 0) {
+					return;
+				}
 				TreeNodeWrapper node = (TreeNodeWrapper) selection[0].getData();
 				if (node.getObject() instanceof IInstanz) {
 					_broker.send(InstanzEventConstants.SELECTED, IInstanz.class.cast(node.getObject()));

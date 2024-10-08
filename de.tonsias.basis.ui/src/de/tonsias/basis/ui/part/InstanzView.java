@@ -135,7 +135,7 @@ public class InstanzView {
 			Group typeGroup = new Group(parent, SWT.None);
 			typeGroup.setText(type.name());
 			GridDataFactory.fillDefaults().grab(true, false).applyTo(typeGroup);
-			GridLayoutFactory.fillDefaults().numColumns(3).equalWidth(true).applyTo(typeGroup);
+			GridLayoutFactory.fillDefaults().numColumns(3).applyTo(typeGroup);
 
 			BiMap<String, String> singleValues = _shownInstanz.getSingleValues(type);
 			for (Entry<String, String> attribute : singleValues.entrySet()) {
@@ -157,7 +157,7 @@ public class InstanzView {
 					String text = ((Text) event.widget).getText();
 					_singleService.changeValue(singleValue.get().getOwnKey(), text);
 					_part.setDirty(true);
-				}).data(GridDataFactory.fillDefaults().grab(true, false).create())//
+				}).layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
 				.create(typeGroup);
 
 		LabelFactory.newLabel(SWT.None)//
@@ -169,7 +169,7 @@ public class InstanzView {
 	private void createSingleValueNameText(Group parent, Entry<String, String> attribute, SingleValueTypes type) {
 		TextFactory.newText(SWT.None)//
 				.enabled(true)//
-				.data(GridDataFactory.fillDefaults().create())//
+				.layoutData(GridDataFactory.fillDefaults().create())//
 				.text(attribute.getValue())//
 				.onModify(event -> {
 					_instanzService.changeAttributeName(_shownInstanz.getOwnKey(), type, attribute.getKey(),
