@@ -13,9 +13,13 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.widgets.LabelFactory;
 import org.eclipse.jface.widgets.TextFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
@@ -160,10 +164,25 @@ public class InstanzView {
 				}).layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
 				.create(typeGroup);
 
-		LabelFactory.newLabel(SWT.None)//
+		Label keyLabel = LabelFactory.newLabel(SWT.None)//
 				.text("Key: " + singleValue.get().getOwnKey())//
-				.data(GridDataFactory.fillDefaults().create())//
+				.layoutData(GridDataFactory.fillDefaults().create())//
 				.create(typeGroup);
+
+		Menu labelCM = new Menu(keyLabel);
+		keyLabel.setMenu(labelCM);
+
+		MenuItem deleteMI = new MenuItem(labelCM, SWT.PUSH);
+		deleteMI.setData(singleValue.get());
+		deleteMI.setText("Delete");
+		deleteMI.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				ISingleValue<?> data = (ISingleValue<?>) e.widget.getData();
+				Collection<IInstanz> instanzes = _instanzService.getInstanzes(data.getConnectedInstanzKeys());
+				_singleService.deleteValue(data, instanzes);
+			}
+		});
 	}
 
 	private void createSingleValueNameText(Group parent, Entry<String, String> attribute, SingleValueTypes type) {

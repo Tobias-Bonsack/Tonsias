@@ -63,4 +63,13 @@ public interface ISingleValueService {
 	 */
 	boolean changeValue(String ownKey, Object newValue);
 
+	/**
+	 * Delete SingleValue from store
+	 * 
+	 * @param valueToDelete {@link ISingleValue} to delete
+	 * @param instanzes     {@link IInstanz} to remove connection from
+	 * @return true if deleted, else false
+	 */
+	boolean deleteValue(ISingleValue<?> valueToDelete, Collection<IInstanz> instanzes);
+
 }

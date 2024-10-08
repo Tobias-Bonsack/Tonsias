@@ -1,5 +1,9 @@
 package de.tonsias.basis.osgi.impl;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -9,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.eclipse.core.runtime.Platform;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -105,6 +110,23 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	public boolean changeValue(String ownKey, Object newValue) {
 		ISingleValue<?> value = _cache.get(ownKey);
 		return value.tryToSetValue(value);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean deleteValue(ISingleValue<?> valueToDelete, Collection<IInstanz> instanzes) {
+		String dir = Platform.getInstanceLocation().getURL().getPath().substring(1);
+		Path filePath = Paths.get(dir + valueToDelete.getPath() + valueToDelete.getOwnKey() + ".json");
+		try {
+			Files.delete(filePath);
+			Optional<SingleValueTypes> type = SingleValueTypes
+					.getByClass((Class<? extends ISingleValue<?>>) valueToDelete.getClass());
+			instanzes.forEach(i -> i.deleteKeys(type.get(), valueToDelete.getOwnKey()));
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 
 }
