@@ -32,7 +32,8 @@ import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.IObject;
 import de.tonsias.basis.model.interfaces.ISingleValue;
-import de.tonsias.basis.osgi.intf.IEventBrokerBride;
+import de.tonsias.basis.osgi.intf.IDeltaService;
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
@@ -48,13 +49,16 @@ import jakarta.inject.Inject;
 public class ModelView {
 
 	@Inject
-	IEventBrokerBride _broker;
+	IEventBrokerBridge _broker;
 
 	@Inject
 	IInstanzService _instanzService;
 
 	@Inject
 	ISingleValueService _singleService;
+
+	@Inject
+	IDeltaService _deltaService;
 
 	private final Map<Class<? extends IObject>, Collection<MenuItem>> _menuItems = new HashMap<>();
 

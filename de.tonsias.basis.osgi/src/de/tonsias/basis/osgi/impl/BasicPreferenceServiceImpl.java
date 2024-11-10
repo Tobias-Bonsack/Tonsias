@@ -14,7 +14,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.prefs.BackingStoreException;
 
 import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
-import de.tonsias.basis.osgi.intf.IEventBrokerBride;
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.PreferenceEventConstants;
 
@@ -22,7 +22,7 @@ import de.tonsias.basis.osgi.intf.non.service.PreferenceEventConstants;
 public class BasicPreferenceServiceImpl implements IBasicPreferenceService {
 
 	@Reference
-	IEventBrokerBride _broker;
+	IEventBrokerBridge _broker;
 
 	@Override
 	public <T> List<T> getAsList(String key, Class<T> type) {

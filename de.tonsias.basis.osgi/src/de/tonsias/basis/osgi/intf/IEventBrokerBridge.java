@@ -3,7 +3,9 @@ package de.tonsias.basis.osgi.intf;
 import java.util.Dictionary;
 import java.util.Map;
 
-public interface IEventBrokerBride {
+import org.osgi.service.event.EventHandler;
+
+public interface IEventBrokerBridge {
 
 	/**
 	 * Publish event synchronously (the method does not return until the event is
@@ -35,4 +37,23 @@ public interface IEventBrokerBride {
 	 *         <code>false</code> otherwise
 	 */
 	boolean post(String topic, Object data);
+
+	/**
+	 * Register an EventHandler for a topic
+	 * 
+	 * @param topic        to listen to
+	 * @param eventHandler to get the event
+	 * @param headless     true to run NOT in ui-thread, else false
+	 * @return true if register OK, else false
+	 */
+	boolean subscribe(String topic, EventHandler eventHandler, boolean headless);
+
+	/**
+	 * Deregister an EventHandler for all topics registered with
+	 * {@link IEventBrokerBridge#subscribe(String, EventHandler, boolean)}
+	 * 
+	 * @param eventHandler to unsubscribe
+	 * @return true if deregister OK, else false
+	 */
+	boolean unSubscribe(EventHandler eventHandler);
 }
