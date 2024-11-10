@@ -76,6 +76,7 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		}
 
 		E singleValue = create(type.get());
+		singleValue.addConnectedInstanzKey(parent.getOwnKey());
 		SimpleEntry<String, String> keyToName = new AbstractMap.SimpleEntry<String, String>(singleValue.getOwnKey(),
 				name == null ? singleValue.getOwnKey() : name);
 		parent.addValuekeys(type.get(), keyToName);
@@ -114,19 +115,14 @@ public class SingleValueServiceImpl implements ISingleValueService {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean deleteValue(ISingleValue<?> valueToDelete, Collection<IInstanz> instanzes) {
+	public boolean deleteValue(ISingleValue<?> valueToDelete, Collection<IInstanz> instanzes) throws IOException {
 		String dir = Platform.getInstanceLocation().getURL().getPath().substring(1);
 		Path filePath = Paths.get(dir + valueToDelete.getPath() + valueToDelete.getOwnKey() + ".json");
-		try {
-			Files.delete(filePath);
-			Optional<SingleValueTypes> type = SingleValueTypes
-					.getByClass((Class<? extends ISingleValue<?>>) valueToDelete.getClass());
-			instanzes.forEach(i -> i.deleteKeys(type.get(), valueToDelete.getOwnKey()));
-			return true;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
-		}
+		Files.delete(filePath);
+		Optional<SingleValueTypes> type = SingleValueTypes
+				.getByClass((Class<? extends ISingleValue<?>>) valueToDelete.getClass());
+		instanzes.forEach(i -> i.deleteKeys(type.get(), valueToDelete.getOwnKey()));
+		return true;
 	}
 
 }

@@ -1,5 +1,6 @@
 package de.tonsias.basis.osgi.intf;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -68,8 +69,9 @@ public interface ISingleValueService {
 	 * 
 	 * @param valueToDelete {@link ISingleValue} to delete
 	 * @param instanzes     {@link IInstanz} to remove connection from
-	 * @return true if deleted, else false
+	 * @return true if deleted
+	 * @throws IOException if {@link ISingleValue}-File could not be deleted
 	 */
-	boolean deleteValue(ISingleValue<?> valueToDelete, Collection<IInstanz> instanzes);
+	boolean deleteValue(ISingleValue<?> valueToDelete, Collection<IInstanz> instanzes) throws IOException;
 
 }

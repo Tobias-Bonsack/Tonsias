@@ -1,5 +1,6 @@
 package de.tonsias.basis.ui.part;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -8,6 +9,7 @@ import java.util.Map;
 
 import org.eclipse.e4.core.di.annotations.Optional;
 import org.eclipse.e4.ui.di.UIEventTopic;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
@@ -29,6 +31,7 @@ import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.IObject;
+import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.intf.IEventBrokerBride;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
@@ -92,8 +95,13 @@ public class ModelView {
 
 	private void createMenu(Tree tree) {
 		Menu menu = new Menu(tree);
+
+		// Instanz Menu Items
 		createInstanzMenuItem(tree, menu);
 		createSingleValueMenuItems(tree, menu);
+
+		// Value Menu Items
+		createMenuItemsForvalues(tree, menu);
 
 		tree.setMenu(menu);
 
@@ -111,6 +119,29 @@ public class ModelView {
 					_menuItems.values().stream().flatMap(i -> i.stream()).forEach(i -> i.setEnabled(false));
 				}
 			}
+		});
+	}
+
+	private void createMenuItemsForvalues(Tree tree, Menu menu) {
+		MenuItem menuItem = new MenuItem(menu, SWT.NONE);
+		menuItem.setText("Delete Value");
+		_menuItems.computeIfAbsent(ISingleValue.class, c -> new ArrayList<>()).add(menuItem);
+
+		menuItem.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				TreeItem[] selection = tree.getSelection();
+				if (selection.length == 0) {
+					return;
+				}
+				ISingleValue<?> value = (ISingleValue<?>) selection[0].getData();
+				var linkedInstanzes = _instanzService.getInstanzes(value.getConnectedInstanzKeys());
+				try {
+					_singleService.deleteValue(value, linkedInstanzes);
+				} catch (IOException e1) {
+					MessageDialog.openError(new Shell(), "Error: Could not delete File", e1.getMessage());
+				}
+				_treeViewer.refresh();
+			};
 		});
 	}
 

@@ -1,5 +1,6 @@
 package de.tonsias.basis.ui.part;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -180,7 +181,11 @@ public class InstanzView {
 			public void widgetSelected(SelectionEvent e) {
 				ISingleValue<?> data = (ISingleValue<?>) e.widget.getData();
 				Collection<IInstanz> instanzes = _instanzService.getInstanzes(data.getConnectedInstanzKeys());
-				_singleService.deleteValue(data, instanzes);
+				try {
+					_singleService.deleteValue(data, instanzes);
+				} catch (IOException e1) {
+					MessageDialog.openError(new Shell(), "Error: Could not delete File", e1.getMessage());
+				}
 			}
 		});
 	}
