@@ -205,8 +205,9 @@ public class InstanzView {
 
 	@Inject
 	@org.eclipse.e4.core.di.annotations.Optional
-	private void selectionEventListener(@UIEventTopic(InstanzEventConstants.SELECTED) IInstanz instanz) {
-		if (instanz == null || instanz.equals(_shownInstanz)) {
+	private void selectionEventListener(
+			@UIEventTopic(InstanzEventConstants.SELECTED) InstanzEventConstants.PureInstanzData data) {
+		if (data.newInstanz() == null || data.newInstanz().equals(_shownInstanz)) {
 			return;
 		}
 
@@ -216,7 +217,7 @@ public class InstanzView {
 			_singleService.saveAll();
 		}
 
-		_shownInstanz = instanz;
+		_shownInstanz = data.newInstanz();
 		_part.setDirty(false);
 		updateView();
 	}

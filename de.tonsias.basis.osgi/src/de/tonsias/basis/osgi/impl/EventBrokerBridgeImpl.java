@@ -23,12 +23,17 @@ public class EventBrokerBridgeImpl implements IEventBrokerBridge {
 
 	@Override
 	public boolean subscribe(String topic, EventHandler eventHandler, boolean headless) {
-		return _broker.subscribe(topic, "", eventHandler, headless);
+		return _broker.subscribe(topic, null, eventHandler, headless);
 	}
 
 	@Override
 	public boolean unSubscribe(EventHandler eventHandler) {
 		return _broker.unsubscribe(eventHandler);
+	}
+
+	@Override
+	public IEventBroker getEclipseBroker() {
+		return _broker;
 	}
 
 }

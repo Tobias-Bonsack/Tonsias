@@ -37,9 +37,11 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.PureInstanzData;
 import de.tonsias.basis.osgi.intf.non.service.PreferenceEventConstants;
 import de.tonsias.basis.ui.dialog.IntegerValueDialog;
 import de.tonsias.basis.ui.dialog.StringValueDialog;
+import de.tonsias.basis.ui.handler.AddNewInstanzToRoot;
 import de.tonsias.basis.ui.node.TreeNodeWrapper;
 import de.tonsias.basis.ui.provider.TreeContentProvider;
 import de.tonsias.basis.ui.provider.TreeLabelProvider;
@@ -78,8 +80,9 @@ public class ModelView {
 					return;
 				}
 				TreeNodeWrapper node = (TreeNodeWrapper) selection[0].getData();
-				if (node.getObject() instanceof IInstanz) {
-					_broker.send(InstanzEventConstants.SELECTED, IInstanz.class.cast(node.getObject()));
+				if (node.getObject() instanceof IInstanz instanz) {
+					PureInstanzData data = new InstanzEventConstants.PureInstanzData(instanz);
+					_broker.send(InstanzEventConstants.SELECTED, data);
 				}
 			}
 		});
@@ -162,8 +165,10 @@ public class ModelView {
 				if (selection.length > 0) {
 					TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
 					IInstanz parentObject = (IInstanz) parent.getObject();
-					IInstanz instanz = _instanzService.createInstanz(parentObject);
-					new TreeNodeWrapper(instanz, parent);
+					AddNewInstanzToRoot newInstanzOperation = new AddNewInstanzToRoot(parentObject);
+					newInstanzOperation.execute(_broker.getEclipseBroker());
+					IInstanz createdInstanz = newInstanzOperation.get_createdInstanz();
+					new TreeNodeWrapper(createdInstanz, parent);
 					_treeViewer.refresh(parent);
 				}
 			}
@@ -230,7 +235,7 @@ public class ModelView {
 
 	@Inject
 	@Optional
-	private void newInstanzListener(@UIEventTopic(InstanzEventConstants.NEW) IInstanz instanz) {
+	private void newInstanzListener(@UIEventTopic(InstanzEventConstants.NEW) Map<String, Object> data) {
 		_treeViewer.refresh();
 	}
 

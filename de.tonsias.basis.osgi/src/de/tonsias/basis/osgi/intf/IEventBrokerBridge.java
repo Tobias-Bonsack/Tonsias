@@ -3,6 +3,7 @@ package de.tonsias.basis.osgi.intf;
 import java.util.Dictionary;
 import java.util.Map;
 
+import org.eclipse.e4.core.services.events.IEventBroker;
 import org.osgi.service.event.EventHandler;
 
 public interface IEventBrokerBridge {
@@ -56,4 +57,10 @@ public interface IEventBrokerBridge {
 	 * @return true if deregister OK, else false
 	 */
 	boolean unSubscribe(EventHandler eventHandler);
+
+	/**
+	 * 
+	 * @return the original used broker
+	 */
+	IEventBroker getEclipseBroker();
 }

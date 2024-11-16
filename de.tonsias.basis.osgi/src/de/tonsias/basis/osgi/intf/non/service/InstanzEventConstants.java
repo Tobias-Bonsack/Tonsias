@@ -1,5 +1,7 @@
 package de.tonsias.basis.osgi.intf.non.service;
 
+import de.tonsias.basis.model.interfaces.IInstanz;
+
 public interface InstanzEventConstants {
 	// topic identifier for all topics
 	String INSTANZ = "instanz";
@@ -11,4 +13,10 @@ public interface InstanzEventConstants {
 	String NEW = INSTANZ + "/delta/new";
 
 	String SELECTED = INSTANZ + "/selected";
+
+	// data keys
+	String DATA_INSTANZ = INSTANZ;
+
+	static record PureInstanzData(IInstanz newInstanz) {
+	}
 }

@@ -103,7 +103,11 @@ public class InstanzServiceImpl implements IInstanzService {
 		instanz.setParentKey(parent.getOwnKey());
 		parent.addChildKeys(instanz.getOwnKey());
 		_cache.put(key, instanz);
-		_broker.post(InstanzEventConstants.NEW, instanz);
+
+		Map<String, Object> data = new HashMap<String, Object>();
+		data.put(InstanzEventConstants.DATA_INSTANZ, new InstanzEventConstants.PureInstanzData(instanz));
+		_broker.post(InstanzEventConstants.NEW, data);
+
 		return instanz;
 	}
 

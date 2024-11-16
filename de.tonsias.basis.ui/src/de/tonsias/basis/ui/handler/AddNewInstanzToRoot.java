@@ -11,18 +11,33 @@ import de.tonsias.basis.ui.node.TreeNodeWrapper;
 
 public class AddNewInstanzToRoot {
 
+	private IInstanz _parent;
+	private IInstanz _createdInstanz;
+
+	public AddNewInstanzToRoot() {
+
+	}
+
+	public AddNewInstanzToRoot(IInstanz parent) {
+		_parent = parent;
+	}
+
 	@Execute
 	public void execute(IEventBroker broker) {
 		IInstanzService instanzS = FrameworkUtil.getBundle(TreeNodeWrapper.class).getBundleContext()
 				.getService(FrameworkUtil.getBundle(TreeNodeWrapper.class).getBundleContext()
 						.getServiceReference(IInstanzService.class));
-		IInstanz root = instanzS.getRoot();
-		instanzS.createInstanz(root);
+		IInstanz parent = _parent == null ? instanzS.getRoot() : _parent;
+		_createdInstanz = instanzS.createInstanz(parent);
 	}
 
 	@CanExecute
 	public boolean canExecute() {
 		return true;
+	}
+
+	public IInstanz get_createdInstanz() {
+		return _createdInstanz;
 	}
 
 }
