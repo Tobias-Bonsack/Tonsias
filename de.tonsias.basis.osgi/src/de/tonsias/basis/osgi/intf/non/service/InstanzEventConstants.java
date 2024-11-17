@@ -6,17 +6,22 @@ public interface InstanzEventConstants {
 	// topic identifier for all topics
 	String INSTANZ = "instanz";
 
+	String SELECTED = INSTANZ + "/selected";
+
 	// this key can only be used for event registration, you cannot
 	// send out generic events
 	String ALL_DELTA_TOPIC = INSTANZ + "/delta/*";
 
 	String NEW = INSTANZ + "/delta/new";
 
-	String SELECTED = INSTANZ + "/selected";
+	String DELETE = INSTANZ + "/delta/delete";
 
-	// data keys
+	// data and the keys
 	String DATA_INSTANZ = INSTANZ;
 
 	static record PureInstanzData(IInstanz newInstanz) {
+	}
+
+	static record AttributeChangeData(String key, String oldValue, String newValue) {
 	}
 }

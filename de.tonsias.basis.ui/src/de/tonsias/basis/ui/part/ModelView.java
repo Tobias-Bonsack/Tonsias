@@ -41,7 +41,7 @@ import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.PureInstanzD
 import de.tonsias.basis.osgi.intf.non.service.PreferenceEventConstants;
 import de.tonsias.basis.ui.dialog.IntegerValueDialog;
 import de.tonsias.basis.ui.dialog.StringValueDialog;
-import de.tonsias.basis.ui.handler.AddNewInstanzToRoot;
+import de.tonsias.basis.ui.handler.CreateInstanzOperation;
 import de.tonsias.basis.ui.node.TreeNodeWrapper;
 import de.tonsias.basis.ui.provider.TreeContentProvider;
 import de.tonsias.basis.ui.provider.TreeLabelProvider;
@@ -165,7 +165,7 @@ public class ModelView {
 				if (selection.length > 0) {
 					TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
 					IInstanz parentObject = (IInstanz) parent.getObject();
-					AddNewInstanzToRoot newInstanzOperation = new AddNewInstanzToRoot(parentObject);
+					CreateInstanzOperation newInstanzOperation = new CreateInstanzOperation(parentObject);
 					newInstanzOperation.execute(_broker.getEclipseBroker());
 					IInstanz createdInstanz = newInstanzOperation.get_createdInstanz();
 					new TreeNodeWrapper(createdInstanz, parent);

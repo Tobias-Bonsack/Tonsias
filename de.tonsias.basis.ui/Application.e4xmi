@@ -5,7 +5,7 @@
       <children xsi:type="basic:PartStack" xmi:id="_8i4fEPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.partstack.0">
         <children xsi:type="basic:Part" xmi:id="_WOG8kPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.part.test" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.part.ModelView" label="Model View">
           <toolbar xmi:id="_lPzQQC5cEe-DY8FvUxmb2A" elementId="de.tonsias.basis.ui.toolbar.0">
-            <children xsi:type="menu:DirectToolItem" xmi:id="_mspBsC5cEe-DY8FvUxmb2A" elementId="de.tonsias.basis.ui.directtoolitem.newinstanz" label="New Instanz" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.AddNewInstanzToRoot"/>
+            <children xsi:type="menu:DirectToolItem" xmi:id="_mspBsC5cEe-DY8FvUxmb2A" elementId="de.tonsias.basis.ui.directtoolitem.newinstanz" label="New Instanz" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.CreateInstanzOperation"/>
           </toolbar>
         </children>
       </children>
