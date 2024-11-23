@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
-import de.tonsias.basis.model.enums.SingleValueTypes;
+import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 
 /**
@@ -86,24 +86,24 @@ public abstract class AInstanz implements IInstanz {
 	}
 
 	@Override
-	public void addValuekeys(SingleValueTypes type, Entry<String, String> keyToName) {
+	public void addValuekeys(SingleValueType type, Entry<String, String> keyToName) {
 		getSingleValues(type).put(keyToName.getKey(), keyToName.getValue());
 	}
 
 	@Override
-	public void deleteKeys(SingleValueTypes type, String... keys) {
+	public void deleteKeys(SingleValueType type, String... keys) {
 		BiMap<String, String> singleValues = getSingleValues(type);
 		Arrays.stream(keys).forEach(key -> singleValues.remove(key));
 	}
 
 	@Override
-	public void deleteParam(SingleValueTypes type, String... names) {
+	public void deleteParam(SingleValueType type, String... names) {
 		BiMap<String, String> singleValues = getSingleValues(type).inverse();
 		Arrays.stream(names).forEach(name -> singleValues.remove(name));
 	}
 
 	@Override
-	public BiMap<String, String> getSingleValues(SingleValueTypes type) {
+	public BiMap<String, String> getSingleValues(SingleValueType type) {
 		switch (type) {
 		case SINGLE_STRING:
 			return _singleStringKeyValueMap;

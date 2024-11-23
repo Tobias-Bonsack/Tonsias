@@ -1,6 +1,5 @@
 package de.tonsias.basis.ui.part;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,7 +8,6 @@ import java.util.Map;
 
 import org.eclipse.e4.core.di.annotations.Optional;
 import org.eclipse.e4.ui.di.UIEventTopic;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
@@ -27,6 +25,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
+import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
@@ -36,6 +35,7 @@ import de.tonsias.basis.osgi.intf.IDeltaService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
+import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.PureInstanzData;
 import de.tonsias.basis.osgi.intf.non.service.PreferenceEventConstants;
@@ -105,9 +105,9 @@ public class ModelView {
 
 		// Instanz Menu Items
 		createInstanzMenuItem(tree, menu);
-		createSingleValueMenuItems(tree, menu);
 
 		// Value Menu Items
+		createSingleValueMenuItems(tree, menu);
 		createMenuItemsForvalues(tree, menu);
 
 		tree.setMenu(menu);
@@ -140,13 +140,16 @@ public class ModelView {
 				if (selection.length == 0) {
 					return;
 				}
+
 				ISingleValue<?> value = (ISingleValue<?>) selection[0].getData();
-				var linkedInstanzes = _instanzService.getInstanzes(value.getConnectedInstanzKeys());
-				try {
-					_singleService.deleteValue(value, linkedInstanzes);
-				} catch (IOException e1) {
-					MessageDialog.openError(new Shell(), "Error: Could not delete File", e1.getMessage());
-				}
+				Collection<String> connectedInstanzKeys = value.getConnectedInstanzKeys();
+				SingleValueType type = SingleValueType.getByClass(value.getClass()).get();
+
+				_broker.post(EventConstants.OPEN_OPERATION, null);
+				_singleService.deleteValue(value);
+				_instanzService.removeValueKey(connectedInstanzKeys, type, value.getOwnKey());
+				_broker.post(EventConstants.CLOSE_OPERATION, null);
+
 				_treeViewer.refresh();
 			};
 		});

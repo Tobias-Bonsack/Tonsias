@@ -2,7 +2,7 @@ package de.tonsias.basis.model.impl.value;
 
 import java.util.Set;
 
-import de.tonsias.basis.model.enums.SingleValueTypes;
+import de.tonsias.basis.model.enums.SingleValueType;
 
 public class SingleIntegerValue extends ASingleValue<Integer> {
 
@@ -22,7 +22,7 @@ public class SingleIntegerValue extends ASingleValue<Integer> {
 
 	@Override
 	public String getPath() {
-		return SingleValueTypes.SINGLE_INTEGER.getPath();
+		return SingleValueType.SINGLE_INTEGER.getPath();
 	}
 
 	@Override

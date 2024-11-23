@@ -1,9 +1,5 @@
 package de.tonsias.basis.osgi.impl;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -11,21 +7,25 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.eclipse.core.runtime.Platform;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
-import de.tonsias.basis.model.enums.SingleValueTypes;
+import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.PureSingleValueData;
 
 @Component
 public class SingleValueServiceImpl implements ISingleValueService {
@@ -38,6 +38,9 @@ public class SingleValueServiceImpl implements ISingleValueService {
 
 	@Reference
 	IKeyService _keyService;
+
+	@Reference
+	IEventBrokerBridge _broker;
 
 	private final Map<String, ISingleValue<?>> _cache = new HashMap<>();
 
@@ -70,7 +73,7 @@ public class SingleValueServiceImpl implements ISingleValueService {
 
 	@Override
 	public <E extends ISingleValue<?>> E createNew(Class<E> clazz, IInstanz parent, String name) {
-		Optional<SingleValueTypes> type = SingleValueTypes.getByClass(clazz);
+		Optional<SingleValueType> type = SingleValueType.getByClass(clazz);
 		if (type.isEmpty()) {
 			return null;
 		}
@@ -81,11 +84,15 @@ public class SingleValueServiceImpl implements ISingleValueService {
 				name == null ? singleValue.getOwnKey() : name);
 		parent.addValuekeys(type.get(), keyToName);
 		_cache.put(singleValue.getOwnKey(), singleValue);
+
+		PureSingleValueData data = new SingleValueEventConstants.PureSingleValueData(singleValue);
+		_broker.post(SingleValueEventConstants.NEW, data);
+
 		return singleValue;
 	}
 
 	@SuppressWarnings("unchecked") // is checked in reality
-	private <E extends ISingleValue<?>> E create(SingleValueTypes type) {
+	private <E extends ISingleValue<?>> E create(SingleValueType type) {
 		String key = _keyService.generateKey();
 		switch (type) {
 		case SINGLE_STRING:
@@ -103,6 +110,16 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	}
 
 	@Override
+	public boolean saveAll(Set<String> singlevalueKeysToSave) {
+		var singleValuesToSave = singlevalueKeysToSave.stream()//
+				.map(key -> resolveKey(null, key, null))//
+				.filter(opt -> opt.isPresent()).map(opt -> opt.get())//
+				.collect(Collectors.toUnmodifiableList());
+		singleValuesToSave.forEach(i -> _saveService.safeAsGson(i, i.getClass()));
+		return true;
+	}
+
+	@Override
 	public boolean removeFromCache(String... keys) {
 		return !Stream.of(keys).map(key -> _cache.remove(key)).anyMatch(removedValue -> removedValue == null);
 	}
@@ -113,16 +130,12 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		return value.tryToSetValue(value);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public boolean deleteValue(ISingleValue<?> valueToDelete, Collection<IInstanz> instanzes) throws IOException {
-		String dir = Platform.getInstanceLocation().getURL().getPath().substring(1);
-		Path filePath = Paths.get(dir + valueToDelete.getPath() + valueToDelete.getOwnKey() + ".json");
-		Files.delete(filePath);
-		Optional<SingleValueTypes> type = SingleValueTypes
-				.getByClass((Class<? extends ISingleValue<?>>) valueToDelete.getClass());
-		instanzes.forEach(i -> i.deleteKeys(type.get(), valueToDelete.getOwnKey()));
-		return true;
+	public boolean deleteValue(ISingleValue<?> valueToDelete) {
+		boolean removeFromCache = this.removeFromCache(valueToDelete.getOwnKey());
+		PureSingleValueData data = new PureSingleValueData(valueToDelete);
+		_broker.send(SingleValueEventConstants.DELETE, data);
+		return removeFromCache;
 	}
 
 }

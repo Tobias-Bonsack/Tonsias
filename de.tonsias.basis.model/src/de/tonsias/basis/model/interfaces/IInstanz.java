@@ -5,7 +5,7 @@ import java.util.Map.Entry;
 
 import com.google.common.collect.BiMap;
 
-import de.tonsias.basis.model.enums.SingleValueTypes;
+import de.tonsias.basis.model.enums.SingleValueType;
 
 /**
  * top interface for each displayed object
@@ -37,15 +37,15 @@ public interface IInstanz extends IObject, ISavePathOwner {
 	/**
 	 * Get all {@link ISingleValue} available of this {@link IInstanz}
 	 * 
-	 * @param type from {@link SingleValueTypes} to search for
+	 * @param type from {@link SingleValueType} to search for
 	 * @return {@link BiMap} Key is the Key of the {@link ISingleValue}, Value is
 	 *         the Name of the Parameter
 	 */
-	BiMap<String, String> getSingleValues(SingleValueTypes type);
+	BiMap<String, String> getSingleValues(SingleValueType type);
 
-	void addValuekeys(SingleValueTypes type, Entry<String, String> keyToName);
+	void addValuekeys(SingleValueType type, Entry<String, String> keyToName);
 
-	void deleteKeys(SingleValueTypes type, String... keys);
+	void deleteKeys(SingleValueType type, String... keys);
 
-	void deleteParam(SingleValueTypes type, String... names);
+	void deleteParam(SingleValueType type, String... names);
 }

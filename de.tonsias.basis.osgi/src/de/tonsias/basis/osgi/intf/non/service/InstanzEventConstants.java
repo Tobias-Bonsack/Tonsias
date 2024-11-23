@@ -14,14 +14,18 @@ public interface InstanzEventConstants {
 
 	String NEW = INSTANZ + "/delta/new";
 
-	String DELETE = INSTANZ + "/delta/delete";
+	String CHANGE = INSTANZ + "delta/change";
 
 	// data and the keys
+
+	/**
+	 * Only use for event data, maps to {@link PureInstanzData}
+	 */
 	String DATA_INSTANZ = INSTANZ;
 
-	static record PureInstanzData(IInstanz newInstanz) {
+	static record PureInstanzData(IInstanz _newInstanz) {
 	}
 
-	static record AttributeChangeData(String key, String oldValue, String newValue) {
+	static record AttributeChangeData(String _key, String _oldValue, String _newValue) {
 	}
 }

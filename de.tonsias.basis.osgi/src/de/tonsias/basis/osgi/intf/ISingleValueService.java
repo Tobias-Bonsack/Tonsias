@@ -3,6 +3,7 @@ package de.tonsias.basis.osgi.intf;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
@@ -65,13 +66,22 @@ public interface ISingleValueService {
 	boolean changeValue(String ownKey, Object newValue);
 
 	/**
-	 * Delete SingleValue from store
+	 * Delete SingleValue from cache and remove all connections. It´s still
+	 * available as file! Deletion will be handled through {@link IDeltaService}
 	 * 
 	 * @param valueToDelete {@link ISingleValue} to delete
-	 * @param instanzes     {@link IInstanz} to remove connection from
 	 * @return true if deleted
 	 * @throws IOException if {@link ISingleValue}-File could not be deleted
 	 */
-	boolean deleteValue(ISingleValue<?> valueToDelete, Collection<IInstanz> instanzes) throws IOException;
+	boolean deleteValue(ISingleValue<?> valueToDelete);
+
+	/**
+	 * saves all {@link ISingleValue} from the collection, if possible. Can only
+	 * save Objects in the cache, everything else will be ignored or it will crash
+	 * 
+	 * @param singlevalueKeysToSave list of keys to resolve and save
+	 * @return true, if all possible saved, else false
+	 */
+	boolean saveAll(Set<String> singlevalueKeysToSave);
 
 }

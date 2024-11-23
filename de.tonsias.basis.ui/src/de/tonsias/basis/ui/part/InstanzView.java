@@ -1,6 +1,5 @@
 package de.tonsias.basis.ui.part;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -26,7 +25,7 @@ import org.eclipse.swt.widgets.Text;
 
 import com.google.common.collect.BiMap;
 
-import de.tonsias.basis.model.enums.SingleValueTypes;
+import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.intf.IInstanzService;
@@ -135,8 +134,8 @@ public class InstanzView {
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(parent);
 		_groups.add(parent);
 
-		SingleValueTypes[] values = SingleValueTypes.values();
-		for (SingleValueTypes type : values) {
+		SingleValueType[] values = SingleValueType.values();
+		for (SingleValueType type : values) {
 			Group typeGroup = new Group(parent, SWT.None);
 			typeGroup.setText(type.name());
 			GridDataFactory.fillDefaults().grab(true, false).applyTo(typeGroup);
@@ -180,17 +179,15 @@ public class InstanzView {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				ISingleValue<?> data = (ISingleValue<?>) e.widget.getData();
-				Collection<IInstanz> instanzes = _instanzService.getInstanzes(data.getConnectedInstanzKeys());
-				try {
-					_singleService.deleteValue(data, instanzes);
-				} catch (IOException e1) {
-					MessageDialog.openError(new Shell(), "Error: Could not delete File", e1.getMessage());
-				}
+				_singleService.deleteValue(data);
+
+				SingleValueType type = SingleValueType.getByClass(data.getClass()).get();
+				_instanzService.removeValueKey(data.getConnectedInstanzKeys(), type, data.getOwnKey());
 			}
 		});
 	}
 
-	private void createSingleValueNameText(Group parent, Entry<String, String> attribute, SingleValueTypes type) {
+	private void createSingleValueNameText(Group parent, Entry<String, String> attribute, SingleValueType type) {
 		TextFactory.newText(SWT.None)//
 				.enabled(true)//
 				.layoutData(GridDataFactory.fillDefaults().create())//
@@ -207,7 +204,7 @@ public class InstanzView {
 	@org.eclipse.e4.core.di.annotations.Optional
 	private void selectionEventListener(
 			@UIEventTopic(InstanzEventConstants.SELECTED) InstanzEventConstants.PureInstanzData data) {
-		if (data.newInstanz() == null || data.newInstanz().equals(_shownInstanz)) {
+		if (data._newInstanz() == null || data._newInstanz().equals(_shownInstanz)) {
 			return;
 		}
 
@@ -217,7 +214,7 @@ public class InstanzView {
 			_singleService.saveAll();
 		}
 
-		_shownInstanz = data.newInstanz();
+		_shownInstanz = data._newInstanz();
 		_part.setDirty(false);
 		updateView();
 	}

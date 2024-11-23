@@ -3,7 +3,7 @@ package de.tonsias.basis.ui.node;
 import java.util.Arrays;
 import java.util.Optional;
 
-import de.tonsias.basis.model.enums.SingleValueTypes;
+import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.IObject;
 import de.tonsias.basis.model.interfaces.ISingleValue;
@@ -43,7 +43,7 @@ public class TreeNodeWrapper {
 		result += instanz.getChildren().size();
 
 		if (_prefService.getValue(IBasicPreferenceService.Key.SHOW_VALUES.getKey(), Boolean.class).orElse(false)) {
-			result += Arrays.stream(SingleValueTypes.values()).mapToInt(s -> instanz.getSingleValues(s).size()).sum();
+			result += Arrays.stream(SingleValueType.values()).mapToInt(s -> instanz.getSingleValues(s).size()).sum();
 		}
 		return result;
 	}
@@ -64,7 +64,7 @@ public class TreeNodeWrapper {
 			cIndex++;
 		}
 
-		for (SingleValueTypes type : SingleValueTypes.values()) {
+		for (SingleValueType type : SingleValueType.values()) {
 			for (String singleValueKey : instanz.getSingleValues(type).keySet()) {
 				if (cIndex == index) {
 					Optional<? extends ISingleValue<?>> singleValue = _singleService.resolveKey(type.getPath(),

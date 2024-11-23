@@ -7,7 +7,7 @@ import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 
-public enum SingleValueTypes {
+public enum SingleValueType {
 
 	SINGLE_STRING(SingleStringValue.class, "single_value/string/"),
 	SINGLE_INTEGER(SingleIntegerValue.class, "single_value/integer/");
@@ -16,7 +16,7 @@ public enum SingleValueTypes {
 
 	private final String _path;
 
-	SingleValueTypes(Class<? extends ISingleValue<?>> clazz, String path) {
+	SingleValueType(Class<? extends ISingleValue<?>> clazz, String path) {
 		_clazz = clazz;
 		_path = path;
 	}
@@ -29,10 +29,11 @@ public enum SingleValueTypes {
 		return _path;
 	}
 
-	public static Optional<SingleValueTypes> getByClass(Class<? extends ISingleValue<?>> clazz) {
+	public static Optional<SingleValueType> getByClass(
+			@SuppressWarnings("rawtypes") Class<? extends ISingleValue> clazz) {
 		if (clazz == null) {
 			return Optional.empty();
 		}
-		return Arrays.stream(SingleValueTypes.values()).filter(e -> clazz == e.getClazz()).findFirst();
+		return Arrays.stream(SingleValueType.values()).filter(e -> clazz == e.getClazz()).findFirst();
 	}
 }

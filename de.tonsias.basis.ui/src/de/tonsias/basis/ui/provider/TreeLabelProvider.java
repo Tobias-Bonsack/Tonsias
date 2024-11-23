@@ -6,7 +6,7 @@ import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.swt.graphics.Image;
 
-import de.tonsias.basis.model.enums.SingleValueTypes;
+import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.IObject;
@@ -64,9 +64,9 @@ public class TreeLabelProvider implements ILabelProvider {
 			return treeNodeWrapper.toString();
 		}
 
-		String nameKey = ((IInstanz) object).getSingleValues(SingleValueTypes.SINGLE_STRING).inverse()
+		String nameKey = ((IInstanz) object).getSingleValues(SingleValueType.SINGLE_STRING).inverse()
 				.get(textValue.get());
-		Optional<SingleStringValue> nameValue = _singleServise.resolveKey(SingleValueTypes.SINGLE_STRING.getPath(),
+		Optional<SingleStringValue> nameValue = _singleServise.resolveKey(SingleValueType.SINGLE_STRING.getPath(),
 				nameKey, SingleStringValue.class);
 		return nameValue.isEmpty() ? treeNodeWrapper.toString() : nameValue.get().getValue();
 	}

@@ -35,5 +35,4 @@ public class EventBrokerBridgeImpl implements IEventBrokerBridge {
 	public IEventBroker getEclipseBroker() {
 		return _broker;
 	}
-
 }

@@ -6,13 +6,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
-import de.tonsias.basis.model.enums.SingleValueTypes;
+import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.Instanz;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
@@ -117,12 +119,33 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public void changeAttributeName(String instanzKey, SingleValueTypes type, String key, String newName) {
+	public boolean saveAll(Set<String> instanzKeysToSave) {
+		var instanzsToSave = instanzKeysToSave.stream()//
+				.map(key -> resolveKey(key))//
+				.filter(opt -> opt.isPresent()).map(opt -> opt.get())//
+				.collect(Collectors.toUnmodifiableList());
+		instanzsToSave.forEach(i -> _saveService.safeAsGson(i, i.getClass()));
+		return true;
+	}
+
+	@Override
+	public void changeAttributeName(String instanzKey, SingleValueType type, String key, String newName) {
 		Optional<IInstanz> instanz = resolveKey(instanzKey);
 		if (instanz.isEmpty() || type == null || key.isBlank() || newName.isBlank()) {
 			return;
 		}
 
 		instanz.get().getSingleValues(type).put(key, newName);
+	}
+
+	@Override
+	public boolean removeValueKey(Collection<String> instanzKeys, SingleValueType type, String valueKeyToRemove) {
+		Collection<IInstanz> instanzes = getInstanzes(instanzKeys);
+		for (IInstanz instanz : instanzes) {
+			instanz.getSingleValues(type).remove(valueKeyToRemove);
+			_broker.send(InstanzEventConstants.NEW,
+					new InstanzEventConstants.AttributeChangeData(instanz.getOwnKey(), valueKeyToRemove, null));
+		}
+		return false;
 	}
 }

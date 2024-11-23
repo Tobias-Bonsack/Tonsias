@@ -2,9 +2,11 @@ package de.tonsias.basis.osgi.intf;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
-import de.tonsias.basis.model.enums.SingleValueTypes;
+import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
+import de.tonsias.basis.model.interfaces.ISingleValue;
 
 public interface IInstanzService {
 
@@ -53,5 +55,24 @@ public interface IInstanzService {
 	 * @param key        of the attribute to change
 	 * @param newName    of the attribute
 	 */
-	void changeAttributeName(String instanzKey, SingleValueTypes type, String key, String newName);
+	void changeAttributeName(String instanzKey, SingleValueType type, String key, String newName);
+
+	/**
+	 * Removes the given key from the given {@link IInstanz} keys in the
+	 * {@link SingleValueType}
+	 * 
+	 * @param instanzKeys      where to remove the key
+	 * @param type             of the key
+	 * @param valueKeyToRemove {@link ISingleValue} key to remove
+	 * @return true if no given {@link IInstanz} has the key anymore
+	 */
+	boolean removeValueKey(Collection<String> instanzKeys, SingleValueType type, String valueKeyToRemove);
+
+	/**
+	 * saves all {@link IInstanz} from the collection, if possible
+	 * 
+	 * @param instanzKeysToSave list of keys to save
+	 * @return true, if all possible saved, else false
+	 */
+	boolean saveAll(Set<String> instanzKeysToSave);
 }

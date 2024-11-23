@@ -18,7 +18,7 @@ import org.eclipse.swt.widgets.Text;
 
 import com.google.common.collect.BiMap;
 
-import de.tonsias.basis.model.enums.SingleValueTypes;
+import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.intf.IKeyService;
@@ -39,7 +39,7 @@ public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 
 	Text _valueText;
 
-	SingleValueTypes _type;
+	SingleValueType _type;
 
 	protected AValueDialog(Shell parentShell, T singleValue, IInstanz parent) {
 		super(parentShell);
@@ -48,7 +48,7 @@ public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 		_type = getType();
 	}
 
-	abstract SingleValueTypes getType();
+	abstract SingleValueType getType();
 
 	@Override
 	protected Control createDialogArea(Composite parent) {

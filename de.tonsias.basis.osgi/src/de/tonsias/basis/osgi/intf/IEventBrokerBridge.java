@@ -28,8 +28,8 @@ public interface IEventBrokerBridge {
 	 * Publish event asynchronously (this method returns immediately).
 	 * <p>
 	 * If data is a {@link Map} or a {@link Dictionary}, it is passed as is.
-	 * Otherwise, a new Map is constructed and its {@link #DATA} attribute is
-	 * populated with this value.
+	 * Otherwise, a new Map is constructed and its {@link IEventBroker#DATA}
+	 * attribute is populated with this value.
 	 * </p>
 	 *
 	 * @param topic topic of the event to be published

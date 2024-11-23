@@ -7,7 +7,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
-import de.tonsias.basis.model.enums.SingleValueTypes;
+import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 
@@ -53,7 +53,7 @@ public class IntegerValueDialog extends AValueDialog<SingleIntegerValue> {
 	}
 
 	@Override
-	SingleValueTypes getType() {
-		return SingleValueTypes.SINGLE_INTEGER;
+	SingleValueType getType() {
+		return SingleValueType.SINGLE_INTEGER;
 	}
 }
