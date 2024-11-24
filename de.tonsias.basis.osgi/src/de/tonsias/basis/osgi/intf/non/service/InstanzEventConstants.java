@@ -18,11 +18,6 @@ public interface InstanzEventConstants {
 
 	// data and the keys
 
-	/**
-	 * Only use for event data, maps to {@link PureInstanzData}
-	 */
-	String DATA_INSTANZ = INSTANZ;
-
 	static record PureInstanzData(IInstanz _newInstanz) {
 	}
 

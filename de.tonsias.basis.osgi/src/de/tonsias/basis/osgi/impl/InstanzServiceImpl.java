@@ -107,7 +107,8 @@ public class InstanzServiceImpl implements IInstanzService {
 		_cache.put(key, instanz);
 
 		Map<String, Object> data = new HashMap<String, Object>();
-		data.put(InstanzEventConstants.DATA_INSTANZ, new InstanzEventConstants.PureInstanzData(instanz));
+		data.put(InstanzEventConstants.PureInstanzData.class.getName(),
+				new InstanzEventConstants.PureInstanzData(instanz));
 		_broker.post(InstanzEventConstants.NEW, data);
 
 		return instanz;

@@ -80,13 +80,9 @@ public class DeltaServiceImpl implements IDeltaService, EventHandler {
 	private void handleInstanzEvents(Event event, Set<String> instanzKeysToSave) {
 		String[] propertyNames = event.getPropertyNames();
 		for (String string : propertyNames) {
-			switch (string) {
-			case InstanzEventConstants.DATA_INSTANZ:
+			if (InstanzEventConstants.PureInstanzData.class.getName().equals(string)) {
 				var instanzData = InstanzEventConstants.PureInstanzData.class.cast(event.getProperty(string));
 				instanzKeysToSave.add(instanzData._newInstanz().getOwnKey());
-				break;
-			default:
-				break;
 			}
 		}
 	}
