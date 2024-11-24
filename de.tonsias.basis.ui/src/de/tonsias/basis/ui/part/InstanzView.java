@@ -28,8 +28,10 @@ import com.google.common.collect.BiMap;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
+import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
@@ -52,6 +54,9 @@ public class InstanzView {
 
 	@Inject
 	private ISingleValueService _singleService;
+
+	@Inject
+	private IEventBrokerBridge _broker;
 
 	@PostConstruct
 	public void postConstruct(Composite parent) {
@@ -210,8 +215,7 @@ public class InstanzView {
 
 		if (_part.isDirty() && MessageDialog.openQuestion(new Shell(), "Ist noch dirty hier",
 				"Sollen die Änderungen gespeichert werden?")) {
-			_instanzService.saveAll();
-			_singleService.saveAll();
+			_broker.send(EventConstants.SAVE_ALL, null);
 		}
 
 		_shownInstanz = data._newInstanz();
