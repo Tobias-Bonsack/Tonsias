@@ -39,12 +39,11 @@ public class IntegerValueDialog extends AValueDialog<SingleIntegerValue> {
 	@Override
 	protected void okPressed() {
 		if (_value.isEmpty()) {
-			_value = Optional.of(_sVService.createNew(SingleIntegerValue.class, _instanz, _nameText.getText()));
+			_value = Optional.of(//
+					_sVService.createNew(SingleIntegerValue.class, _instanz.getOwnKey(), _valueText.getText()));
 		} else {
 			_instanz.getSingleValues(_type).put(_value.get().getOwnKey(), _nameText.getText());
 		}
-
-		_value.get().setValue(Integer.valueOf(_valueText.getText()));
 		super.okPressed();
 	}
 

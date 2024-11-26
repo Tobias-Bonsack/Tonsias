@@ -21,6 +21,7 @@ import com.google.common.collect.BiMap;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.util.OsgiUtil;
@@ -30,6 +31,8 @@ public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 	IKeyService _keyService = OsgiUtil.getService(IKeyService.class);
 
 	ISingleValueService _sVService = OsgiUtil.getService(ISingleValueService.class);
+
+	IInstanzService _iService = OsgiUtil.getService(IInstanzService.class);
 
 	Optional<T> _value;
 

@@ -21,12 +21,11 @@ public class StringValueDialog extends AValueDialog<SingleStringValue> {
 	@Override
 	protected void okPressed() {
 		if (_value.isEmpty()) {
-			_value = Optional.of(_sVService.createNew(SingleStringValue.class, _instanz, _nameText.getText()));
-		} else {
-			_instanz.getSingleValues(_type).put(_value.get().getOwnKey(), _nameText.getText());
+			_value = Optional.of(//
+					_sVService.createNew(SingleStringValue.class, _instanz.getOwnKey(), _valueText.getText()));
 		}
+		_iService.putSingleValue(_instanz.getOwnKey(), _type, _value.get().getOwnKey(), _valueText.getText());
 
-		_value.get().setValue(_valueText.getText());
 		super.okPressed();
 	}
 

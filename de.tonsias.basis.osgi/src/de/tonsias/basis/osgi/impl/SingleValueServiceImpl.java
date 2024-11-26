@@ -1,7 +1,5 @@
 package de.tonsias.basis.osgi.impl;
 
-import java.util.AbstractMap;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -19,7 +17,6 @@ import de.tonsias.basis.data.access.osgi.intf.SaveService;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
-import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IKeyService;
@@ -72,17 +69,15 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	}
 
 	@Override
-	public <E extends ISingleValue<?>> E createNew(Class<E> clazz, IInstanz parent, String name) {
+	public <E extends ISingleValue<?>> E createNew(Class<E> clazz, String parentKey, Object value) {
 		Optional<SingleValueType> type = SingleValueType.getByClass(clazz);
 		if (type.isEmpty()) {
 			return null;
 		}
 
 		E singleValue = create(type.get());
-		singleValue.addConnectedInstanzKey(parent.getOwnKey());
-		SimpleEntry<String, String> keyToName = new AbstractMap.SimpleEntry<String, String>(singleValue.getOwnKey(),
-				name == null ? singleValue.getOwnKey() : name);
-		parent.addValuekeys(type.get(), keyToName);
+		singleValue.addConnectedInstanzKey(parentKey);
+		singleValue.tryToSetValue(value);
 		_cache.put(singleValue.getOwnKey(), singleValue);
 
 		PureSingleValueData data = new SingleValueEventConstants.PureSingleValueData(singleValue);

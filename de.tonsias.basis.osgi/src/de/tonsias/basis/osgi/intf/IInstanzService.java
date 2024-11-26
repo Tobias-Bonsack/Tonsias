@@ -55,7 +55,7 @@ public interface IInstanzService {
 	 * @param key        of the attribute to change
 	 * @param newName    of the attribute
 	 */
-	void changeAttributeName(String instanzKey, SingleValueType type, String key, String newName);
+	void putSingleValue(String instanzKey, SingleValueType type, String key, String newName);
 
 	/**
 	 * Removes the given key from the given {@link IInstanz} keys in the

@@ -21,6 +21,8 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.AttributeChangeData;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.PureInstanzData;
 
 @Component
 public class InstanzServiceImpl implements IInstanzService {
@@ -107,8 +109,7 @@ public class InstanzServiceImpl implements IInstanzService {
 		_cache.put(key, instanz);
 
 		Map<String, Object> data = new HashMap<String, Object>();
-		data.put(InstanzEventConstants.PureInstanzData.class.getName(),
-				new InstanzEventConstants.PureInstanzData(instanz));
+		data.put(PureInstanzData.class.getName(), new PureInstanzData(instanz));
 		_broker.post(InstanzEventConstants.NEW, data);
 
 		return instanz;
@@ -130,13 +131,19 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public void changeAttributeName(String instanzKey, SingleValueType type, String key, String newName) {
+	public void putSingleValue(String instanzKey, SingleValueType type, String key, String newName) {
 		Optional<IInstanz> instanz = resolveKey(instanzKey);
 		if (instanz.isEmpty() || type == null || key.isBlank() || newName.isBlank()) {
 			return;
 		}
 
+		String oldValue = instanz.get().getSingleValues(type).get(key);
+		String oldKey = oldValue == null ? null : key;
+
 		instanz.get().getSingleValues(type).put(key, newName);
+		var changeData = new AttributeChangeData(instanzKey, type, oldKey, oldValue, key, oldValue);
+		Map<String, Object> data = Map.of(AttributeChangeData.class.getName(), changeData);
+		_broker.post(InstanzEventConstants.CHANGE, data);
 	}
 
 	@Override
@@ -144,8 +151,7 @@ public class InstanzServiceImpl implements IInstanzService {
 		Collection<IInstanz> instanzes = getInstanzes(instanzKeys);
 		for (IInstanz instanz : instanzes) {
 			instanz.getSingleValues(type).remove(valueKeyToRemove);
-			_broker.send(InstanzEventConstants.NEW,
-					new InstanzEventConstants.AttributeChangeData(instanz.getOwnKey(), valueKeyToRemove, null));
+			// TODO: add event for attribute change of removing
 		}
 		return false;
 	}

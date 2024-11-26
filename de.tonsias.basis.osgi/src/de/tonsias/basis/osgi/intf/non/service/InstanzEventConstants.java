@@ -1,5 +1,6 @@
 package de.tonsias.basis.osgi.intf.non.service;
 
+import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 
 public interface InstanzEventConstants {
@@ -21,6 +22,7 @@ public interface InstanzEventConstants {
 	static record PureInstanzData(IInstanz _newInstanz) {
 	}
 
-	static record AttributeChangeData(String _key, String _oldValue, String _newValue) {
+	static record AttributeChangeData(String _key, SingleValueType _type, String _oldKey, String _oldValue,
+			String _newKey, String _newValue) {
 	}
 }

@@ -198,7 +198,7 @@ public class InstanzView {
 				.layoutData(GridDataFactory.fillDefaults().create())//
 				.text(attribute.getValue())//
 				.onModify(event -> {
-					_instanzService.changeAttributeName(_shownInstanz.getOwnKey(), type, attribute.getKey(),
+					_instanzService.putSingleValue(_shownInstanz.getOwnKey(), type, attribute.getKey(),
 							((Text) event.widget).getText());
 					_part.setDirty(true);
 				})//
