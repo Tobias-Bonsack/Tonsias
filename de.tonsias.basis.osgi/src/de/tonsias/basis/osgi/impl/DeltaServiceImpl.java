@@ -15,6 +15,7 @@ import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 import jakarta.inject.Inject;
 
 /**
@@ -74,7 +75,13 @@ public class DeltaServiceImpl implements IDeltaService, EventHandler {
 	}
 
 	private void handleSingleValueEvents(Event event, Set<String> singlevalueKeysToSave) {
-
+		String[] propertyNames = event.getPropertyNames();
+		for (String string : propertyNames) {
+			if (SingleValueEventConstants.PureSingleValueData.class.getName().equals(string)) {
+				var singleValue = SingleValueEventConstants.PureSingleValueData.class.cast(event.getProperty(string));
+				singlevalueKeysToSave.add(singleValue._newSingleValue().getOwnKey());
+			}
+		}
 	}
 
 	private void handleInstanzEvents(Event event, Set<String> instanzKeysToSave) {

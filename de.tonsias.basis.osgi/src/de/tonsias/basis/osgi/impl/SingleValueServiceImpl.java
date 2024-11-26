@@ -86,7 +86,8 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		_cache.put(singleValue.getOwnKey(), singleValue);
 
 		PureSingleValueData data = new SingleValueEventConstants.PureSingleValueData(singleValue);
-		_broker.post(SingleValueEventConstants.NEW, data);
+		Map<String, Object> map = Map.of(SingleValueEventConstants.class.getName(), data);
+		_broker.post(SingleValueEventConstants.NEW, map);
 
 		return singleValue;
 	}

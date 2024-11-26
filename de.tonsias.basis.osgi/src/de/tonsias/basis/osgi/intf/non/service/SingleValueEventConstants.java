@@ -9,6 +9,9 @@ public interface SingleValueEventConstants {
 
 	String ALL_DELTA_TOPIC = SINGLE_VALUE + "/delta/*";
 
+	/**
+	 * Maps to {@link PureSingleValueData}
+	 */
 	String NEW = SINGLE_VALUE + "/delta/new";
 
 	String CHANGE = SINGLE_VALUE + "/delta/change";
