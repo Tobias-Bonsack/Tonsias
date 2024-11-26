@@ -15,7 +15,7 @@ public interface InstanzEventConstants {
 
 	String NEW = INSTANZ + "/delta/new";
 
-	String CHANGE = INSTANZ + "delta/change";
+	String CHANGE = INSTANZ + "/delta/change";
 
 	// data and the keys
 

@@ -44,6 +44,7 @@ public class DeltaServiceImpl implements IDeltaService, EventHandler {
 
 	public void postConstruct() {
 		_eventBride.subscribe(InstanzEventConstants.ALL_DELTA_TOPIC, this, true);
+		_eventBride.subscribe(SingleValueEventConstants.ALL_DELTA_TOPIC, this, true);
 		_eventBride.subscribe(EventConstants.OPEN_OPERATION, this, true);
 		_eventBride.subscribe(EventConstants.CLOSE_OPERATION, this, true);
 		_eventBride.subscribe(EventConstants.SAVE_ALL, event -> saveDeltas(), true);
