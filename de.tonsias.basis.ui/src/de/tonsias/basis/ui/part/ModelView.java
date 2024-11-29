@@ -24,6 +24,7 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
+import org.osgi.service.event.Event;
 
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
@@ -238,21 +239,19 @@ public class ModelView {
 
 	@Inject
 	@Optional
-	private void newInstanzListener(@UIEventTopic(InstanzEventConstants.NEW) Map<String, Object> data) {
+	private void newInstanzListener(@UIEventTopic(InstanzEventConstants.NEW) Event data) {
 		_treeViewer.refresh();
 	}
 
 	@Inject
 	@Optional
-	private void basicShowValueListener(
-			@UIEventTopic(PreferenceEventConstants.SHOW_VALUE_TOPIC) Map<String, Object> instanz) {
+	private void basicShowValueListener(@UIEventTopic(PreferenceEventConstants.SHOW_VALUE_TOPIC) Event event) {
 		_treeViewer.refresh();
 	}
 
 	@Inject
 	@Optional
-	private void basicLabelListener(
-			@UIEventTopic(PreferenceEventConstants.MODEL_VIEW_TEXT_TOPIC) Map<String, Object> instanz) {
+	private void basicLabelListener(@UIEventTopic(PreferenceEventConstants.MODEL_VIEW_TEXT_TOPIC) Event instanz) {
 		_treeViewer.refresh();
 	}
 }

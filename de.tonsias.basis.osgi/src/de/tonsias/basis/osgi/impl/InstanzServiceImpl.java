@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.e4.core.services.events.IEventBroker;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -108,9 +109,7 @@ public class InstanzServiceImpl implements IInstanzService {
 		parent.addChildKeys(instanz.getOwnKey());
 		_cache.put(key, instanz);
 
-		Map<String, Object> data = new HashMap<String, Object>();
-		data.put(PureInstanzData.class.getName(), new PureInstanzData(instanz));
-		_broker.post(InstanzEventConstants.NEW, data);
+		_broker.post(InstanzEventConstants.NEW, Map.of(IEventBroker.DATA, new PureInstanzData(instanz)));
 
 		return instanz;
 	}
@@ -142,7 +141,7 @@ public class InstanzServiceImpl implements IInstanzService {
 
 		instanz.get().getSingleValues(type).put(key, newName);
 		var changeData = new AttributeChangeData(instanzKey, type, oldKey, oldValue, key, oldValue);
-		Map<String, Object> data = Map.of(AttributeChangeData.class.getName(), changeData);
+		Map<String, Object> data = Map.of(IEventBroker.DATA, changeData);
 		_broker.post(InstanzEventConstants.CHANGE, data);
 	}
 

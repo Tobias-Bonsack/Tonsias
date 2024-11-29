@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.eclipse.e4.core.services.events.IEventBroker;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -81,8 +82,7 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		_cache.put(singleValue.getOwnKey(), singleValue);
 
 		PureSingleValueData data = new SingleValueEventConstants.PureSingleValueData(singleValue);
-		Map<String, Object> map = Map.of(SingleValueEventConstants.class.getName(), data);
-		_broker.post(SingleValueEventConstants.NEW, map);
+		_broker.post(SingleValueEventConstants.NEW, Map.of(IEventBroker.DATA, data));
 
 		return singleValue;
 	}
@@ -130,7 +130,7 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	public boolean deleteValue(ISingleValue<?> valueToDelete) {
 		boolean removeFromCache = this.removeFromCache(valueToDelete.getOwnKey());
 		PureSingleValueData data = new PureSingleValueData(valueToDelete);
-		_broker.send(SingleValueEventConstants.DELETE, data);
+		_broker.send(SingleValueEventConstants.DELETE, Map.of(IEventBroker.DATA, data));
 		return removeFromCache;
 	}
 

@@ -1,5 +1,7 @@
 package de.tonsias.basis.osgi.intf.non.service;
 
+import org.eclipse.e4.core.services.events.IEventBroker;
+
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 
@@ -13,8 +15,14 @@ public interface InstanzEventConstants {
 	// send out generic events
 	String ALL_DELTA_TOPIC = INSTANZ + "/delta/*";
 
+	/**
+	 * {@link IEventBroker#DATA} maps to {@link PureInstanzData}
+	 */
 	String NEW = INSTANZ + "/delta/new";
 
+	/**
+	 * {@link IEventBroker#DATA} maps to {@link AttributeChangeData}
+	 */
 	String CHANGE = INSTANZ + "/delta/change";
 
 	// data and the keys

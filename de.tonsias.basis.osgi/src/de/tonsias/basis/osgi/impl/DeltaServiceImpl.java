@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.e4.core.services.events.IEventBroker;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventHandler;
 
@@ -76,6 +77,18 @@ public class DeltaServiceImpl implements IDeltaService, EventHandler {
 	}
 
 	private void handleSingleValueEvents(Event event, Set<String> singlevalueKeysToSave) {
+		switch (event.getTopic()) {
+		case SingleValueEventConstants.NEW:
+			var instanzData = SingleValueEventConstants.PureSingleValueData.class.cast(IEventBroker.DATA);
+			singlevalueKeysToSave.add(instanzData._newSingleValue().getOwnKey());
+			break;
+		case SingleValueEventConstants.CHANGE:
+			var change = SingleValueEventConstants.AttributeChangeData.class.cast(IEventBroker.DATA);
+			singlevalueKeysToSave.add(change._key());
+			break;
+		default:
+			break;
+		}
 		String[] propertyNames = event.getPropertyNames();
 		for (String string : propertyNames) {
 			if (SingleValueEventConstants.PureSingleValueData.class.getName().equals(string)) {
@@ -86,12 +99,17 @@ public class DeltaServiceImpl implements IDeltaService, EventHandler {
 	}
 
 	private void handleInstanzEvents(Event event, Set<String> instanzKeysToSave) {
-		String[] propertyNames = event.getPropertyNames();
-		for (String string : propertyNames) {
-			if (InstanzEventConstants.PureInstanzData.class.getName().equals(string)) {
-				var instanzData = InstanzEventConstants.PureInstanzData.class.cast(event.getProperty(string));
-				instanzKeysToSave.add(instanzData._newInstanz().getOwnKey());
-			}
+		switch (event.getTopic()) {
+		case InstanzEventConstants.NEW:
+			var instanzData = InstanzEventConstants.PureInstanzData.class.cast(IEventBroker.DATA);
+			instanzKeysToSave.add(instanzData._newInstanz().getOwnKey());
+			break;
+		case InstanzEventConstants.CHANGE:
+			var change = InstanzEventConstants.AttributeChangeData.class.cast(IEventBroker.DATA);
+			instanzKeysToSave.add(change._key());
+			break;
+		default:
+			break;
 		}
 	}
 }
