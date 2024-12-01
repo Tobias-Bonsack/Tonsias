@@ -73,7 +73,9 @@ public class DeltaServiceImpl implements IDeltaService, EventHandler {
 		}
 
 		_instanzService.saveAll(instanzKeysToSave);
+		_instanzService.deleteAll(instanzKeysToDelete);
 		_singleValueService.saveAll(singlevalueKeysToSave);
+		_singleValueService.deleteAll(singlevalueKeysToDelete);
 
 		_notSavedEvents.clear();
 	}

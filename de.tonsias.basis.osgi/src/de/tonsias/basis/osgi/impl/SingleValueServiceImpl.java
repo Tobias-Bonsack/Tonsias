@@ -1,11 +1,13 @@
 package de.tonsias.basis.osgi.impl;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -13,6 +15,7 @@ import org.eclipse.e4.core.services.events.IEventBroker;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
+import de.tonsias.basis.data.access.osgi.intf.DeleteService;
 import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
 import de.tonsias.basis.model.enums.SingleValueType;
@@ -34,6 +37,9 @@ public class SingleValueServiceImpl implements ISingleValueService {
 
 	@Reference
 	LoadService _loadService;
+
+	@Reference
+	DeleteService _deleteService;
 
 	@Reference
 	IKeyService _keyService;
@@ -139,6 +145,24 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		PureSingleValueData data = new PureSingleValueData(valueToDelete);
 		_broker.send(SingleValueEventConstants.DELETE, Map.of(IEventBroker.DATA, data));
 		return removeFromCache;
+	}
+
+	@Override
+	public boolean deleteAll(Set<String> singlevalueKeysToDelete) throws CompletionException {
+		CompletionException ex = new CompletionException(null);
+		for (String key : singlevalueKeysToDelete) {
+			try {
+				_deleteService.deleteFile(key);
+			} catch (IOException e) {
+				ex.addSuppressed(ex);
+			}
+		}
+
+		if (ex.getSuppressed().length > 0) {
+			throw ex;
+		}
+
+		return true;
 	}
 
 }

@@ -4,6 +4,7 @@
       <provide interface="de.tonsias.basis.osgi.intf.IInstanzService"/>
    </service>
    <reference cardinality="1..1" field="_broker" interface="de.tonsias.basis.osgi.intf.IEventBrokerBridge" name="_broker"/>
+   <reference cardinality="1..1" field="_deleteService" interface="de.tonsias.basis.data.access.osgi.intf.DeleteService" name="_deleteService"/>
    <reference cardinality="1..1" field="_keyService" interface="de.tonsias.basis.osgi.intf.IKeyService" name="_keyService"/>
    <reference cardinality="1..1" field="_loadService" interface="de.tonsias.basis.data.access.osgi.intf.LoadService" name="_loadService"/>
    <reference cardinality="1..1" field="_saveService" interface="de.tonsias.basis.data.access.osgi.intf.SaveService" name="_saveService"/>

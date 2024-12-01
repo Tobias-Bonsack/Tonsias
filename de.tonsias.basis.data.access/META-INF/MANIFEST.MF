@@ -13,5 +13,6 @@ Bundle-Vendor: TONSIAS
 Automatic-Module-Name: de.tonsias.basis.data.access
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-19
-Service-Component: OSGI-INF/de.tonsias.basis.data.access.osgi.impl.LoadServiceImpl.xml,
+Service-Component: OSGI-INF/de.tonsias.basis.data.access.osgi.impl.DeleteServiceImpl.xml,
+ OSGI-INF/de.tonsias.basis.data.access.osgi.impl.LoadServiceImpl.xml,
  OSGI-INF/de.tonsias.basis.data.access.osgi.impl.SaveServiceImpl.xml

@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletionException;
 
+import de.tonsias.basis.data.access.osgi.intf.DeleteService;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 
@@ -83,5 +85,16 @@ public interface ISingleValueService {
 	 * @return true, if all possible saved, else false
 	 */
 	boolean saveAll(Set<String> singlevalueKeysToSave);
+
+	/**
+	 * Delete Files
+	 * 
+	 * @param singlevalueKeysToDelete Keys of {@link ISingleValue} to delete
+	 * @throws {@link CompletionException} with all suppressed exceptions. Look into
+	 *                {@link DeleteService} for more info
+	 * @return <code>true</code> if all are deleted, if possible, else
+	 *         <code>false</code>
+	 */
+	boolean deleteAll(Set<String> singlevalueKeysToDelete) throws CompletionException;
 
 }
