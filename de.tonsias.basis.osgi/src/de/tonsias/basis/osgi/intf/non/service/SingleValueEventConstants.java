@@ -21,6 +21,6 @@ public interface SingleValueEventConstants {
 	static record PureSingleValueData(ISingleValue<?> _newSingleValue) {
 	}
 
-	static record AttributeChangeData(String _key, String _oldValue, String _newValue) {
+	static record AttributeChangeData(String _key, Object _oldValue, Object _newValue) {
 	}
 }

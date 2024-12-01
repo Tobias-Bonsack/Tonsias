@@ -23,6 +23,7 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.AttributeChangeData;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.PureSingleValueData;
 
 @Component
@@ -123,7 +124,13 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	@Override
 	public boolean changeValue(String ownKey, Object newValue) {
 		ISingleValue<?> value = _cache.get(ownKey);
-		return value.tryToSetValue(value);
+		Object oldValue = value.getValue();
+		boolean isChanged = value.tryToSetValue(value);
+		if (isChanged) {
+			AttributeChangeData data = new AttributeChangeData(ownKey, oldValue, newValue);
+			_broker.send(SingleValueEventConstants.CHANGE, Map.of(IEventBroker.DATA, data));
+		}
+		return isChanged;
 	}
 
 	@Override
