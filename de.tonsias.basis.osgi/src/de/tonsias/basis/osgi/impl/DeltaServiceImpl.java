@@ -61,13 +61,15 @@ public class DeltaServiceImpl implements IDeltaService, EventHandler {
 	public void saveDeltas() {
 		Set<String> instanzKeysToSave = new HashSet<String>();
 		Set<String> singlevalueKeysToSave = new HashSet<String>();
+		Set<String> instanzKeysToDelete = new HashSet<String>();
+		Set<String> singlevalueKeysToDelete = new HashSet<String>();
 
 		for (Event event : _notSavedEvents) {
 			if (_notSaveableEvents.contains(event.getTopic())) {
 				continue;
 			}
-			handleInstanzEvents(event, instanzKeysToSave);
-			handleSingleValueEvents(event, singlevalueKeysToSave);
+			handleInstanzEvents(event, instanzKeysToSave, instanzKeysToDelete);
+			handleSingleValueEvents(event, singlevalueKeysToSave, singlevalueKeysToDelete);
 		}
 
 		_instanzService.saveAll(instanzKeysToSave);
@@ -76,7 +78,8 @@ public class DeltaServiceImpl implements IDeltaService, EventHandler {
 		_notSavedEvents.clear();
 	}
 
-	private void handleSingleValueEvents(Event event, Set<String> singlevalueKeysToSave) {
+	private void handleSingleValueEvents(Event event, Set<String> singlevalueKeysToSave,
+			Set<String> singlevalueKeysToDelete) {
 		switch (event.getTopic()) {
 		case SingleValueEventConstants.NEW:
 			var instanzData = SingleValueEventConstants.PureSingleValueData.class.cast(IEventBroker.DATA);
@@ -85,6 +88,10 @@ public class DeltaServiceImpl implements IDeltaService, EventHandler {
 		case SingleValueEventConstants.CHANGE:
 			var change = SingleValueEventConstants.AttributeChangeData.class.cast(IEventBroker.DATA);
 			singlevalueKeysToSave.add(change._key());
+			break;
+		case SingleValueEventConstants.DELETE:
+			instanzData = SingleValueEventConstants.PureSingleValueData.class.cast(IEventBroker.DATA);
+			singlevalueKeysToDelete.add(instanzData._newSingleValue().getOwnKey());
 			break;
 		default:
 			break;
@@ -98,7 +105,7 @@ public class DeltaServiceImpl implements IDeltaService, EventHandler {
 		}
 	}
 
-	private void handleInstanzEvents(Event event, Set<String> instanzKeysToSave) {
+	private void handleInstanzEvents(Event event, Set<String> instanzKeysToSave, Set<String> instanzKeysToDelete) {
 		switch (event.getTopic()) {
 		case InstanzEventConstants.NEW:
 			var instanzData = InstanzEventConstants.PureInstanzData.class.cast(IEventBroker.DATA);
@@ -108,7 +115,9 @@ public class DeltaServiceImpl implements IDeltaService, EventHandler {
 			var change = InstanzEventConstants.AttributeChangeData.class.cast(IEventBroker.DATA);
 			instanzKeysToSave.add(change._key());
 			break;
-		default:
+		case InstanzEventConstants.DELETE:
+			instanzData = InstanzEventConstants.PureInstanzData.class.cast(IEventBroker.DATA);
+			instanzKeysToDelete.add(instanzData._newInstanz().getOwnKey());
 			break;
 		}
 	}

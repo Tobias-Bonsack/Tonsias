@@ -25,6 +25,11 @@ public interface InstanzEventConstants {
 	 */
 	String CHANGE = INSTANZ + "/delta/change";
 
+	/**
+	 * {@link IEventBroker#DATA} maps to {@link PureInstanzData}
+	 */
+	String DELETE = INSTANZ + "/delta/delete";
+
 	// data and the keys
 
 	static record PureInstanzData(IInstanz _newInstanz) {
