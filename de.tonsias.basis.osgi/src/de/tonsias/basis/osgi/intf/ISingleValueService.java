@@ -75,7 +75,7 @@ public interface ISingleValueService {
 	 * @return true if deleted
 	 * @throws IOException if {@link ISingleValue}-File could not be deleted
 	 */
-	boolean deleteValue(ISingleValue<?> valueToDelete);
+	boolean removeValue(ISingleValue<?> valueToDelete);
 
 	/**
 	 * saves all {@link ISingleValue} from the collection, if possible. Can only

@@ -1,5 +1,7 @@
 package de.tonsias.basis.osgi.intf.non.service;
 
+import org.eclipse.e4.core.services.events.IEventBroker;
+
 import de.tonsias.basis.osgi.intf.IDeltaService;
 
 public interface EventConstants {
@@ -12,7 +14,13 @@ public interface EventConstants {
 	String NEW_VAlUE = "newvalue";
 
 	// Operations and others
+	/**
+	 * No {@link IEventBroker#DATA} needed
+	 */
 	String OPEN_OPERATION = "open_operation";
+	/**
+	 * No {@link IEventBroker#DATA} needed
+	 */
 	String CLOSE_OPERATION = "close_operation";
 
 	/**

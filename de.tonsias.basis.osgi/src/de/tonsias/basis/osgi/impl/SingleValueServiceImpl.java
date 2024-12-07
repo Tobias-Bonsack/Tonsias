@@ -140,7 +140,7 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	}
 
 	@Override
-	public boolean deleteValue(ISingleValue<?> valueToDelete) {
+	public boolean removeValue(ISingleValue<?> valueToDelete) {
 		boolean removeFromCache = this.removeFromCache(valueToDelete.getOwnKey());
 		PureSingleValueData data = new PureSingleValueData(valueToDelete);
 		_broker.send(SingleValueEventConstants.DELETE, Map.of(IEventBroker.DATA, data));

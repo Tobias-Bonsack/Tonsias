@@ -2,9 +2,16 @@ package de.tonsias.basis.ui.part;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.e4.ui.di.UIEventTopic;
 import org.eclipse.e4.ui.model.application.ui.basic.MPart;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -13,6 +20,7 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.widgets.LabelFactory;
 import org.eclipse.jface.widgets.TextFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Composite;
@@ -57,6 +65,8 @@ public class InstanzView {
 
 	@Inject
 	private IEventBrokerBridge _broker;
+
+	private final List<Job> _changeJobs = new LinkedList<Job>();
 
 	@PostConstruct
 	public void postConstruct(Composite parent) {
@@ -154,7 +164,7 @@ public class InstanzView {
 						attribute.getKey(), type.getClazz());
 				if (singleValue.isPresent()) {
 					createSinlgeValueTexts(typeGroup, singleValue);
-				}
+				} // TODO: is there always a resolvable single value?
 			}
 		}
 	}
@@ -162,11 +172,8 @@ public class InstanzView {
 	private void createSinlgeValueTexts(Group typeGroup, Optional<? extends ISingleValue<?>> singleValue) {
 		TextFactory.newText(SWT.None)//
 				.text(singleValue.get().getValue().toString())//
-				.onModify(event -> {
-					String text = ((Text) event.widget).getText();
-					_singleService.changeValue(singleValue.get().getOwnKey(), text);
-					_part.setDirty(true);
-				}).layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
+				.onModify(event -> onSingleValueModify(singleValue, event))
+				.layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
 				.create(typeGroup);
 
 		Label keyLabel = LabelFactory.newLabel(SWT.None)//
@@ -180,16 +187,52 @@ public class InstanzView {
 		MenuItem deleteMI = new MenuItem(labelCM, SWT.PUSH);
 		deleteMI.setData(singleValue.get());
 		deleteMI.setText("Delete");
-		deleteMI.addSelectionListener(new SelectionAdapter() {
+		deleteMI.addSelectionListener(deleteSingleValueSelectionListener());
+	}
+
+	private SelectionAdapter deleteSingleValueSelectionListener() {
+		return new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				ISingleValue<?> data = (ISingleValue<?>) e.widget.getData();
-				_singleService.deleteValue(data);
+				_changeJobs.add(new Job("") {
 
-				SingleValueType type = SingleValueType.getByClass(data.getClass()).get();
-				_instanzService.removeValueKey(data.getConnectedInstanzKeys(), type, data.getOwnKey());
+					@Override
+					protected IStatus run(IProgressMonitor monitor) {
+						ISingleValue<?> data = (ISingleValue<?>) e.widget.getData();
+						_singleService.removeValue(data);
+						SingleValueType type = SingleValueType.getByClass(data.getClass()).get();
+						_instanzService.removeValueKey(data.getConnectedInstanzKeys(), type, data.getOwnKey());
+						return null;
+					}
+
+					@Override
+					public boolean belongsTo(Object family) {
+						return family == InstanzView.this;
+					}
+				});
+				_part.setDirty(true);
+
 			}
+		};
+	}
+
+	private void onSingleValueModify(Optional<? extends ISingleValue<?>> singleValue, ModifyEvent event) {
+		_changeJobs.add(new Job("") {
+
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				String text = ((Text) event.widget).getText();
+				_singleService.changeValue(singleValue.get().getOwnKey(), text);
+				return Status.OK_STATUS;
+			}
+
+			@Override
+			public boolean belongsTo(Object family) {
+				return family == InstanzView.this;
+			}
+
 		});
+		_part.setDirty(true);
 	}
 
 	private void createSingleValueNameText(Group parent, Entry<String, String> attribute, SingleValueType type) {
@@ -213,11 +256,28 @@ public class InstanzView {
 			return;
 		}
 
-		if (_part.isDirty() && MessageDialog.openQuestion(new Shell(), "Ist noch dirty hier",
-				"Sollen die Änderungen gespeichert werden?")) {
-			_broker.send(EventConstants.SAVE_ALL, null);
+		if (_part.isDirty()) {
+			int index = MessageDialog.open(MessageDialog.QUESTION, new Shell(), "Ist noch dirty hier",
+					"Sollen die Änderungen publiziert werden?", SWT.None, "Ja", "Nein", "Cancel");
+			switch (index) {
+			case 0:
+				_broker.post(EventConstants.OPEN_OPERATION, null);
+				_changeJobs.forEach(j -> j.schedule());
+				try {
+					Job.getJobManager().join(this, new NullProgressMonitor());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				_broker.post(EventConstants.CLOSE_OPERATION, null);
+				break;
+			case 2:
+				_broker.post(InstanzEventConstants.SELECTED, _shownInstanz);
+				return;
+
+			}
 		}
 
+		_changeJobs.clear();
 		_shownInstanz = data._newInstanz();
 		_part.setDirty(false);
 		updateView();
