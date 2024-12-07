@@ -155,8 +155,10 @@ public class InstanzServiceImpl implements IInstanzService {
 	public boolean removeValueKey(Collection<String> instanzKeys, SingleValueType type, String valueKeyToRemove) {
 		Collection<IInstanz> instanzes = getInstanzes(instanzKeys);
 		for (IInstanz instanz : instanzes) {
+			String name = instanz.getSingleValues(type).get(valueKeyToRemove);
 			instanz.getSingleValues(type).remove(valueKeyToRemove);
-			// TODO: add event for attribute change of removing
+			var data = new AttributeChangeData(instanz.getOwnKey(), type, valueKeyToRemove, name, null, null);
+			_broker.post(InstanzEventConstants.CHANGE, Map.of(IEventBroker.DATA, data));
 		}
 		return false;
 	}
