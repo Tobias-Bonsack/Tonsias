@@ -30,7 +30,7 @@ import jakarta.inject.Inject;
 public class DeltaServiceImpl implements IDeltaService, EventHandler {
 
 	@Inject
-	IEventBrokerBridge _eventBride;
+	IEventBrokerBridge _eventBridge;
 
 	@Inject
 	IInstanzService _instanzService;
@@ -44,11 +44,11 @@ public class DeltaServiceImpl implements IDeltaService, EventHandler {
 			EventConstants.CLOSE_OPERATION);
 
 	public void postConstruct() {
-		_eventBride.subscribe(InstanzEventConstants.ALL_DELTA_TOPIC, this, true);
-		_eventBride.subscribe(SingleValueEventConstants.ALL_DELTA_TOPIC, this, true);
-		_eventBride.subscribe(EventConstants.OPEN_OPERATION, this, true);
-		_eventBride.subscribe(EventConstants.CLOSE_OPERATION, this, true);
-		_eventBride.subscribe(EventConstants.SAVE_ALL, event -> saveDeltas(), true);
+		_eventBridge.subscribe(InstanzEventConstants.ALL_DELTA_TOPIC, this, true);
+		_eventBridge.subscribe(SingleValueEventConstants.ALL_DELTA_TOPIC, this, true);
+		_eventBridge.subscribe(EventConstants.OPEN_OPERATION, this, true);
+		_eventBridge.subscribe(EventConstants.CLOSE_OPERATION, this, true);
+		_eventBridge.subscribe(EventConstants.SAVE_ALL, event -> saveDeltas(), true);
 	}
 
 	@Override
