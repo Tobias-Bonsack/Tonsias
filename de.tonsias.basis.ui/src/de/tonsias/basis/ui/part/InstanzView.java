@@ -24,6 +24,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
@@ -183,6 +184,7 @@ public class InstanzView {
 				.create(typeGroup);
 
 		Menu labelCM = new Menu(keyLabel);
+		labelCM.setData(keyLabel);
 		keyLabel.setMenu(labelCM);
 
 		MenuItem deleteMI = new MenuItem(labelCM, SWT.PUSH);
@@ -195,15 +197,20 @@ public class InstanzView {
 		return new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				ISingleValue<?> data = (ISingleValue<?>) e.widget.getData();
+				if (e.getSource() instanceof MenuItem mi) {
+					Control parent = (Control) mi.getParent().getData();
+					parent.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_RED));
+				}
+
 				_changeJobs.add(new Job("") {
 
 					@Override
 					protected IStatus run(IProgressMonitor monitor) {
-						ISingleValue<?> data = (ISingleValue<?>) e.widget.getData();
 						_singleService.removeValue(data);
 						SingleValueType type = SingleValueType.getByClass(data.getClass()).get();
 						_instanzService.removeValueKey(data.getConnectedInstanzKeys(), type, data.getOwnKey());
-						return null;
+						return Job.ASYNC_FINISH;
 					}
 
 					@Override
@@ -218,12 +225,35 @@ public class InstanzView {
 	}
 
 	private void onSingleValueModify(Optional<? extends ISingleValue<?>> singleValue, ModifyEvent event) {
+		Text text2 = (Text) event.widget;
+		text2.setBackground(text2.getDisplay().getSystemColor(SWT.COLOR_GREEN));
+		String text = text2.getText();
 		_changeJobs.add(new Job("") {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				String text = ((Text) event.widget).getText();
 				_singleService.changeValue(singleValue.get().getOwnKey(), text);
+				return Status.OK_STATUS;
+			}
+
+			@Override
+			public boolean belongsTo(Object family) {
+				return family == InstanzView.this;
+			}
+
+		});
+		_part.setDirty(true);
+	}
+
+	private void onSingleValueNameModify(Entry<String, String> attribute, SingleValueType type, ModifyEvent event) {
+		Text text2 = (Text) event.widget;
+		text2.setBackground(text2.getDisplay().getSystemColor(SWT.COLOR_GREEN));
+		_changeJobs.add(new Job("") {
+
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				_instanzService.putSingleValue(_shownInstanz.getOwnKey(), type, attribute.getKey(),
+						((Text) event.widget).getText());
 				return Status.OK_STATUS;
 			}
 
@@ -241,11 +271,7 @@ public class InstanzView {
 				.enabled(true)//
 				.layoutData(GridDataFactory.fillDefaults().create())//
 				.text(attribute.getValue())//
-				.onModify(event -> {
-					_instanzService.putSingleValue(_shownInstanz.getOwnKey(), type, attribute.getKey(),
-							((Text) event.widget).getText());
-					_part.setDirty(true);
-				})//
+				.onModify(event -> onSingleValueNameModify(attribute, type, event))//
 				.create(parent);
 	}
 
