@@ -53,7 +53,7 @@
 			 </dependency>
 		 </dependencies>
 	 </location>
-	 <location includeDependencyDepth="infinite" includeDependencyScopes="compile,runtime" includeSource="true" label="Testing" missingManifest="generate" type="Maven">
+	 <location includeDependencyDepth="infinite" includeDependencyScopes="compile,runtime,test" includeSource="true" label="Testing" missingManifest="generate" type="Maven">
 		 <dependencies>
 			 <dependency>
 				 <groupId>org.junit.jupiter</groupId>

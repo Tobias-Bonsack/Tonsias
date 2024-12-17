@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.eclipse.e4.core.services.events.IEventBroker;
 import org.osgi.service.event.Event;
-import org.osgi.service.event.EventHandler;
 
 import de.tonsias.basis.osgi.intf.IDeltaService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
@@ -27,18 +26,18 @@ import jakarta.inject.Inject;
  * to me at the moment, since even with undo/redo you can find out the brackets
  * here
  */
-public class DeltaServiceImpl implements IDeltaService, EventHandler {
+public class DeltaServiceImpl implements IDeltaService {
 
 	@Inject
-	IEventBrokerBridge _eventBridge;
+	protected IEventBrokerBridge _eventBridge;
 
 	@Inject
-	IInstanzService _instanzService;
+	protected IInstanzService _instanzService;
 
 	@Inject
-	ISingleValueService _singleValueService;
+	protected ISingleValueService _singleValueService;
 
-	Collection<Event> _notSavedEvents = new ArrayList<Event>();
+	protected Collection<Event> _notSavedEvents = new ArrayList<Event>();
 
 	private final Collection<String> _notSaveableEvents = List.of(EventConstants.OPEN_OPERATION,
 			EventConstants.CLOSE_OPERATION);
@@ -53,7 +52,6 @@ public class DeltaServiceImpl implements IDeltaService, EventHandler {
 
 	@Override
 	public void handleEvent(Event event) {
-		System.out.printf("%s :: Delta Event - %s", this.getClass().toString(), event.toString());
 		_notSavedEvents.add(event);
 	}
 
@@ -95,15 +93,6 @@ public class DeltaServiceImpl implements IDeltaService, EventHandler {
 			instanzData = SingleValueEventConstants.PureSingleValueData.class.cast(IEventBroker.DATA);
 			singlevalueKeysToDelete.add(instanzData._newSingleValue().getOwnKey());
 			break;
-		default:
-			break;
-		}
-		String[] propertyNames = event.getPropertyNames();
-		for (String string : propertyNames) {
-			if (SingleValueEventConstants.PureSingleValueData.class.getName().equals(string)) {
-				var singleValue = SingleValueEventConstants.PureSingleValueData.class.cast(event.getProperty(string));
-				singlevalueKeysToSave.add(singleValue._newSingleValue().getOwnKey());
-			}
 		}
 	}
 

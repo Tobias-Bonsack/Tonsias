@@ -7,6 +7,10 @@ import org.osgi.framework.ServiceReference;
 public class OsgiUtil {
 	public static <T> T getService(Class<T> clazz) {
 		BundleContext context = FrameworkUtil.getBundle(clazz).getBundleContext();
+		return getService(clazz, context);
+	}
+
+	public static <T> T getService(Class<T> clazz, BundleContext context) {
 		ServiceReference<T> serviceReference = context.getServiceReference(clazz);
 		if (context == null || serviceReference == null) {
 			return null;
