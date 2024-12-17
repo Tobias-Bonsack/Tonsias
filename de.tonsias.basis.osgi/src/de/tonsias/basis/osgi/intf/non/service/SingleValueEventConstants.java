@@ -1,5 +1,7 @@
 package de.tonsias.basis.osgi.intf.non.service;
 
+import java.util.Collection;
+
 import de.tonsias.basis.model.interfaces.ISingleValue;
 
 public interface SingleValueEventConstants {
@@ -21,6 +23,7 @@ public interface SingleValueEventConstants {
 	static record PureSingleValueData(ISingleValue<?> _newSingleValue) {
 	}
 
-	static record AttributeChangeData(String _key, Object _oldValue, Object _newValue) {
+	static record AttributeChangeData(String _key, Object _oldValue, Object _newValue,
+			Collection<String> _connectedInstanzs) {
 	}
 }

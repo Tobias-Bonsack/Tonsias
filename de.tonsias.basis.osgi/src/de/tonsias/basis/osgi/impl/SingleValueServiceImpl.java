@@ -133,7 +133,8 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		Object oldValue = value.getValue();
 		boolean isChanged = value.tryToSetValue(value);
 		if (isChanged) {
-			AttributeChangeData data = new AttributeChangeData(ownKey, oldValue, newValue);
+			AttributeChangeData data = new AttributeChangeData(ownKey, oldValue, newValue,
+					value.getConnectedInstanzKeys());
 			_broker.send(SingleValueEventConstants.CHANGE, Map.of(IEventBroker.DATA, data));
 		}
 		return isChanged;

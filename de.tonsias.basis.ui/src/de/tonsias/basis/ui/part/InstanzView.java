@@ -41,6 +41,7 @@ import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 
@@ -246,6 +247,26 @@ public class InstanzView {
 					_part.setDirty(true);
 				})//
 				.create(parent);
+	}
+
+	@Inject
+	@org.eclipse.e4.core.di.annotations.Optional
+	private void changeListener(
+			@UIEventTopic(InstanzEventConstants.CHANGE) InstanzEventConstants.AttributeChangeData data) {
+		if (_shownInstanz != null && data._key().equals(_shownInstanz.getOwnKey())) {
+			return;
+		}
+		updateView();
+	}
+
+	@Inject
+	@org.eclipse.e4.core.di.annotations.Optional
+	private void changeListener(
+			@UIEventTopic(SingleValueEventConstants.CHANGE) SingleValueEventConstants.AttributeChangeData data) {
+		if (_shownInstanz != null && data._connectedInstanzs().contains(_shownInstanz.getOwnKey())) {
+			return;
+		}
+		updateView();
 	}
 
 	@Inject
