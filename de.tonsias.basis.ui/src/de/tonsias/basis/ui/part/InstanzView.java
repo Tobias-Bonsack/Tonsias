@@ -254,7 +254,7 @@ public class InstanzView {
 			protected IStatus run(IProgressMonitor monitor) {
 				_instanzService.putSingleValue(_shownInstanz.getOwnKey(), type, attribute.getKey(),
 						((Text) event.widget).getText());
-				return Status.OK_STATUS;
+				return Job.ASYNC_FINISH;
 			}
 
 			@Override
