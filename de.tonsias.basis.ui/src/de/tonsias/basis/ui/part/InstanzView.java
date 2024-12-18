@@ -2,16 +2,9 @@ package de.tonsias.basis.ui.part;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.e4.ui.di.UIEventTopic;
 import org.eclipse.e4.ui.model.application.ui.basic.MPart;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -34,13 +27,13 @@ import org.eclipse.swt.widgets.Text;
 
 import com.google.common.collect.BiMap;
 
+import de.tonsias.basis.logic.part.InstanzViewLogic;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
-import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 import jakarta.annotation.PostConstruct;
@@ -68,7 +61,7 @@ public class InstanzView {
 	@Inject
 	private IEventBrokerBridge _broker;
 
-	private final List<Job> _changeJobs = new LinkedList<Job>();
+	private final InstanzViewLogic _logic = new InstanzViewLogic();
 
 	@PostConstruct
 	public void postConstruct(Composite parent) {
@@ -82,6 +75,37 @@ public class InstanzView {
 		createSingleValueGroup();
 		createChildren();
 		createParent();
+	}
+
+	private void createInstanzInfos() {
+		Group parent = new Group(_parent, SWT.None);
+		parent.setText("Instanz");
+		GridDataFactory.fillDefaults().applyTo(parent);
+		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(parent);
+
+		LabelFactory.newLabel(SWT.None)//
+				.text("Key")//
+				.data(GridDataFactory.fillDefaults().create())//
+				.create(parent);
+		_ownKeyLabel = LabelFactory.newLabel(SWT.None)//
+				.text(_shownInstanz.getOwnKey())//
+				.data(GridDataFactory.fillDefaults().create())//
+				.create(parent);
+
+	}
+
+	private void updateView() {
+		if (_ownKeyLabel == null) {
+			createInstanzInfos();
+		}
+		_ownKeyLabel.setText(_shownInstanz.getOwnKey());
+
+		_groups.forEach(group -> group.dispose());
+		createSingleValueGroup();
+		createParent();
+		createChildren();
+
+		_parent.layout();
 	}
 
 	private void createParent() {
@@ -111,37 +135,6 @@ public class InstanzView {
 					.data(GridDataFactory.fillDefaults().create())//
 					.create(parent);
 		}
-	}
-
-	private void updateView() {
-		if (_ownKeyLabel == null) {
-			createInstanzInfos();
-		}
-		_ownKeyLabel.setText(_shownInstanz.getOwnKey());
-
-		_groups.forEach(group -> group.dispose());
-		createSingleValueGroup();
-		createParent();
-		createChildren();
-
-		_parent.layout();
-	}
-
-	private void createInstanzInfos() {
-		Group parent = new Group(_parent, SWT.None);
-		parent.setText("Instanz");
-		GridDataFactory.fillDefaults().applyTo(parent);
-		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(parent);
-
-		LabelFactory.newLabel(SWT.None)//
-				.text("Key")//
-				.data(GridDataFactory.fillDefaults().create())//
-				.create(parent);
-		_ownKeyLabel = LabelFactory.newLabel(SWT.None)//
-				.text(_shownInstanz.getOwnKey())//
-				.data(GridDataFactory.fillDefaults().create())//
-				.create(parent);
-
 	}
 
 	private void createSingleValueGroup() {
@@ -203,21 +196,7 @@ public class InstanzView {
 					parent.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_RED));
 				}
 
-				_changeJobs.add(new Job("") {
-
-					@Override
-					protected IStatus run(IProgressMonitor monitor) {
-						_singleService.removeValue(data);
-						SingleValueType type = SingleValueType.getByClass(data.getClass()).get();
-						_instanzService.removeValueKey(data.getConnectedInstanzKeys(), type, data.getOwnKey());
-						return Job.ASYNC_FINISH;
-					}
-
-					@Override
-					public boolean belongsTo(Object family) {
-						return family == InstanzView.this;
-					}
-				});
+				_logic.createOneAndBiFunctionJob(_singleService::removeValue, data, _instanzService::removeValueKey);
 				_part.setDirty(true);
 
 			}
@@ -225,44 +204,17 @@ public class InstanzView {
 	}
 
 	private void onSingleValueModify(Optional<? extends ISingleValue<?>> singleValue, ModifyEvent event) {
-		Text text2 = (Text) event.widget;
-		text2.setBackground(text2.getDisplay().getSystemColor(SWT.COLOR_GREEN));
-		String text = text2.getText();
-		_changeJobs.add(new Job("") {
-
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				_singleService.changeValue(singleValue.get().getOwnKey(), text);
-				return Status.OK_STATUS;
-			}
-
-			@Override
-			public boolean belongsTo(Object family) {
-				return family == InstanzView.this;
-			}
-
-		});
+		Text text = (Text) event.widget;
+		text.setBackground(text.getDisplay().getSystemColor(SWT.COLOR_GREEN));
+		_logic.createBiFunctionJob(_singleService::changeValue, singleValue.get().getOwnKey(), text.getText());
 		_part.setDirty(true);
 	}
 
 	private void onSingleValueNameModify(Entry<String, String> attribute, SingleValueType type, ModifyEvent event) {
-		Text text2 = (Text) event.widget;
-		text2.setBackground(text2.getDisplay().getSystemColor(SWT.COLOR_GREEN));
-		_changeJobs.add(new Job("") {
-
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				_instanzService.putSingleValue(_shownInstanz.getOwnKey(), type, attribute.getKey(),
-						((Text) event.widget).getText());
-				return Job.ASYNC_FINISH;
-			}
-
-			@Override
-			public boolean belongsTo(Object family) {
-				return family == InstanzView.this;
-			}
-
-		});
+		Text text = (Text) event.widget;
+		text.setBackground(text.getDisplay().getSystemColor(SWT.COLOR_GREEN));
+		_logic.createQuadConsumerJob(_instanzService::putSingleValue, _shownInstanz.getOwnKey(), type,
+				attribute.getKey(), ((Text) event.widget).getText());
 		_part.setDirty(true);
 	}
 
@@ -306,25 +258,12 @@ public class InstanzView {
 		if (_part.isDirty()) {
 			int index = MessageDialog.open(MessageDialog.QUESTION, new Shell(), "Ist noch dirty hier",
 					"Sollen die Änderungen publiziert werden?", SWT.None, "Ja", "Nein", "Cancel");
-			switch (index) {
-			case 0:
-				_broker.post(EventConstants.OPEN_OPERATION, null);
-				_changeJobs.forEach(j -> j.schedule());
-				try {
-					Job.getJobManager().join(this, new NullProgressMonitor());
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				_broker.post(EventConstants.CLOSE_OPERATION, null);
-				break;
-			case 2:
-				_broker.post(InstanzEventConstants.SELECTED, _shownInstanz);
+			_logic.executeChanges(index, _broker, _shownInstanz);
+			if (index == 2) {
 				return;
-
 			}
 		}
 
-		_changeJobs.clear();
 		_shownInstanz = data._newInstanz();
 		_part.setDirty(false);
 		updateView();
