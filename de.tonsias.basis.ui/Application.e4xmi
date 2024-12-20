@@ -23,8 +23,12 @@
       <children xsi:type="menu:Menu" xmi:id="_RaXJQH_REe-yVaOg3SKHrg" elementId="de.tonsias.basis.ui.menu.window" label="Window">
         <children xsi:type="menu:DirectMenuItem" xmi:id="_TMcx8H_REe-yVaOg3SKHrg" elementId="de.tonsias.basis.ui.directmenuitem.preferences" label="Preferences" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.PreferencesHandler"/>
       </children>
+      <children xsi:type="menu:Menu" xmi:id="_OLD-UL7gEe-iy9yOXwbNCw" elementId="de.tonsias.basis.ui.menu.parts" label="Parts">
+        <children xsi:type="menu:DynamicMenuContribution" xmi:id="_YeR6kL7gEe-iy9yOXwbNCw" elementId="de.tonsias.basis.ui.dynamicmenucontribution.0" label="Parts" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.DynamicPartMenuContributor"/>
+      </children>
     </mainMenu>
   </children>
+  <descriptors xmi:id="_tU3yIL7kEe-iy9yOXwbNCw" elementId="de.tonsias.basis.ui.partdescriptor.testest" label="TESTEST" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.part.ModelView"/>
   <addons xmi:id="_k4GEkfmbEe6DqPOwG-kyMA" elementId="org.eclipse.e4.core.commands.service" contributionURI="bundleclass://org.eclipse.e4.core.commands/org.eclipse.e4.core.commands.CommandServiceAddon"/>
   <addons xmi:id="_k4GEkvmbEe6DqPOwG-kyMA" elementId="org.eclipse.e4.ui.contexts.service" contributionURI="bundleclass://org.eclipse.e4.ui.services/org.eclipse.e4.ui.services.ContextServiceAddon"/>
   <addons xmi:id="_k4GEk_mbEe6DqPOwG-kyMA" elementId="org.eclipse.e4.ui.bindings.service" contributionURI="bundleclass://org.eclipse.e4.ui.bindings/org.eclipse.e4.ui.bindings.BindingServiceAddon"/>
