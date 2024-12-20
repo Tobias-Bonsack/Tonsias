@@ -14,8 +14,6 @@ public class CreatePartHandler {
 	public void execute(MDirectMenuItem item, EPartService pService) {
 		MPart part = pService.createPart(item.getPersistedState().get(PART_ID));
 		pService.showPart(part, PartState.ACTIVATE);
-
-		System.out.println(this.getClass().getSimpleName());
 	}
 
 }

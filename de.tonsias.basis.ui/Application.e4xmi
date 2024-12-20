@@ -17,14 +17,14 @@
       </children>
     </children>
     <mainMenu xmi:id="_gZoVYPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.menu.0">
-      <children xsi:type="menu:Menu" xmi:id="_okuaEDGQEe-osN1KarNnQg" elementId="de.tonsias.basis.ui.menu.file" label="File">
-        <children xsi:type="menu:DirectMenuItem" xmi:id="_kARM4DGPEe-osN1KarNnQg" elementId="de.tonsias.basis.ui.directmenuitem.save" label="Save" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.SaveHandler"/>
+      <children xsi:type="menu:Menu" xmi:id="_okuaEDGQEe-osN1KarNnQg" elementId="de.tonsias.basis.ui.menu.file" label="%menu.file">
+        <children xsi:type="menu:DirectMenuItem" xmi:id="_kARM4DGPEe-osN1KarNnQg" elementId="de.tonsias.basis.ui.directmenuitem.save" label="%menu.save" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.SaveHandler"/>
       </children>
-      <children xsi:type="menu:Menu" xmi:id="_RaXJQH_REe-yVaOg3SKHrg" elementId="de.tonsias.basis.ui.menu.window" label="Window">
-        <children xsi:type="menu:DirectMenuItem" xmi:id="_TMcx8H_REe-yVaOg3SKHrg" elementId="de.tonsias.basis.ui.directmenuitem.preferences" label="Preferences" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.PreferencesHandler"/>
-      </children>
-      <children xsi:type="menu:Menu" xmi:id="_OLD-UL7gEe-iy9yOXwbNCw" elementId="de.tonsias.basis.ui.menu.parts" label="Parts">
-        <children xsi:type="menu:DynamicMenuContribution" xmi:id="_YeR6kL7gEe-iy9yOXwbNCw" elementId="de.tonsias.basis.ui.dynamicmenucontribution.0" label="Parts" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.DynamicPartMenuContributor"/>
+      <children xsi:type="menu:Menu" xmi:id="_RaXJQH_REe-yVaOg3SKHrg" elementId="de.tonsias.basis.ui.menu.window" label="%menu.window">
+        <children xsi:type="menu:Menu" xmi:id="_HmtQ8L8WEe-Bstd_TXU8KA" elementId="de.tonsias.basis.ui.menu.menuview" label="%menu.view">
+          <children xsi:type="menu:DynamicMenuContribution" xmi:id="_YeR6kL7gEe-iy9yOXwbNCw" elementId="de.tonsias.basis.ui.dynamicmenucontribution.0" label="DynamicPartMenu" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.DynamicPartMenuContributor"/>
+        </children>
+        <children xsi:type="menu:DirectMenuItem" xmi:id="_TMcx8H_REe-yVaOg3SKHrg" elementId="de.tonsias.basis.ui.directmenuitem.preferences" label="%menu.preferences" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.PreferencesHandler"/>
       </children>
     </mainMenu>
   </children>
