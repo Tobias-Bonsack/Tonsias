@@ -3,7 +3,7 @@
   <children xsi:type="basic:TrimmedWindow" xmi:id="_mbuagPmbEe6DqPOwG-kyMA" elementId="de.tonsias.basis.ui.trimmedwindow.tonsias" label="Tonsias" x="0" y="0" width="800" height="1024">
     <children xsi:type="basic:PartSashContainer" xmi:id="_VOvKQPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.partsashcontainer.0" horizontal="true">
       <children xsi:type="basic:PartStack" xmi:id="_8i4fEPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.partstack.0">
-        <children xsi:type="basic:Part" xmi:id="_WOG8kPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.part.test" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.part.ModelView" label="Model View">
+        <children xsi:type="basic:Part" xmi:id="_WOG8kPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.part.test" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.part.ModelView" label="%part.modelview">
           <toolbar xmi:id="_lPzQQC5cEe-DY8FvUxmb2A" elementId="de.tonsias.basis.ui.toolbar.0">
             <children xsi:type="menu:DirectToolItem" xmi:id="_mspBsC5cEe-DY8FvUxmb2A" elementId="de.tonsias.basis.ui.directtoolitem.newinstanz" label="New Instanz" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.CreateInstanzOperation"/>
           </toolbar>
@@ -12,7 +12,7 @@
       <children xsi:type="basic:PartSashContainer" xmi:id="_zUcSwDJZEe-dKNMEZRImXw" elementId="de.tonsias.basis.ui.partsashcontainer.1">
         <children xsi:type="basic:PartStack" xmi:id="_0zzzwDJZEe-dKNMEZRImXw" elementId="de.tonsias.basis.ui.partstack.1"/>
         <children xsi:type="basic:PartStack" xmi:id="_1mDJADJZEe-dKNMEZRImXw" elementId="de.tonsias.basis.ui.partstack.2">
-          <children xsi:type="basic:Part" xmi:id="_2DLJ4DJZEe-dKNMEZRImXw" elementId="de.tonsias.basis.ui.part.instanzansicht" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.part.InstanzView" label="Instanz Ansicht"/>
+          <children xsi:type="basic:Part" xmi:id="_2DLJ4DJZEe-dKNMEZRImXw" elementId="de.tonsias.basis.ui.part.instanzansicht" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.part.InstanzView" label="%part.instanzview.label"/>
         </children>
       </children>
     </children>
@@ -28,7 +28,6 @@
       </children>
     </mainMenu>
   </children>
-  <descriptors xmi:id="_tU3yIL7kEe-iy9yOXwbNCw" elementId="de.tonsias.basis.ui.partdescriptor.testest" label="TESTEST" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.part.ModelView"/>
   <addons xmi:id="_k4GEkfmbEe6DqPOwG-kyMA" elementId="org.eclipse.e4.core.commands.service" contributionURI="bundleclass://org.eclipse.e4.core.commands/org.eclipse.e4.core.commands.CommandServiceAddon"/>
   <addons xmi:id="_k4GEkvmbEe6DqPOwG-kyMA" elementId="org.eclipse.e4.ui.contexts.service" contributionURI="bundleclass://org.eclipse.e4.ui.services/org.eclipse.e4.ui.services.ContextServiceAddon"/>
   <addons xmi:id="_k4GEk_mbEe6DqPOwG-kyMA" elementId="org.eclipse.e4.ui.bindings.service" contributionURI="bundleclass://org.eclipse.e4.ui.bindings/org.eclipse.e4.ui.bindings.BindingServiceAddon"/>
