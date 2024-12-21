@@ -16,7 +16,7 @@ public class DynamicPartMenuContributor {
 		List<MPartDescriptor> parts = application.getDescriptors();
 		for (MPartDescriptor part : parts) {
 			MDirectMenuItem directItem = modelService.createModelElement(MDirectMenuItem.class);
-			directItem.setLabel(part.getLabel());
+			directItem.setLabel(part.getLocalizedLabel());
 			directItem.setEnabled(true);
 			directItem.setVisible(true);
 			directItem.getPersistedState().put("persistState", "false");
