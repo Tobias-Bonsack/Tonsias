@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Optional;
 
+import org.eclipse.e4.core.services.nls.Translation;
 import org.eclipse.e4.ui.di.UIEventTopic;
 import org.eclipse.e4.ui.model.application.ui.basic.MPart;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -36,18 +37,15 @@ import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
+import de.tonsias.basis.ui.i18n.Messages;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 
 public class InstanzView {
 
-	private IInstanz _shownInstanz = null;
-
-	private Label _ownKeyLabel;
-
-	private Collection<Group> _groups = new ArrayList<Group>();
-
-	private Composite _parent;
+	@Inject
+	@Translation
+	Messages _messages;
 
 	@Inject
 	private MPart _part;
@@ -62,6 +60,14 @@ public class InstanzView {
 	private IEventBrokerBridge _broker;
 
 	private final InstanzViewLogic _logic = new InstanzViewLogic();
+
+	private IInstanz _shownInstanz = null;
+
+	private Label _ownKeyLabel;
+
+	private Collection<Group> _groups = new ArrayList<Group>();
+
+	private Composite _parent;
 
 	@PostConstruct
 	public void postConstruct(Composite parent) {
@@ -79,12 +85,12 @@ public class InstanzView {
 
 	private void createInstanzInfos() {
 		Group parent = new Group(_parent, SWT.None);
-		parent.setText("Instanz");
+		parent.setText(_messages.instanz);
 		GridDataFactory.fillDefaults().applyTo(parent);
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(parent);
 
 		LabelFactory.newLabel(SWT.None)//
-				.text("Key")//
+				.text(_messages.key)//
 				.data(GridDataFactory.fillDefaults().create())//
 				.create(parent);
 		_ownKeyLabel = LabelFactory.newLabel(SWT.None)//
@@ -110,7 +116,7 @@ public class InstanzView {
 
 	private void createParent() {
 		Group parent = new Group(_parent, SWT.None);
-		parent.setText("Parent");
+		parent.setText(_messages.parent);
 		GridDataFactory.fillDefaults().applyTo(parent);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(parent);
 		_groups.add(parent);
@@ -123,7 +129,7 @@ public class InstanzView {
 
 	private void createChildren() {
 		Group parent = new Group(_parent, SWT.None);
-		parent.setText("Children");
+		parent.setText(_messages.children);
 		GridDataFactory.fillDefaults().applyTo(parent);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(parent);
 		_groups.add(parent);
@@ -139,7 +145,7 @@ public class InstanzView {
 
 	private void createSingleValueGroup() {
 		Group parent = new Group(_parent, SWT.None);
-		parent.setText("SingleValues");
+		parent.setText(_messages.mi_singleValue);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(parent);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(parent);
 		_groups.add(parent);
@@ -147,7 +153,7 @@ public class InstanzView {
 		SingleValueType[] values = SingleValueType.values();
 		for (SingleValueType type : values) {
 			Group typeGroup = new Group(parent, SWT.None);
-			typeGroup.setText(type.name());
+			typeGroup.setText(type.name()); // TODO: translation for type names
 			GridDataFactory.fillDefaults().grab(true, false).applyTo(typeGroup);
 			GridLayoutFactory.fillDefaults().numColumns(3).applyTo(typeGroup);
 
@@ -172,7 +178,7 @@ public class InstanzView {
 				.create(typeGroup);
 
 		Label keyLabel = LabelFactory.newLabel(SWT.None)//
-				.text("Key: " + singleValue.get().getOwnKey())//
+				.text(_messages.key + ": " + singleValue.get().getOwnKey())//
 				.layoutData(GridDataFactory.fillDefaults().create())//
 				.create(typeGroup);
 
@@ -182,7 +188,7 @@ public class InstanzView {
 
 		MenuItem deleteMI = new MenuItem(labelCM, SWT.PUSH);
 		deleteMI.setData(singleValue.get());
-		deleteMI.setText("Delete");
+		deleteMI.setText(_messages.mi_delete);
 		deleteMI.addSelectionListener(deleteSingleValueSelectionListener());
 	}
 
@@ -256,8 +262,8 @@ public class InstanzView {
 		}
 
 		if (_part.isDirty()) {
-			int index = MessageDialog.open(MessageDialog.QUESTION, new Shell(), "Ist noch dirty hier",
-					"Sollen die Änderungen publiziert werden?", SWT.None, "Ja", "Nein", "Cancel");
+			int index = MessageDialog.open(MessageDialog.QUESTION, new Shell(), _messages.dialog_save_title,
+					_messages.dialog_save_text, SWT.None, _messages.yes, _messages.no, _messages.cancel);
 			_logic.executeChanges(index, _broker, _shownInstanz);
 			if (index == 2) {
 				return;

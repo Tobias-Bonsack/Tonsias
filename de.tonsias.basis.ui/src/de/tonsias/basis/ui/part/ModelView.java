@@ -164,7 +164,7 @@ public class ModelView {
 
 	private void createInstanzMenuItem(Tree tree, Menu menu) {
 		MenuItem menuItem = new MenuItem(menu, SWT.NONE);
-		menuItem.setText("Erstelle Instanz");
+		menuItem.setText(_messages.mi_createInstanz);
 		_menuItems.putIfAbsent(IInstanz.class, new ArrayList<>());
 		_menuItems.get(IInstanz.class).add(menuItem);
 
@@ -187,14 +187,14 @@ public class ModelView {
 
 	private void createSingleValueMenuItems(Tree tree, Menu menu) {
 		MenuItem parentItem = new MenuItem(menu, SWT.CASCADE);
-		parentItem.setText("SingleValues");
+		parentItem.setText(_messages.mi_singleValue);
 		_menuItems.get(IInstanz.class).add(parentItem);
 
 		Menu singleValueMenu = new Menu(menu);
 		parentItem.setMenu(singleValueMenu);
 
 		MenuItem createStringSingleValueItem = new MenuItem(singleValueMenu, SWT.None);
-		createStringSingleValueItem.setText("String");
+		createStringSingleValueItem.setText(_messages.mi_string);
 
 		createStringSingleValueItem.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -218,7 +218,7 @@ public class ModelView {
 		});
 
 		MenuItem createStringIntegerValueItem = new MenuItem(singleValueMenu, SWT.None);
-		createStringIntegerValueItem.setText("Integer");
+		createStringIntegerValueItem.setText(_messages.mi_integer);
 
 		createStringIntegerValueItem.addSelectionListener(new SelectionAdapter() {
 			@Override
