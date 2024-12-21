@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.e4.core.di.annotations.Optional;
+import org.eclipse.e4.core.services.nls.Translation;
 import org.eclipse.e4.ui.di.UIEventTopic;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.window.Window;
@@ -43,6 +44,7 @@ import de.tonsias.basis.osgi.intf.non.service.PreferenceEventConstants;
 import de.tonsias.basis.ui.dialog.IntegerValueDialog;
 import de.tonsias.basis.ui.dialog.StringValueDialog;
 import de.tonsias.basis.ui.handler.CreateInstanzOperation;
+import de.tonsias.basis.ui.i18n.Messages;
 import de.tonsias.basis.ui.node.TreeNodeWrapper;
 import de.tonsias.basis.ui.provider.TreeContentProvider;
 import de.tonsias.basis.ui.provider.TreeLabelProvider;
@@ -62,6 +64,10 @@ public class ModelView {
 
 	@Inject
 	IDeltaService _deltaService;
+
+	@Inject
+	@Translation
+	Messages _messages;
 
 	private final Map<Class<? extends IObject>, Collection<MenuItem>> _menuItems = new HashMap<>();
 
@@ -132,7 +138,7 @@ public class ModelView {
 
 	private void createMenuItemsForvalues(Tree tree, Menu menu) {
 		MenuItem menuItem = new MenuItem(menu, SWT.NONE);
-		menuItem.setText("Delete Value");
+		menuItem.setText(_messages.mi_delete);
 		_menuItems.computeIfAbsent(ISingleValue.class, c -> new ArrayList<>()).add(menuItem);
 
 		menuItem.addSelectionListener(new SelectionAdapter() {
