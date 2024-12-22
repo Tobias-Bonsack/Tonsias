@@ -7,15 +7,16 @@ import org.eclipse.swt.widgets.Shell;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
+import de.tonsias.basis.ui.i18n.Messages;
 
 public class StringValueDialog extends AValueDialog<SingleStringValue> {
 
-	public StringValueDialog(Shell parentShell, SingleStringValue stringValue, IInstanz instanz) {
-		super(parentShell, stringValue, instanz);
+	public StringValueDialog(Shell parentShell, SingleStringValue stringValue, IInstanz instanz, Messages messages) {
+		super(parentShell, stringValue, instanz, messages);
 	}
 
-	public StringValueDialog(Shell shell, IInstanz parentObject) {
-		this(shell, null, parentObject);
+	public StringValueDialog(Shell shell, IInstanz parentObject, Messages messages) {
+		this(shell, null, parentObject, messages);
 	}
 
 	@Override

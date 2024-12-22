@@ -25,6 +25,7 @@ import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.util.OsgiUtil;
+import de.tonsias.basis.ui.i18n.Messages;
 
 public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 
@@ -44,8 +45,11 @@ public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 
 	SingleValueType _type;
 
-	protected AValueDialog(Shell parentShell, T singleValue, IInstanz parent) {
+	private Messages _messages;
+
+	protected AValueDialog(Shell parentShell, T singleValue, IInstanz parent, Messages messages) {
 		super(parentShell);
+		_messages = messages;
 		_value = Optional.ofNullable(singleValue);
 		_instanz = parent;
 		_type = getType();
@@ -65,21 +69,29 @@ public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 		GridDataFactory.fillDefaults().span(2, 1).grab(true, false).applyTo(separator);
 
 		createSingleValuePart(composite);
+
 		return composite;
 	}
 
+	@Override
+	protected Control createButtonBar(Composite parent) {
+		Control buttonBar = super.createButtonBar(parent);
+		getButton(IDialogConstants.CANCEL_ID).setText(_messages.constant_cancel);
+		return buttonBar;
+	}
+
 	private void createInstanzPart(Composite composite) {
-		Label instanzLabel = LabelFactory.newLabel(SWT.None).text("Instanz-Seite").create(composite);
+		Label instanzLabel = LabelFactory.newLabel(SWT.None).text(_messages.dialog_value_instanzSide).create(composite);
 		GridDataFactory.fillDefaults().span(2, 1).applyTo(instanzLabel);
 
-		Label keyLabel = LabelFactory.newLabel(SWT.None).text("Key").create(composite);
+		Label keyLabel = LabelFactory.newLabel(SWT.None).text(_messages.constant_key).create(composite);
 		GridDataFactory.fillDefaults().applyTo(keyLabel);
 
 		String keyString = _value.map(v -> v.getOwnKey()).orElse(_keyService.previewNextKey());
 		Text keyText = TextFactory.newText(SWT.None).text(keyString).enabled(false).create(composite);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(keyText);
 
-		Label nameLabel = LabelFactory.newLabel(SWT.None).text("Name").create(composite);
+		Label nameLabel = LabelFactory.newLabel(SWT.None).text(_messages.constant_name).create(composite);
 		GridDataFactory.fillDefaults().applyTo(nameLabel);
 
 		String name = _instanz.getSingleValues(_type).getOrDefault(keyString, "");
@@ -89,7 +101,7 @@ public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 			BiMap<String, String> biMap = _instanz.getSingleValues(_type);
 			if (biMap.inverse().containsKey(_nameText.getText())) {
 				_nameText.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_RED));
-				_nameText.setMessage("Name bereits genutzt!");
+				_nameText.setMessage(_messages.dialog_value_usedName);
 				getButton(IDialogConstants.OK_ID).setEnabled(false);
 			} else {
 				_nameText.setBackground(null);
@@ -100,10 +112,11 @@ public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 	}
 
 	private void createSingleValuePart(Composite composite) {
-		Label singleValueLabel = LabelFactory.newLabel(SWT.None).text("Value-Seite").create(composite);
+		Label singleValueLabel = LabelFactory.newLabel(SWT.None).text(_messages.dialog_value_valueSide)
+				.create(composite);
 		GridDataFactory.fillDefaults().span(2, 1).applyTo(singleValueLabel);
 
-		Label valueLabel = LabelFactory.newLabel(SWT.None).text("Value").create(composite);
+		Label valueLabel = LabelFactory.newLabel(SWT.None).text(_messages.constant_singleValue).create(composite);
 		GridDataFactory.fillDefaults().applyTo(valueLabel);
 
 		String valueString = _value.map(v -> v.getValue().toString()).orElse("");

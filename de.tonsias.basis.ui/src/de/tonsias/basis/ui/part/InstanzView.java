@@ -85,12 +85,12 @@ public class InstanzView {
 
 	private void createInstanzInfos() {
 		Group parent = new Group(_parent, SWT.None);
-		parent.setText(_messages.instanz);
+		parent.setText(_messages.constant_instanz);
 		GridDataFactory.fillDefaults().applyTo(parent);
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(parent);
 
 		LabelFactory.newLabel(SWT.None)//
-				.text(_messages.key)//
+				.text(_messages.constant_key)//
 				.data(GridDataFactory.fillDefaults().create())//
 				.create(parent);
 		_ownKeyLabel = LabelFactory.newLabel(SWT.None)//
@@ -116,7 +116,7 @@ public class InstanzView {
 
 	private void createParent() {
 		Group parent = new Group(_parent, SWT.None);
-		parent.setText(_messages.parent);
+		parent.setText(_messages.constant_parent);
 		GridDataFactory.fillDefaults().applyTo(parent);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(parent);
 		_groups.add(parent);
@@ -129,7 +129,7 @@ public class InstanzView {
 
 	private void createChildren() {
 		Group parent = new Group(_parent, SWT.None);
-		parent.setText(_messages.children);
+		parent.setText(_messages.constant_children);
 		GridDataFactory.fillDefaults().applyTo(parent);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(parent);
 		_groups.add(parent);
@@ -145,7 +145,7 @@ public class InstanzView {
 
 	private void createSingleValueGroup() {
 		Group parent = new Group(_parent, SWT.None);
-		parent.setText(_messages.mi_singleValue);
+		parent.setText(_messages.constant_singleValue);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(parent);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(parent);
 		_groups.add(parent);
@@ -178,7 +178,7 @@ public class InstanzView {
 				.create(typeGroup);
 
 		Label keyLabel = LabelFactory.newLabel(SWT.None)//
-				.text(_messages.key + ": " + singleValue.get().getOwnKey())//
+				.text(_messages.constant_key + ": " + singleValue.get().getOwnKey())//
 				.layoutData(GridDataFactory.fillDefaults().create())//
 				.create(typeGroup);
 
@@ -263,7 +263,7 @@ public class InstanzView {
 
 		if (_part.isDirty()) {
 			int index = MessageDialog.open(MessageDialog.QUESTION, new Shell(), _messages.dialog_save_title,
-					_messages.dialog_save_text, SWT.None, _messages.yes, _messages.no, _messages.cancel);
+					_messages.dialog_save_text, SWT.None, _messages.constant_yes, _messages.constant_no, _messages.constant_cancel);
 			_logic.executeChanges(index, _broker, _shownInstanz);
 			if (index == 2) {
 				return;

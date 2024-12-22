@@ -187,7 +187,7 @@ public class ModelView {
 
 	private void createSingleValueMenuItems(Tree tree, Menu menu) {
 		MenuItem parentItem = new MenuItem(menu, SWT.CASCADE);
-		parentItem.setText(_messages.mi_singleValue);
+		parentItem.setText(_messages.constant_singleValue);
 		_menuItems.get(IInstanz.class).add(parentItem);
 
 		Menu singleValueMenu = new Menu(menu);
@@ -207,7 +207,7 @@ public class ModelView {
 				TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
 				IInstanz parentObject = (IInstanz) parent.getObject();
 
-				StringValueDialog dialog = new StringValueDialog(new Shell(), parentObject);
+				StringValueDialog dialog = new StringValueDialog(new Shell(), parentObject, _messages);
 				int open = dialog.open();
 				if (open == Window.OK) {
 					SingleStringValue singleValue = dialog.getSingleValue();
@@ -231,7 +231,7 @@ public class ModelView {
 				TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
 				IInstanz parentObject = (IInstanz) parent.getObject();
 
-				IntegerValueDialog dialog = new IntegerValueDialog(new Shell(), parentObject);
+				IntegerValueDialog dialog = new IntegerValueDialog(new Shell(), parentObject, _messages);
 				int open = dialog.open();
 				if (open == Window.OK) {
 					SingleIntegerValue singleValue = dialog.getSingleValue();

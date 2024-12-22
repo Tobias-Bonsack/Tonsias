@@ -10,15 +10,16 @@ import org.eclipse.swt.widgets.Shell;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
+import de.tonsias.basis.ui.i18n.Messages;
 
 public class IntegerValueDialog extends AValueDialog<SingleIntegerValue> {
 
-	public IntegerValueDialog(Shell parentShell, SingleIntegerValue stringValue, IInstanz instanz) {
-		super(parentShell, stringValue, instanz);
+	public IntegerValueDialog(Shell parentShell, SingleIntegerValue stringValue, IInstanz instanz, Messages messages) {
+		super(parentShell, stringValue, instanz, messages);
 	}
 
-	public IntegerValueDialog(Shell parentShell, IInstanz instanz) {
-		this(parentShell, null, instanz);
+	public IntegerValueDialog(Shell parentShell, IInstanz instanz, Messages messages) {
+		this(parentShell, null, instanz, messages);
 	}
 
 	@Override
