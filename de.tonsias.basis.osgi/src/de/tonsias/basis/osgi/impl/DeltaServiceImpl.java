@@ -1,8 +1,8 @@
 package de.tonsias.basis.osgi.impl;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -37,7 +37,7 @@ public class DeltaServiceImpl implements IDeltaService {
 	@Inject
 	protected ISingleValueService _singleValueService;
 
-	protected Collection<Event> _notSavedEvents = new ArrayList<Event>();
+	protected Collection<Event> _notSavedEvents = new LinkedList<Event>();
 
 	private final Collection<String> _notSaveableEvents = List.of(EventConstants.OPEN_OPERATION,
 			EventConstants.CLOSE_OPERATION);
@@ -111,5 +111,10 @@ public class DeltaServiceImpl implements IDeltaService {
 			instanzKeysToDelete.add(instanzData._newInstanz().getOwnKey());
 			break;
 		}
+	}
+
+	@Override
+	public Collection<Event> getDeltas() {
+		return _notSavedEvents;
 	}
 }

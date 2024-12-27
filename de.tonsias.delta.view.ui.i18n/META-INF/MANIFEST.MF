@@ -3,6 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: I18n
 Bundle-SymbolicName: de.tonsias.delta.view.ui.i18n
 Bundle-Version: 1.0.0.qualifier
+Export-Package: de.tonsias.delta.view.ui.i18n
 Automatic-Module-Name: de.tonsias.delta.view.ui.i18n
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-22
