@@ -10,7 +10,9 @@ Require-Bundle: org.eclipse.e4.ui.model.workbench;bundle-version="2.4.200.v20240
  org.eclipse.e4.core.di;bundle-version="1.9.300",
  org.eclipse.e4.ui.workbench;bundle-version="1.15.300",
  org.eclipse.e4.ui.di;bundle-version="1.5.300",
- jakarta.annotation-api;bundle-version="2.1.1"
+ de.tonsias.basis.osgi,
+ jakarta.inject.jakarta.inject-api,
+ jakarta.annotation-api
 Automatic-Module-Name: de.tonsias.delta.view.ui
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-22
