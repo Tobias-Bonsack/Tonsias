@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Test
+Bundle-SymbolicName: de.tonsias.delta.view.ui.test
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: de.tonsias.delta.view.ui.test
+Bundle-RequiredExecutionEnvironment: JavaSE-22
