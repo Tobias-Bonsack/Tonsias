@@ -43,6 +43,8 @@ public class DeltaServiceImpl implements IDeltaService {
 			EventConstants.CLOSE_OPERATION);
 
 	public void postConstruct() {
+		_notSavedEvents.add(START_EVENT);
+
 		_eventBridge.subscribe(InstanzEventConstants.ALL_DELTA_TOPIC, this, true);
 		_eventBridge.subscribe(SingleValueEventConstants.ALL_DELTA_TOPIC, this, true);
 		_eventBridge.subscribe(EventConstants.OPEN_OPERATION, this, true);
@@ -76,6 +78,7 @@ public class DeltaServiceImpl implements IDeltaService {
 		_singleValueService.deleteAll(singlevalueKeysToDelete);
 
 		_notSavedEvents.clear();
+		_notSavedEvents.add(START_EVENT);
 	}
 
 	private void handleSingleValueEvents(Event event, Set<String> singlevalueKeysToSave,

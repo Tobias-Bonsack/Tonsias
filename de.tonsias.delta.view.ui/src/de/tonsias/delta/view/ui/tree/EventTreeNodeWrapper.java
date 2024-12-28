@@ -21,7 +21,8 @@ public class EventTreeNodeWrapper {
 	}
 
 	public int getChildCount() {
-		if (!_event.getTopic().equals(EventConstants.OPEN_OPERATION)) {
+		if (!_event.getTopic().equals(EventConstants.OPEN_OPERATION)
+				&& !_event.getTopic().equals(IDeltaService.START_TOPIC)) {
 			return 0;
 		}
 

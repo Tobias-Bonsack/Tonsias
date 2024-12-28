@@ -10,7 +10,9 @@ import java.util.function.Function;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobGroup;
 
 import de.tonsias.basis.logic.function.QuadConsumer;
 import de.tonsias.basis.logic.function.TriFunction;
@@ -25,17 +27,20 @@ public class InstanzViewLogic {
 
 	private final List<Job> _changeJobs = new LinkedList<Job>();
 
+	private final JobGroup _jobGroup;
+
 	public InstanzViewLogic() {
+		_jobGroup = new JobGroup("InstanzViewLogic JobGroup", 1, 0);
 	}
 
 	public void createBiFunctionJob(BiFunction<String, String, Boolean> serviceFunction, String valueKey,
 			String newValue) {
-		_changeJobs.add(new Job("") {
+		Job job = new Job("") {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				serviceFunction.apply(valueKey, newValue);
-				return Job.ASYNC_FINISH;
+				return Status.OK_STATUS;
 			}
 
 			@Override
@@ -43,24 +48,29 @@ public class InstanzViewLogic {
 				return family == InstanzViewLogic.this;
 			}
 
-		});
+		};
+		job.setJobGroup(_jobGroup);
+		_changeJobs.add(job);
 	}
 
 	public void createQuadConsumerJob(QuadConsumer<String, SingleValueType, String, String> serviceConsumer,
 			String ownKey, SingleValueType type, String key, String text) {
-		_changeJobs.add(new Job("") {
+		Job job = new Job("") {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				serviceConsumer.accept(ownKey, type, key, text);
-				return Job.ASYNC_FINISH;
+				return Status.OK_STATUS;
 			}
 
 			@Override
 			public boolean belongsTo(Object family) {
 				return family == InstanzViewLogic.this;
 			}
-		});
+
+		};
+		job.setJobGroup(_jobGroup);
+		_changeJobs.add(job);
 	}
 
 	public void executeChanges(int dialogReturn, IEventBrokerBridge broker, IInstanz shownInstanz) {
@@ -87,19 +97,21 @@ public class InstanzViewLogic {
 	}
 
 	private void addConsumerOperation(IEventBrokerBridge broker, String topic, Consumer<Job> changeJobFunction) {
-		changeJobFunction.accept(new Job("") {
+		Job job = new Job("") {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				broker.post(topic, null);
-				return Job.ASYNC_FINISH;
+				return Status.OK_STATUS;
 			}
 
 			@Override
 			public boolean belongsTo(Object family) {
 				return family == InstanzViewLogic.this;
 			}
-		});
+		};
+		job.setJobGroup(_jobGroup);
+		changeJobFunction.accept(job);
 	}
 
 	public void createOneAndBiFunctionJob(Function<ISingleValue<?>, Boolean> function, ISingleValue<?> data,
