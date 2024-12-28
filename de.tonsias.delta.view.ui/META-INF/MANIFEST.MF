@@ -3,6 +3,8 @@ Bundle-ManifestVersion: 2
 Bundle-Name: DeltaViewUI
 Bundle-SymbolicName: de.tonsias.delta.view.ui
 Bundle-Version: 1.0.0.qualifier
+Export-Package: de.tonsias.delta.view.ui;x-friends:="de.tonsias.delta.view.ui.test",
+ de.tonsias.delta.view.ui.tree;x-friends:="de.tonsias.delta.view.ui.test"
 Require-Bundle: org.eclipse.e4.ui.model.workbench;bundle-version="2.4.200.v20240109-1025",
  org.eclipse.e4.core.services;bundle-version="2.4.300",
  org.eclipse.core.runtime;bundle-version="3.31.0",

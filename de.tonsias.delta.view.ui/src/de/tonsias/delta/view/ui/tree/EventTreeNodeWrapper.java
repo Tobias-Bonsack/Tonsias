@@ -1,5 +1,7 @@
 package de.tonsias.delta.view.ui.tree;
 
+import java.util.LinkedList;
+
 import org.osgi.service.event.Event;
 
 import de.tonsias.basis.osgi.intf.IDeltaService;
@@ -23,36 +25,50 @@ public class EventTreeNodeWrapper {
 			return 0;
 		}
 
-		boolean foundEvent = false;
-		int pos = 0;
-		for (var event : _deltaService.getDeltas()) {
-			if (!foundEvent && event == _event) {
-				foundEvent = true;
-				pos = 0;
-			} else if (foundEvent && event.getTopic().equals(EventConstants.CLOSE_OPERATION)) {
-				break;
-			} else {
-				pos++;
-			}
-		}
-
-		return pos;
+		return getChildren().size();
 	}
 
 	public Event getChildAt(int index) {
+		return getChildren().get(index);
+	}
+
+	private LinkedList<Event> getChildren() {
+		var children = new LinkedList<Event>();
+
 		boolean foundEvent = false;
-		int pos = 0;
-		for (var event : _deltaService.getDeltas()) {
+		int operations = 1;
+
+		loop: for (var event : _deltaService.getDeltas()) {
+
+			// Step 1: search for start
 			if (!foundEvent && event == _event) {
 				foundEvent = true;
-				pos = 0;
-			} else if (foundEvent && index == pos) {
-				return event;
-			} else {
-				pos++;
+				continue;
+			} else if (!foundEvent) {
+				continue;
+			}
+
+			// Step 2: search till operation end
+			switch (event.getTopic()) {
+			case EventConstants.CLOSE_OPERATION:
+				if (--operations == 0) {
+					break loop;
+				}
+				break;
+			case EventConstants.OPEN_OPERATION:
+				if (operations++ == 1) {
+					children.add(event);
+				}
+				break;
+			default:
+				if (operations == 1) {
+					children.add(event);
+				}
+				break;
 			}
 		}
-		return null;
+
+		return children;
 	}
 
 	public EventTreeNodeWrapper getParent() {
