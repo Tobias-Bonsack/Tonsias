@@ -17,10 +17,16 @@ public class CreatePartHandler {
 	@Execute
 	@SuppressWarnings("unchecked")
 	public void execute(MDirectMenuItem item, EModelService mService, EPartService pService, MApplication app) {
-		MPart part = pService.createPart(item.getPersistedState().get(PART_ID));
-		pService.showPart(part, PartState.ACTIVATE);
-		MUIElement muiElement = mService.find("de.tonsias.basis.ui.partstack.1", app);
-		part.setParent((MElementContainer<MUIElement>) muiElement);
+		MPart foundPart = pService.findPart(item.getPersistedState().get(PART_ID));
+		if (foundPart == null) {
+			foundPart = pService.createPart(item.getPersistedState().get(PART_ID));
+			MUIElement muiElement = mService.find("de.tonsias.basis.ui.partstack.1", app);
+			if (muiElement != null) {
+				muiElement.setOnTop(true);
+				foundPart.setParent((MElementContainer<MUIElement>) muiElement);
+			}
+		}
+		pService.showPart(foundPart, PartState.ACTIVATE);
 	}
 
 }
