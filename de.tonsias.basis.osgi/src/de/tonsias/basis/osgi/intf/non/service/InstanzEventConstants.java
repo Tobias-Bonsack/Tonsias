@@ -35,7 +35,7 @@ public interface InstanzEventConstants {
 	static record PureInstanzData(IInstanz _newInstanz) {
 	}
 
-	static record AttributeChangeData(String _key, SingleValueType _type, String _oldKey, String _oldValue,
-			String _newKey, String _newValue) {
+	static record AttributeChangeData(String _key, SingleValueType _type, String _oldKey, String _oldName,
+			String _newKey, String _newName) {
 	}
 }

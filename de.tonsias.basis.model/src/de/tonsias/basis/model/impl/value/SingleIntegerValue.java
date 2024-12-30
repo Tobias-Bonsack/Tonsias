@@ -17,7 +17,18 @@ public class SingleIntegerValue extends ASingleValue<Integer> {
 
 	@Override
 	public boolean tryToSetValue(Object value) {
-		return (value instanceof Integer) && setValue((Integer) value);
+		if (value instanceof Integer i) {
+			return setValue(i);
+		} else if (value instanceof String s) {
+			try {
+				Integer i = Integer.valueOf(s);
+				return setValue(i);
+			} catch (Exception e) {
+				throw e;
+			}
+		}
+
+		return false;
 	}
 
 	@Override

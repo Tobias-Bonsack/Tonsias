@@ -142,11 +142,11 @@ public class InstanzServiceImpl implements IInstanzService {
 			return;
 		}
 
-		String oldValue = instanz.get().getSingleValues(type).get(key);
-		String oldKey = oldValue == null ? null : key;
+		String oldName = instanz.get().getSingleValues(type).get(key);
+		String oldKey = oldName == null ? null : key;
 
 		instanz.get().getSingleValues(type).put(key, newName);
-		var changeData = new AttributeChangeData(instanzKey, type, oldKey, oldValue, key, oldValue);
+		var changeData = new AttributeChangeData(instanzKey, type, oldKey, oldName, key, newName);
 		Map<String, Object> data = Map.of(IEventBroker.DATA, changeData);
 		_broker.post(InstanzEventConstants.CHANGE, data);
 	}
