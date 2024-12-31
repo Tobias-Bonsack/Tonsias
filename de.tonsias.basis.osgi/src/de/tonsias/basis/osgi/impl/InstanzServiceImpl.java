@@ -141,12 +141,11 @@ public class InstanzServiceImpl implements IInstanzService {
 		if (instanz.isEmpty() || type == null || key.isBlank() || newName.isBlank()) {
 			return;
 		}
-
 		String oldName = instanz.get().getSingleValues(type).get(key);
-		String oldKey = oldName == null ? null : key;
 
 		instanz.get().getSingleValues(type).put(key, newName);
-		var changeData = new AttributeChangeData(instanzKey, type, oldKey, oldName, key, newName);
+
+		var changeData = new AttributeChangeData(instanzKey, type, key, oldName, newName);
 		Map<String, Object> data = Map.of(IEventBroker.DATA, changeData);
 		_broker.post(InstanzEventConstants.CHANGE, data);
 	}
@@ -157,10 +156,10 @@ public class InstanzServiceImpl implements IInstanzService {
 		for (IInstanz instanz : instanzes) {
 			String name = instanz.getSingleValues(type).get(valueKeyToRemove);
 			instanz.getSingleValues(type).remove(valueKeyToRemove);
-			var data = new AttributeChangeData(instanz.getOwnKey(), type, valueKeyToRemove, name, null, null);
+			var data = new AttributeChangeData(instanz.getOwnKey(), type, valueKeyToRemove, name, null);
 			_broker.post(InstanzEventConstants.CHANGE, Map.of(IEventBroker.DATA, data));
 		}
-		return false;
+		return true;
 	}
 
 	@Override
