@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ASCII"?>
 <fragment:ModelFragments xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:basic="http://www.eclipse.org/ui/2010/UIModel/application/descriptor/basic" xmlns:fragment="http://www.eclipse.org/ui/2010/UIModel/fragment" xmlns:menu="http://www.eclipse.org/ui/2010/UIModel/application/ui/menu" xmi:id="_S-yBcL7fEe-iy9yOXwbNCw">
   <fragments xsi:type="fragment:StringModelFragment" xmi:id="_UfbU0L7fEe-iy9yOXwbNCw" featurename="descriptors" parentElementId="de.tonsias.basis.ui.application">
-    <elements xsi:type="basic:PartDescriptor" xmi:id="_ihPpwL7fEe-iy9yOXwbNCw" elementId="de.tonsias.delta.view.ui.partdescriptor.deltaview" label="%part.modelview.label" closeable="true" contributionURI="bundleclass://de.tonsias.delta.view.ui/de.tonsias.delta.view.ui.DeltaView">
+    <elements xsi:type="basic:PartDescriptor" xmi:id="_ihPpwL7fEe-iy9yOXwbNCw" elementId="de.tonsias.delta.view.ui.partdescriptor.deltaview" label="%part.deltaview.label" closeable="true" contributionURI="bundleclass://de.tonsias.delta.view.ui/de.tonsias.delta.view.ui.DeltaView">
       <toolbar xmi:id="_japPMNvkEe-ZmsncMgHwgQ" elementId="de.tonsias.delta.view.ui.toolbar.0">
         <children xsi:type="menu:DirectToolItem" xmi:id="_khaC8NvkEe-ZmsncMgHwgQ" elementId="de.tonsias.delta.view.ui.directtoolitem.0" iconURI="platform:/plugin/de.tonsias.basis.icon/res/refresh.png" tooltip="%part.toolbar.refresh.tooltip" contributionURI="bundleclass://de.tonsias.delta.view.ui/de.tonsias.delta.view.ui.toolbar.RefreshHandler"/>
       </toolbar>
