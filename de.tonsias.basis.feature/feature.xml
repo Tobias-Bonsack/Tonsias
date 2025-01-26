@@ -45,4 +45,8 @@
          id="de.tonsias.basis.ui.i18n"
          version="0.0.0"/>
 
+   <plugin
+         id="de.tonsias.basis.icon"
+         version="0.0.0"/>
+
 </feature>

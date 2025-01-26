@@ -25,4 +25,8 @@
          id="de.tonsias.delta.view.ui.i18n"
          version="0.0.0"/>
 
+   <plugin
+         id="de.tonsias.delta.view.logic"
+         version="0.0.0"/>
+
 </feature>
