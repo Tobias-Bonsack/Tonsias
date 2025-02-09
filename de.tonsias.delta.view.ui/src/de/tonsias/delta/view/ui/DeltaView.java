@@ -29,6 +29,8 @@ public class DeltaView {
 
 	private Composite _parent;
 
+	private TreeViewer _treeViewer;
+
 	@PostConstruct
 	public void postConstruct(Composite parent) {
 		EventTreeNodeWrapper._deltaService = _deltaService;
@@ -50,15 +52,20 @@ public class DeltaView {
 			}
 		});
 
-		TreeViewer treeViewer = new TreeViewer(tree);
-		treeViewer.setContentProvider(new EventTreeContentProvider(treeViewer));
-		treeViewer.setLabelProvider(new LabelProvider());
-		treeViewer.setUseHashlookup(true);
+		_treeViewer = new TreeViewer(tree);
+		_treeViewer.setContentProvider(new EventTreeContentProvider(_treeViewer));
+		_treeViewer.setLabelProvider(new LabelProvider());
+		_treeViewer.setUseHashlookup(true);
 
 		EventTreeNodeWrapper root = new EventTreeNodeWrapper(IDeltaService.START_EVENT, null);
-		treeViewer.setInput(root);
-		treeViewer.setChildCount(root, root.getChildCount());
+		_treeViewer.setInput(root);
+		_treeViewer.setChildCount(root, root.getChildCount());
 
-		treeViewer.refresh();
+		_treeViewer.refresh();
+	}
+
+	public void updateTree() {
+		_treeViewer.refresh();
+
 	}
 }
