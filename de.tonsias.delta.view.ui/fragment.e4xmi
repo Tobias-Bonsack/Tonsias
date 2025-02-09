@@ -4,6 +4,7 @@
     <elements xsi:type="basic:PartDescriptor" xmi:id="_ihPpwL7fEe-iy9yOXwbNCw" elementId="de.tonsias.delta.view.ui.partdescriptor.deltaview" label="%part.deltaview.label" closeable="true" contributionURI="bundleclass://de.tonsias.delta.view.ui/de.tonsias.delta.view.ui.DeltaView">
       <toolbar xmi:id="_japPMNvkEe-ZmsncMgHwgQ" elementId="de.tonsias.delta.view.ui.toolbar.0">
         <children xsi:type="menu:DirectToolItem" xmi:id="_khaC8NvkEe-ZmsncMgHwgQ" elementId="de.tonsias.delta.view.ui.directtoolitem.0" iconURI="platform:/plugin/de.tonsias.basis.icon/res/refresh.png" tooltip="%part.toolbar.refresh.tooltip" contributionURI="bundleclass://de.tonsias.delta.view.ui/de.tonsias.delta.view.ui.toolbar.RefreshHandler"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_gB4zEOb6Ee-ISNE6Pd0oDw" elementId="de.tonsias.delta.view.ui.handledtoolitem.0" iconURI="platform:/plugin/de.tonsias.basis.icon/res/file_save.png" tooltip="%part.toolbar.save.tooltip"/>
       </toolbar>
     </elements>
   </fragments>

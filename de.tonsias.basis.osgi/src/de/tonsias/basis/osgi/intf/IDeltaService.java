@@ -12,6 +12,9 @@ public interface IDeltaService extends EventHandler {
 
 	static final Event START_EVENT = new Event(START_TOPIC, Collections.emptyMap());
 
+	/**
+	 * Save all changes on the model.
+	 */
 	void saveDeltas();
 
 	Collection<Event> getDeltas();
