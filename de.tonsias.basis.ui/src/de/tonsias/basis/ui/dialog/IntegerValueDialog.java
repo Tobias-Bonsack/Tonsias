@@ -42,9 +42,8 @@ public class IntegerValueDialog extends AValueDialog<SingleIntegerValue> {
 		if (_value.isEmpty()) {
 			_value = Optional.of(//
 					_sVService.createNew(SingleIntegerValue.class, _instanz.getOwnKey(), _valueText.getText()));
-		} else {
-			_iService.putSingleValue(_instanz.getOwnKey(), _type, _value.get().getOwnKey(), _nameText.getText());
 		}
+		_iService.putSingleValue(_instanz.getOwnKey(), _type, _value.get().getOwnKey(), _nameText.getText());
 		super.okPressed();
 	}
 

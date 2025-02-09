@@ -237,7 +237,7 @@ public class InstanzView {
 	@org.eclipse.e4.core.di.annotations.Optional
 	private void changeListener(
 			@UIEventTopic(InstanzEventConstants.CHANGE) InstanzEventConstants.AttributeChangeData data) {
-		if (_shownInstanz != null && data._key().equals(_shownInstanz.getOwnKey())) {
+		if (_shownInstanz == null || !data._key().equals(_shownInstanz.getOwnKey())) {
 			return;
 		}
 		updateView();
@@ -263,7 +263,8 @@ public class InstanzView {
 
 		if (_part.isDirty()) {
 			int index = MessageDialog.open(MessageDialog.QUESTION, new Shell(), _messages.dialog_save_title,
-					_messages.dialog_save_text, SWT.None, _messages.constant_yes, _messages.constant_no, _messages.constant_cancel);
+					_messages.dialog_save_text, SWT.None, _messages.constant_yes, _messages.constant_no,
+					_messages.constant_cancel);
 			_logic.executeChanges(index, _broker, _shownInstanz);
 			if (index == 2) {
 				return;
