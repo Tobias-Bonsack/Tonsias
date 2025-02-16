@@ -33,7 +33,7 @@ public class InstanzViewLogic {
 		_jobGroup = new JobGroup("InstanzViewLogic JobGroup", 1, 0);
 	}
 
-	public void createBiFunctionJob(BiFunction<String, String, Boolean> serviceFunction, String valueKey,
+	public Job createBiFunctionJob(BiFunction<String, String, Boolean> serviceFunction, String valueKey,
 			String newValue) {
 		Job job = new Job("") {
 
@@ -51,9 +51,10 @@ public class InstanzViewLogic {
 		};
 		job.setJobGroup(_jobGroup);
 		_changeJobs.add(job);
+		return job;
 	}
 
-	public void createQuadConsumerJob(QuadConsumer<String, SingleValueType, String, String> serviceConsumer,
+	public Job createQuadConsumerJob(QuadConsumer<String, SingleValueType, String, String> serviceConsumer,
 			String ownKey, SingleValueType type, String key, String text) {
 		Job job = new Job("") {
 
@@ -71,6 +72,28 @@ public class InstanzViewLogic {
 		};
 		job.setJobGroup(_jobGroup);
 		_changeJobs.add(job);
+		return job;
+	}
+
+	public Job createOneAndTriFunctionJob(Function<ISingleValue<?>, Boolean> function, ISingleValue<?> data,
+			TriFunction<Collection<String>, SingleValueType, String, Boolean> triFunction) {
+		Job job = new Job("") {
+
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				function.apply(data);
+				triFunction.apply(data.getConnectedInstanzKeys(), SingleValueType.getByClass(data.getClass()).get(),
+						data.getOwnKey());
+				return Status.OK_STATUS;
+			}
+
+			@Override
+			public boolean belongsTo(Object family) {
+				return family == InstanzViewLogic.this;
+			}
+		};
+		_changeJobs.add(job);
+		return job;
 	}
 
 	public void executeChanges(int dialogReturn, IEventBrokerBridge broker, IInstanz shownInstanz) {
@@ -112,25 +135,6 @@ public class InstanzViewLogic {
 		};
 		job.setJobGroup(_jobGroup);
 		changeJobFunction.accept(job);
-	}
-
-	public void createOneAndBiFunctionJob(Function<ISingleValue<?>, Boolean> function, ISingleValue<?> data,
-			TriFunction<Collection<String>, SingleValueType, String, Boolean> triFunction) {
-		_changeJobs.add(new Job("") {
-
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				function.apply(data);
-				triFunction.apply(data.getConnectedInstanzKeys(), SingleValueType.getByClass(data.getClass()).get(),
-						data.getOwnKey());
-				return Job.ASYNC_FINISH;
-			}
-
-			@Override
-			public boolean belongsTo(Object family) {
-				return family == InstanzViewLogic.this;
-			}
-		});
 	}
 
 }

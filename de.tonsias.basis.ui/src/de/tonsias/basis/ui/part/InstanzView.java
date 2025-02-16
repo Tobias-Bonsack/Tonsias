@@ -202,7 +202,7 @@ public class InstanzView {
 					parent.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_RED));
 				}
 
-				_logic.createOneAndBiFunctionJob(_singleService::removeValue, data, _instanzService::removeValueKey);
+				_logic.createOneAndTriFunctionJob(_singleService::removeValue, data, _instanzService::removeValueKey);
 				_part.setDirty(true);
 
 			}

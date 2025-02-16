@@ -85,15 +85,17 @@ public class DeltaServiceImpl implements IDeltaService {
 			Set<String> singlevalueKeysToDelete) {
 		switch (event.getTopic()) {
 		case SingleValueEventConstants.NEW:
-			var instanzData = SingleValueEventConstants.PureSingleValueData.class.cast(IEventBroker.DATA);
+			var instanzData = SingleValueEventConstants.PureSingleValueData.class
+					.cast(event.getProperty(IEventBroker.DATA));
 			singlevalueKeysToSave.add(instanzData._newSingleValue().getOwnKey());
 			break;
 		case SingleValueEventConstants.CHANGE:
-			var change = SingleValueEventConstants.AttributeChangeData.class.cast(IEventBroker.DATA);
+			var change = SingleValueEventConstants.AttributeChangeData.class.cast(event.getProperty(IEventBroker.DATA));
 			singlevalueKeysToSave.add(change._key());
 			break;
 		case SingleValueEventConstants.DELETE:
-			instanzData = SingleValueEventConstants.PureSingleValueData.class.cast(IEventBroker.DATA);
+			instanzData = SingleValueEventConstants.PureSingleValueData.class
+					.cast(event.getProperty(IEventBroker.DATA));
 			singlevalueKeysToDelete.add(instanzData._newSingleValue().getOwnKey());
 			break;
 		}
@@ -102,16 +104,18 @@ public class DeltaServiceImpl implements IDeltaService {
 	private void handleInstanzEvents(Event event, Set<String> instanzKeysToSave, Set<String> instanzKeysToDelete) {
 		switch (event.getTopic()) {
 		case InstanzEventConstants.NEW:
-			var instanzData = InstanzEventConstants.PureInstanzData.class.cast(IEventBroker.DATA);
+			var instanzData = InstanzEventConstants.PureInstanzData.class.cast(event.getProperty(IEventBroker.DATA));
 			instanzKeysToSave.add(instanzData._newInstanz().getOwnKey());
+			instanzKeysToSave.add(instanzData._newInstanz().getParentKey());
 			break;
 		case InstanzEventConstants.CHANGE:
-			var change = InstanzEventConstants.AttributeChangeData.class.cast(IEventBroker.DATA);
+			var change = InstanzEventConstants.AttributeChangeData.class.cast(event.getProperty(IEventBroker.DATA));
 			instanzKeysToSave.add(change._key());
 			break;
 		case InstanzEventConstants.DELETE:
-			instanzData = InstanzEventConstants.PureInstanzData.class.cast(IEventBroker.DATA);
+			instanzData = InstanzEventConstants.PureInstanzData.class.cast(event.getProperty(IEventBroker.DATA));
 			instanzKeysToDelete.add(instanzData._newInstanz().getOwnKey());
+			instanzKeysToSave.add(instanzData._newInstanz().getParentKey());
 			break;
 		}
 	}
