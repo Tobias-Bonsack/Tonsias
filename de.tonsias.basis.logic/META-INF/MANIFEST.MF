@@ -4,8 +4,10 @@ Bundle-Name: Logic
 Bundle-SymbolicName: de.tonsias.basis.logic
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: de.tonsias.basis.logic
+Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-22
 Export-Package: de.tonsias.basis.logic.dialog,
+ de.tonsias.basis.logic.function,
  de.tonsias.basis.logic.part
 Require-Bundle: de.tonsias.basis.osgi,
  org.eclipse.equinox.preferences,
