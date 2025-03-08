@@ -3,6 +3,7 @@ package de.tonsias.basis.logic.part;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -13,6 +14,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobGroup;
+import org.eclipse.e4.core.services.events.IEventBroker;
 
 import de.tonsias.basis.logic.function.QuadConsumer;
 import de.tonsias.basis.logic.function.TriFunction;
@@ -22,6 +24,7 @@ import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 
 public class InstanzViewLogic {
 
@@ -114,7 +117,8 @@ public class InstanzViewLogic {
 			return;
 		case 2:
 			_changeJobs.clear();
-			broker.post(InstanzEventConstants.SELECTED, shownInstanz);
+			InstanzEvent data = new InstanzEventConstants.InstanzEvent(shownInstanz.getOwnKey());
+			broker.send(InstanzEventConstants.SELECTED, Map.of(IEventBroker.DATA, data));
 			return;
 		}
 	}

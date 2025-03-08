@@ -236,7 +236,7 @@ public class InstanzView {
 	@Inject
 	@org.eclipse.e4.core.di.annotations.Optional
 	private void changeListener(
-			@UIEventTopic(InstanzEventConstants.CHANGE) InstanzEventConstants.AttributeChangeData data) {
+			@UIEventTopic(InstanzEventConstants.NAME_CHANGE) InstanzEventConstants.ValueRenameEvent data) {
 		if (_shownInstanz == null || !data._key().equals(_shownInstanz.getOwnKey())) {
 			return;
 		}
@@ -246,18 +246,23 @@ public class InstanzView {
 	@Inject
 	@org.eclipse.e4.core.di.annotations.Optional
 	private void changeListener(
-			@UIEventTopic(SingleValueEventConstants.CHANGE) SingleValueEventConstants.AttributeChangeData data) {
-		if (_shownInstanz != null && data._connectedInstanzs().contains(_shownInstanz.getOwnKey())) {
+			@UIEventTopic(SingleValueEventConstants.VALUE_CHANGE) SingleValueEventConstants.ValueChangeEvent data) {
+		Optional<? extends ISingleValue<?>> sValue = _singleService//
+				.resolveKey(data._type().getPath(), data._key(), data._type().getClazz());
+
+		if (_shownInstanz != null && sValue.isPresent()
+				&& sValue.get().getConnectedInstanzKeys().contains(_shownInstanz.getOwnKey())) {
 			return;
 		}
+
 		updateView();
 	}
 
 	@Inject
 	@org.eclipse.e4.core.di.annotations.Optional
 	private void selectionEventListener(
-			@UIEventTopic(InstanzEventConstants.SELECTED) InstanzEventConstants.PureInstanzData data) {
-		if (data._newInstanz() == null || data._newInstanz().equals(_shownInstanz)) {
+			@UIEventTopic(InstanzEventConstants.SELECTED) InstanzEventConstants.InstanzEvent data) {
+		if (data._key() == null || (_shownInstanz != null && data._key().equals(_shownInstanz.getOwnKey()))) {
 			return;
 		}
 
@@ -271,7 +276,7 @@ public class InstanzView {
 			}
 		}
 
-		_shownInstanz = data._newInstanz();
+		_shownInstanz = _instanzService.resolveKey(data._key()).orElseGet(() -> null);
 		_part.setDirty(false);
 		updateView();
 	}

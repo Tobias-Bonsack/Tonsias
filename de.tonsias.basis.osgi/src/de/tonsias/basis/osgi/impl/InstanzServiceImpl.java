@@ -25,8 +25,10 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.AttributeChangeData;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.PureInstanzData;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedValueChangeEvent;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedValueChangeEvent.ChangeType;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ValueRenameEvent;
 
 @Component
 public class InstanzServiceImpl implements IInstanzService {
@@ -115,8 +117,10 @@ public class InstanzServiceImpl implements IInstanzService {
 		parent.addChildKeys(instanz.getOwnKey());
 		_cache.put(key, instanz);
 
-		_broker.post(InstanzEventConstants.NEW, Map.of(IEventBroker.DATA, new PureInstanzData(instanz)));
+		var data = new InstanzEvent(instanz.getOwnKey());
+		_broker.post(InstanzEventConstants.NEW, Map.of(IEventBroker.DATA, data));
 
+		// TODO 1: needs event for add new instanz child and remove instanz child
 		return instanz;
 	}
 
@@ -136,28 +140,42 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public void putSingleValue(String instanzKey, SingleValueType type, String key, String newName) {
+	public void putSingleValue(String instanzKey, SingleValueType type, String key, String name) {
+		Optional<IInstanz> instanz = resolveKey(instanzKey);
+		if (instanz.isEmpty() || type == null || key.isBlank() || name.isBlank()) {
+			return;
+		}
+
+		instanz.get().getSingleValues(type).putIfAbsent(key, name);
+
+		var changeData = new LinkedValueChangeEvent(instanzKey, type, ChangeType.ADD, List.of(key));
+		Map<String, Object> data = Map.of(IEventBroker.DATA, changeData);
+		_broker.post(InstanzEventConstants.VALUE_LIST_CHANGE, data);
+	}
+
+	@Override
+	public void changeSingleValueName(String instanzKey, SingleValueType type, String key, String newName) {
 		Optional<IInstanz> instanz = resolveKey(instanzKey);
 		if (instanz.isEmpty() || type == null || key.isBlank() || newName.isBlank()) {
 			return;
 		}
-		String oldName = instanz.get().getSingleValues(type).get(key);
 
+		String oldName = instanz.get().getSingleValues(type).get(key);
 		instanz.get().getSingleValues(type).put(key, newName);
 
-		var changeData = new AttributeChangeData(instanzKey, type, key, oldName, newName);
+		var changeData = new ValueRenameEvent(instanzKey, type, key, oldName, newName);
 		Map<String, Object> data = Map.of(IEventBroker.DATA, changeData);
-		_broker.post(InstanzEventConstants.CHANGE, data);
+		_broker.post(InstanzEventConstants.NAME_CHANGE, data);
 	}
 
 	@Override
 	public boolean removeValueKey(Collection<String> instanzKeys, SingleValueType type, String valueKeyToRemove) {
 		Collection<IInstanz> instanzes = getInstanzes(instanzKeys);
 		for (IInstanz instanz : instanzes) {
-			String name = instanz.getSingleValues(type).get(valueKeyToRemove);
 			instanz.getSingleValues(type).remove(valueKeyToRemove);
-			var data = new AttributeChangeData(instanz.getOwnKey(), type, valueKeyToRemove, name, null);
-			_broker.post(InstanzEventConstants.CHANGE, Map.of(IEventBroker.DATA, data));
+			var data = new LinkedValueChangeEvent(instanz.getOwnKey(), type, ChangeType.REMOVE,
+					List.of(valueKeyToRemove));
+			_broker.post(InstanzEventConstants.VALUE_LIST_CHANGE, Map.of(IEventBroker.DATA, data));
 		}
 		return true;
 	}

@@ -1,41 +1,58 @@
 package de.tonsias.basis.osgi.intf.non.service;
 
+import java.util.List;
+
 import org.eclipse.e4.core.services.events.IEventBroker;
 
 import de.tonsias.basis.model.enums.SingleValueType;
-import de.tonsias.basis.model.interfaces.IInstanz;
 
 public interface InstanzEventConstants {
 	// topic identifier for all topics
-	String INSTANZ = "instanz";
+	final String INSTANZ = "instanz";
 
-	String SELECTED = INSTANZ + "/selected";
+	/**
+	 * {@link IEventBroker#DATA} maps to {@link InstanzEvent}
+	 */
+	final String SELECTED = INSTANZ + "/selected";
 
 	// this key can only be used for event registration, you cannot
 	// send out generic events
-	String ALL_DELTA_TOPIC = INSTANZ + "/delta/*";
+	final String ALL_DELTA_TOPIC = INSTANZ + "/delta/*";
+
+	final String NEW = INSTANZ + "/delta/new";
 
 	/**
-	 * {@link IEventBroker#DATA} maps to {@link PureInstanzData}
+	 * {@link IEventBroker#DATA} maps to {@link ValueRenameEvent}
 	 */
-	String NEW = INSTANZ + "/delta/new";
+	final String NAME_CHANGE = INSTANZ + "/delta/nameChange";
 
 	/**
-	 * {@link IEventBroker#DATA} maps to {@link AttributeChangeData}
+	 * {@link IEventBroker#DATA} maps to {@link LinkedValueChangeEvent}
 	 */
-	String CHANGE = INSTANZ + "/delta/change";
+	final String VALUE_LIST_CHANGE = INSTANZ + "/delta/valueChange";
 
 	/**
-	 * {@link IEventBroker#DATA} maps to {@link PureInstanzData}
+	 * {@link IEventBroker#DATA} maps to {@link InstanzEvent}
 	 */
-	String DELETE = INSTANZ + "/delta/delete";
+	final String DELETE = INSTANZ + "/delta/delete";
+
+	final List<String> KNOWN_DELTA = List.of(NEW, NAME_CHANGE, VALUE_LIST_CHANGE, DELETE);
 
 	// data and the keys
 
-	static record PureInstanzData(IInstanz _newInstanz) {
+	static record InstanzEvent(String _key) {
+
 	}
 
-	static record AttributeChangeData(String _key, SingleValueType _type, String _valueKey, String _oldName,
+	static record ValueRenameEvent(String _key, SingleValueType _type, String _attrKey, String _oldName,
 			String _newName) {
+
+	}
+
+	static record LinkedValueChangeEvent(String _key, SingleValueType _singleValuetype, ChangeType _changeType,
+			List<String> _valueKeys) {
+		public static enum ChangeType {
+			ADD, REMOVE;
+		}
 	}
 }

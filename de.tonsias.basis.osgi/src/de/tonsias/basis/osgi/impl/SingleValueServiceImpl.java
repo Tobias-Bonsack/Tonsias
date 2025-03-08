@@ -26,8 +26,6 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
-import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.AttributeChangeData;
-import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.PureSingleValueData;
 
 @Component
 public class SingleValueServiceImpl implements ISingleValueService {
@@ -88,7 +86,7 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		singleValue.tryToSetValue(value);
 		_cache.put(singleValue.getOwnKey(), singleValue);
 
-		PureSingleValueData data = new SingleValueEventConstants.PureSingleValueData(singleValue);
+		var data = new SingleValueEventConstants.SingleValueEvent(singleValue.getOwnKey());
 		_broker.post(SingleValueEventConstants.NEW, Map.of(IEventBroker.DATA, data));
 
 		return singleValue;
@@ -133,9 +131,9 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		Object oldValue = value.getValue();
 		boolean isChanged = value.tryToSetValue(newValue);
 		if (isChanged) {
-			AttributeChangeData data = new AttributeChangeData(ownKey, oldValue, newValue,
-					value.getConnectedInstanzKeys());
-			_broker.post(SingleValueEventConstants.CHANGE, Map.of(IEventBroker.DATA, data));
+			var type = SingleValueType.getByClass(value.getClass()).orElseGet(() -> null);
+			var data = new SingleValueEventConstants.ValueChangeEvent(ownKey, type, oldValue, newValue);
+			_broker.post(SingleValueEventConstants.VALUE_CHANGE, Map.of(IEventBroker.DATA, data));
 		}
 		return isChanged;
 	}
@@ -143,7 +141,7 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	@Override
 	public boolean removeValue(ISingleValue<?> valueToDelete) {
 		boolean removeFromCache = this.removeFromCache(valueToDelete.getOwnKey());
-		PureSingleValueData data = new PureSingleValueData(valueToDelete);
+		var data = new SingleValueEventConstants.SingleValueEvent(valueToDelete.getOwnKey());
 		_broker.send(SingleValueEventConstants.DELETE, Map.of(IEventBroker.DATA, data));
 		return removeFromCache;
 	}

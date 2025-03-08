@@ -3,7 +3,6 @@ package de.tonsias.basis.osgi.impl;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 import org.eclipse.e4.core.services.events.IEventBroker;
@@ -15,7 +14,13 @@ import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedValueChangeEvent;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ValueRenameEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.LinkedInstanzChangeEvent;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueEvent;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.ValueChangeEvent;
 import jakarta.inject.Inject;
 
 /**
@@ -38,9 +43,6 @@ public class DeltaServiceImpl implements IDeltaService {
 	protected ISingleValueService _singleValueService;
 
 	protected Collection<Event> _notSavedEvents = new LinkedList<Event>();
-
-	private final Collection<String> _notSaveableEvents = List.of(EventConstants.OPEN_OPERATION,
-			EventConstants.CLOSE_OPERATION);
 
 	public void postConstruct() {
 		_notSavedEvents.add(START_EVENT);
@@ -65,11 +67,12 @@ public class DeltaServiceImpl implements IDeltaService {
 		Set<String> singlevalueKeysToDelete = new HashSet<String>();
 
 		for (Event event : _notSavedEvents) {
-			if (_notSaveableEvents.contains(event.getTopic())) {
-				continue;
+			if (InstanzEventConstants.KNOWN_DELTA.contains(event.getTopic())) {
+				handleInstanzEvents(event, instanzKeysToSave, instanzKeysToDelete);
 			}
-			handleInstanzEvents(event, instanzKeysToSave, instanzKeysToDelete);
-			handleSingleValueEvents(event, singlevalueKeysToSave, singlevalueKeysToDelete);
+			if (SingleValueEventConstants.KNOWN_DELTA.contains(event.getTopic())) {
+				handleSingleValueEvents(event, singlevalueKeysToSave, singlevalueKeysToDelete);
+			}
 		}
 
 		_instanzService.saveAll(instanzKeysToSave);
@@ -85,38 +88,47 @@ public class DeltaServiceImpl implements IDeltaService {
 			Set<String> singlevalueKeysToDelete) {
 		switch (event.getTopic()) {
 		case SingleValueEventConstants.NEW:
-			var instanzData = SingleValueEventConstants.PureSingleValueData.class
-					.cast(event.getProperty(IEventBroker.DATA));
-			singlevalueKeysToSave.add(instanzData._newSingleValue().getOwnKey());
+			var value = SingleValueEvent.class.cast(event.getProperty(IEventBroker.DATA));
+			singlevalueKeysToSave.add(value._key());
 			break;
-		case SingleValueEventConstants.CHANGE:
-			var change = SingleValueEventConstants.AttributeChangeData.class.cast(event.getProperty(IEventBroker.DATA));
-			singlevalueKeysToSave.add(change._key());
+		case SingleValueEventConstants.VALUE_CHANGE:
+			var value2 = ValueChangeEvent.class.cast(event.getProperty(IEventBroker.DATA));
+			singlevalueKeysToSave.add(value2._key());
+			break;
+		case SingleValueEventConstants.INSTANZ_LIST_CHANGE:
+			var value3 = LinkedInstanzChangeEvent.class.cast(event.getProperty(IEventBroker.DATA));
+			singlevalueKeysToSave.add(value3._key());
 			break;
 		case SingleValueEventConstants.DELETE:
-			instanzData = SingleValueEventConstants.PureSingleValueData.class
-					.cast(event.getProperty(IEventBroker.DATA));
-			singlevalueKeysToDelete.add(instanzData._newSingleValue().getOwnKey());
+			var value4 = SingleValueEvent.class.cast(event.getProperty(IEventBroker.DATA));
+			singlevalueKeysToDelete.add(value4._key());
 			break;
+		default:
+			throw new IllegalArgumentException("Enum value unknown: " + event.getTopic());
 		}
 	}
 
 	private void handleInstanzEvents(Event event, Set<String> instanzKeysToSave, Set<String> instanzKeysToDelete) {
 		switch (event.getTopic()) {
 		case InstanzEventConstants.NEW:
-			var instanzData = InstanzEventConstants.PureInstanzData.class.cast(event.getProperty(IEventBroker.DATA));
-			instanzKeysToSave.add(instanzData._newInstanz().getOwnKey());
-			instanzKeysToSave.add(instanzData._newInstanz().getParentKey());
+			var value = InstanzEvent.class.cast(event.getProperty(IEventBroker.DATA));
+			instanzKeysToSave.add(value._key());
+			_instanzService.resolveKey(value._key()).ifPresent(i -> instanzKeysToSave.add(i.getParentKey()));
 			break;
-		case InstanzEventConstants.CHANGE:
-			var change = InstanzEventConstants.AttributeChangeData.class.cast(event.getProperty(IEventBroker.DATA));
-			instanzKeysToSave.add(change._key());
+		case InstanzEventConstants.NAME_CHANGE:
+			var value2 = ValueRenameEvent.class.cast(event.getProperty(IEventBroker.DATA));
+			instanzKeysToSave.add(value2._key());
 			break;
+		case InstanzEventConstants.VALUE_LIST_CHANGE:
+			var value3 = LinkedValueChangeEvent.class.cast(event.getProperty(IEventBroker.DATA));
+			instanzKeysToSave.add(value3._key());
 		case InstanzEventConstants.DELETE:
-			instanzData = InstanzEventConstants.PureInstanzData.class.cast(event.getProperty(IEventBroker.DATA));
-			instanzKeysToDelete.add(instanzData._newInstanz().getOwnKey());
-			instanzKeysToSave.add(instanzData._newInstanz().getParentKey());
+			var value4 = InstanzEvent.class.cast(event.getProperty(IEventBroker.DATA));
+			instanzKeysToDelete.add(value4._key());
+			_instanzService.resolveKey(value4._key()).ifPresent(i -> instanzKeysToSave.add(i.getParentKey()));
 			break;
+		default:
+			throw new IllegalArgumentException("Enum value unknown: " + event.getTopic());
 		}
 	}
 

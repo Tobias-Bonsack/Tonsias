@@ -35,13 +35,14 @@ public interface ISingleValueService {
 	<E extends ISingleValue<?>> Collection<E> resolveKeys(Class<E> clazz, String path, Collection<String> keys);
 
 	/**
-	 * Creates a new {@link ISingleValue}, but it will not be saved
+	 * Creates a new {@link ISingleValue}, but it will not be saved and the parent
+	 * will not be informed
 	 * 
 	 * @param <E>       created class
 	 * @param clazz     identification
 	 * @param parentKey Key of the parent {@link IInstanz}
 	 * @param value     of the new created {@link ISingleValue}
-	 * @return new instance of {@link ISingleValue}
+	 * @return new instance of {@link ISingleValue} or null
 	 */
 	<E extends ISingleValue<?>> E createNew(Class<E> clazz, String parentKey, Object value);
 

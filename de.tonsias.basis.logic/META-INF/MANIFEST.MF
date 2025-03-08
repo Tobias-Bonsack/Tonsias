@@ -13,4 +13,5 @@ Require-Bundle: de.tonsias.basis.osgi,
  org.eclipse.equinox.preferences,
  org.eclipse.core.jobs,
  org.eclipse.equinox.registry,
- de.tonsias.basis.model
+ de.tonsias.basis.model,
+ org.eclipse.e4.core.services

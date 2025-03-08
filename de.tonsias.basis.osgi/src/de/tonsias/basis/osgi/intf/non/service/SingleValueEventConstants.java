@@ -1,8 +1,10 @@
 package de.tonsias.basis.osgi.intf.non.service;
 
-import java.util.Collection;
+import java.util.List;
 
-import de.tonsias.basis.model.interfaces.ISingleValue;
+import org.eclipse.e4.core.services.events.IEventBroker;
+
+import de.tonsias.basis.model.enums.SingleValueType;
 
 public interface SingleValueEventConstants {
 
@@ -12,18 +14,41 @@ public interface SingleValueEventConstants {
 	String ALL_DELTA_TOPIC = SINGLE_VALUE + "/delta/*";
 
 	/**
-	 * Maps to {@link PureSingleValueData}
+	 * {@link IEventBroker#DATA} maps to {@link SingleValueEvent}
 	 */
 	String NEW = SINGLE_VALUE + "/delta/new";
 
-	String CHANGE = SINGLE_VALUE + "/delta/change";
+	/**
+	 * {@link IEventBroker#DATA} maps to {@link ValueChangeEvent}
+	 */
+	String VALUE_CHANGE = SINGLE_VALUE + "/delta/valueChange";
 
+	/**
+	 * {@link IEventBroker#DATA} maps to {@link LinkedInstanzChangeEvent}
+	 */
+	String INSTANZ_LIST_CHANGE = SINGLE_VALUE + "/delta/linkedInstanzChange";
+
+	/**
+	 * {@link IEventBroker#DATA} maps to {@link SingleValueEvent}
+	 */
 	String DELETE = SINGLE_VALUE + "/delta/delete";
 
-	static record PureSingleValueData(ISingleValue<?> _newSingleValue) {
+	final List<String> KNOWN_DELTA = List.of(NEW, VALUE_CHANGE, INSTANZ_LIST_CHANGE, DELETE);
+
+	// data and the keys
+
+	static record SingleValueEvent(String _key) {
+
 	}
 
-	static record AttributeChangeData(String _key, Object _oldValue, Object _newValue,
-			Collection<String> _connectedInstanzs) {
+	static record ValueChangeEvent(String _key, SingleValueType _type, Object _oldValue, Object _newValue) {
+
+	}
+
+	static record LinkedInstanzChangeEvent(String _key, SingleValueType _singleValuetype, ChangeType _changeType,
+			List<String> _instanzKeys) {
+		static enum ChangeType {
+			ADD, REMOVE;
+		}
 	}
 }

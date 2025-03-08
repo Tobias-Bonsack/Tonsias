@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.e4.core.di.annotations.Optional;
+import org.eclipse.e4.core.services.events.IEventBroker;
 import org.eclipse.e4.core.services.nls.Translation;
 import org.eclipse.e4.ui.di.UIEventTopic;
 import org.eclipse.jface.viewers.TreeViewer;
@@ -39,7 +40,7 @@ import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.PureInstanzData;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.intf.non.service.PreferenceEventConstants;
 import de.tonsias.basis.ui.dialog.IntegerValueDialog;
 import de.tonsias.basis.ui.dialog.StringValueDialog;
@@ -88,8 +89,8 @@ public class ModelView {
 				}
 				TreeNodeWrapper node = (TreeNodeWrapper) selection[0].getData();
 				if (node.getObject() instanceof IInstanz instanz) {
-					PureInstanzData data = new InstanzEventConstants.PureInstanzData(instanz);
-					_broker.send(InstanzEventConstants.SELECTED, data);
+					InstanzEvent data = new InstanzEventConstants.InstanzEvent(instanz.getOwnKey());
+					_broker.send(InstanzEventConstants.SELECTED, Map.of(IEventBroker.DATA, data));
 				}
 			}
 		});
