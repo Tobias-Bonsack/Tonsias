@@ -21,6 +21,10 @@ public class OsgiUtil {
 		return context.getService(serviceReference);
 	}
 
+	/**
+	 * You should be sure that OSGI is not init yet. Uses
+	 * {@link ServiceTracker#addingService(ServiceReference)}
+	 */
 	public static <T> void lazyLoading(Class<T> clazz, Consumer<T> consumer) {
 		BundleContext context = FrameworkUtil.getBundle(clazz).getBundleContext();
 		if (context == null) {
