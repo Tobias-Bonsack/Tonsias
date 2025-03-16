@@ -122,6 +122,7 @@ public class DeltaServiceImpl implements IDeltaService {
 		case InstanzEventConstants.VALUE_LIST_CHANGE:
 			var value3 = LinkedValueChangeEvent.class.cast(event.getProperty(IEventBroker.DATA));
 			instanzKeysToSave.add(value3._key());
+			break;
 		case InstanzEventConstants.DELETE:
 			var value4 = InstanzEvent.class.cast(event.getProperty(IEventBroker.DATA));
 			instanzKeysToDelete.add(value4._key());

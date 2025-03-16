@@ -197,4 +197,12 @@ public class InstanzServiceImpl implements IInstanzService {
 
 		return true;
 	}
+
+	@Override
+	public boolean removeInstanz(String instanzKey) {
+		_cache.remove(instanzKey);
+		var event = new InstanzEvent(instanzKey);
+		_broker.send(InstanzEventConstants.DELETE, Map.of(IEventBroker.DATA, event));
+		return false;
+	}
 }

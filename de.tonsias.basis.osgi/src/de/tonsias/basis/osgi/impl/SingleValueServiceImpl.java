@@ -58,6 +58,9 @@ public class SingleValueServiceImpl implements ISingleValueService {
 			return Optional.ofNullable(clazz.isInstance(value) ? clazz.cast(value) : null);
 		}
 
+		if (path == null || path.isBlank()) {
+			return Optional.empty();
+		}
 		E singleValue = _loadService.loadFromGson(path + key, clazz);
 		_cache.put(key, singleValue);
 		return Optional.ofNullable(singleValue);
@@ -113,7 +116,7 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	@Override
 	public boolean saveAll(Set<String> singlevalueKeysToSave) {
 		var singleValuesToSave = singlevalueKeysToSave.stream()//
-				.map(key -> resolveKey(null, key, null))//
+				.map(key -> resolveKey(null, key, ISingleValue.class))//
 				.filter(opt -> opt.isPresent()).map(opt -> opt.get())//
 				.collect(Collectors.toUnmodifiableList());
 		singleValuesToSave.forEach(i -> _saveService.safeAsGson(i, i.getClass()));

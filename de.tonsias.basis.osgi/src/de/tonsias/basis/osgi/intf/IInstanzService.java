@@ -81,6 +81,14 @@ public interface IInstanzService {
 	boolean removeValueKey(Collection<String> instanzKeys, SingleValueType type, String valueKeyToRemove);
 
 	/**
+	 * Mark the {@link IInstanz} as delete, remove from cache, nothing else
+	 * 
+	 * @param instanzKeys
+	 * @return
+	 */
+	boolean removeInstanz(String instanzKey);
+
+	/**
 	 * saves all {@link IInstanz} from the collection, if possible
 	 * 
 	 * @param instanzKeysToSave list of keys to save
