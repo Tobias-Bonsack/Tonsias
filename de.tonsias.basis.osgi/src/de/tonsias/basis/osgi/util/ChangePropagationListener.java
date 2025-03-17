@@ -3,11 +3,14 @@ package de.tonsias.basis.osgi.util;
 import org.eclipse.e4.core.di.annotations.Creatable;
 import org.eclipse.e4.core.di.annotations.Optional;
 import org.eclipse.e4.core.di.extensions.EventTopic;
+import org.eclipse.e4.core.services.events.IEventBroker;
 import org.osgi.service.event.Event;
 
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -36,8 +39,27 @@ public class ChangePropagationListener {
 
 	@Inject
 	@Optional
-	private void newInstanzListener(@EventTopic(InstanzEventConstants.NEW) Event data) {
-		System.out.println("event");
+	private void newInstanzListener(@EventTopic(InstanzEventConstants.NEW) Event event) {
+		InstanzEvent data = (InstanzEvent) event.getProperty(IEventBroker.DATA);
+		_instanz.resolveKey(data._key()).ifPresent(child -> _instanz.putChild(child.getParentKey(), child.getOwnKey()));
+	}
+
+	@Inject
+	@Optional
+	private void changeChildCollectionListener(@EventTopic(InstanzEventConstants.CHILD_LIST_CHANGE) Event event) {
+		LinkedChildChangeEvent data = (LinkedChildChangeEvent) event.getProperty(IEventBroker.DATA);
+
+		switch (data._changeType()) {
+		case ADD:
+			// TODO: change parent service
+			break;
+		case REMOVE:
+			// TODO: removeparent? wird inkonsistent damit... remove == remove from cache?
+			data._valueKeys().forEach(_instanz::removeInstanz);
+			break;
+		default:
+			throw new IllegalArgumentException("Unexpected value: " + data._changeType());
+		}
 	}
 
 }

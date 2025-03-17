@@ -24,13 +24,15 @@ public interface IInstanz extends IObject, ISavePathOwner {
 	 */
 	Collection<String> getChildren();
 
-	void addChildKeys(String... children);
-
-	void addChildKeys(Collection<String> children);
+	/**
+	 * Try to add all keys, ignore duplicated
+	 * 
+	 * @param children to add
+	 * @return true, if any key is added, else false
+	 */
+	boolean addChildKeys(String... children);
 
 	void removeChildKeys(String... children);
-
-	void removeChildKeys(Collection<String> children);
 
 	// single value section
 

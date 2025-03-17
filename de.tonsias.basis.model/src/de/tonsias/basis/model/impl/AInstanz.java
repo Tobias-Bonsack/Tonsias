@@ -55,18 +55,8 @@ public abstract class AInstanz implements IInstanz {
 	}
 
 	@Override
-	public void addChildKeys(Collection<String> children) {
-		_childKeys.addAll(children);
-	}
-
-	@Override
-	public void addChildKeys(String... children) {
-		Stream.of(children).forEach(child -> _childKeys.add(child));
-	}
-
-	@Override
-	public void removeChildKeys(Collection<String> children) {
-		_childKeys.removeAll(children);
+	public boolean addChildKeys(String... children) {
+		return Stream.of(children).anyMatch(_childKeys::add);
 	}
 
 	@Override

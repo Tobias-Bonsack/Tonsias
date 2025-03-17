@@ -25,9 +25,10 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ChangeType;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedValueChangeEvent;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedValueChangeEvent.ChangeType;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ValueRenameEvent;
 
 @Component
@@ -49,23 +50,6 @@ public class InstanzServiceImpl implements IInstanzService {
 	IEventBrokerBridge _broker;
 
 	private final Map<String, IInstanz> _cache = new HashMap<>();
-
-	@Override
-	public Optional<IInstanz> resolveKey(String key) {
-		if (_cache.containsKey(key)) {
-			return Optional.of(_cache.get(key));
-		}
-
-		String path = "instanz/" + key;
-		Instanz instanz = _loadService.loadFromGson(path, Instanz.class);
-
-		if (instanz != null) {
-			_cache.put(key, instanz);
-			return Optional.of(instanz);
-		}
-
-		return Optional.empty();
-	}
 
 	@Override
 	public IInstanz getRoot() {
@@ -91,7 +75,36 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public Collection<IInstanz> getInstanzes(Collection<String> keys) {
+	public IInstanz createInstanz(IInstanz parent) {
+		String key = _keyService.generateKey();
+		Instanz instanz = new Instanz(key);
+		instanz.setParentKey(parent.getOwnKey());
+		_cache.put(key, instanz);
+
+		var data = new InstanzEvent(instanz.getOwnKey());
+		_broker.post(InstanzEventConstants.NEW, Map.of(IEventBroker.DATA, data));
+		return instanz;
+	}
+
+	@Override
+	public Optional<IInstanz> resolveKey(String key) {
+		if (_cache.containsKey(key)) {
+			return Optional.of(_cache.get(key));
+		}
+
+		String path = "instanz/" + key;
+		Instanz instanz = _loadService.loadFromGson(path, Instanz.class);
+
+		if (instanz != null) {
+			_cache.put(key, instanz);
+			return Optional.of(instanz);
+		}
+
+		return Optional.empty();
+	}
+
+	@Override
+	public Collection<IInstanz> resolveInstanzes(Collection<String> keys) {
 		List<IInstanz> result = new ArrayList<>();
 		for (String key : keys) {
 			if (_cache.containsKey(key)) {
@@ -110,18 +123,25 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public IInstanz createInstanz(IInstanz parent) {
-		String key = _keyService.generateKey();
-		Instanz instanz = new Instanz(key);
-		instanz.setParentKey(parent.getOwnKey());
-		parent.addChildKeys(instanz.getOwnKey());
-		_cache.put(key, instanz);
+	public boolean putChild(String parentKey, String childKey) {
+		Optional<IInstanz> parent = resolveKey(parentKey);
+		if (parent.isPresent()) {
+			boolean hasAddedAny = parent.get().addChildKeys(childKey);
+			if (hasAddedAny) {
+				var data = new LinkedChildChangeEvent(parentKey, ChangeType.ADD, List.of(childKey));
+				_broker.post(InstanzEventConstants.CHILD_LIST_CHANGE, Map.of(IEventBroker.DATA, data));
+			}
+			return hasAddedAny;
+		}
+		return false;
+	}
 
-		var data = new InstanzEvent(instanz.getOwnKey());
-		_broker.post(InstanzEventConstants.NEW, Map.of(IEventBroker.DATA, data));
-
-		// TODO 1: needs event for add new instanz child and remove instanz child
-		return instanz;
+	@Override
+	public boolean removeInstanz(String instanzKey) {
+		_cache.remove(instanzKey);
+		var event = new InstanzEvent(instanzKey);
+		_broker.post(InstanzEventConstants.DELETE, Map.of(IEventBroker.DATA, event));
+		return false;
 	}
 
 	@Override
@@ -136,6 +156,24 @@ public class InstanzServiceImpl implements IInstanzService {
 				.filter(opt -> opt.isPresent()).map(opt -> opt.get())//
 				.collect(Collectors.toUnmodifiableList());
 		instanzsToSave.forEach(i -> _saveService.safeAsGson(i, i.getClass()));
+		return true;
+	}
+
+	@Override
+	public boolean deleteAll(Set<String> instanzKeysToDelete) throws CompletionException {
+		CompletionException ex = new CompletionException(null);
+		for (String key : instanzKeysToDelete) {
+			try {
+				_deleteService.deleteFile(key);
+			} catch (IOException e) {
+				ex.addSuppressed(ex);
+			}
+		}
+
+		if (ex.getSuppressed().length > 0) {
+			throw ex;
+		}
+
 		return true;
 	}
 
@@ -170,7 +208,7 @@ public class InstanzServiceImpl implements IInstanzService {
 
 	@Override
 	public boolean removeValueKey(Collection<String> instanzKeys, SingleValueType type, String valueKeyToRemove) {
-		Collection<IInstanz> instanzes = getInstanzes(instanzKeys);
+		Collection<IInstanz> instanzes = resolveInstanzes(instanzKeys);
 		for (IInstanz instanz : instanzes) {
 			instanz.getSingleValues(type).remove(valueKeyToRemove);
 			var data = new LinkedValueChangeEvent(instanz.getOwnKey(), type, ChangeType.REMOVE,
@@ -178,31 +216,5 @@ public class InstanzServiceImpl implements IInstanzService {
 			_broker.post(InstanzEventConstants.VALUE_LIST_CHANGE, Map.of(IEventBroker.DATA, data));
 		}
 		return true;
-	}
-
-	@Override
-	public boolean deleteAll(Set<String> instanzKeysToDelete) throws CompletionException {
-		CompletionException ex = new CompletionException(null);
-		for (String key : instanzKeysToDelete) {
-			try {
-				_deleteService.deleteFile(key);
-			} catch (IOException e) {
-				ex.addSuppressed(ex);
-			}
-		}
-
-		if (ex.getSuppressed().length > 0) {
-			throw ex;
-		}
-
-		return true;
-	}
-
-	@Override
-	public boolean removeInstanz(String instanzKey) {
-		_cache.remove(instanzKey);
-		var event = new InstanzEvent(instanzKey);
-		_broker.send(InstanzEventConstants.DELETE, Map.of(IEventBroker.DATA, event));
-		return false;
 	}
 }

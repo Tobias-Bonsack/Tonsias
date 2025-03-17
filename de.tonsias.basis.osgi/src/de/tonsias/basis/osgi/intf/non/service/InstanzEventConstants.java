@@ -19,12 +19,20 @@ public interface InstanzEventConstants {
 	// send out generic events
 	final String ALL_DELTA_TOPIC = INSTANZ + "/delta/*";
 
+	/**
+	 * {@link IEventBroker#DATA} maps to {@link InstanzEvent}
+	 */
 	final String NEW = INSTANZ + "/delta/new";
 
 	/**
 	 * {@link IEventBroker#DATA} maps to {@link ValueRenameEvent}
 	 */
 	final String NAME_CHANGE = INSTANZ + "/delta/nameChange";
+
+	/**
+	 * {@link IEventBroker#DATA} maps to {@link LinkedChildChangeEvent}
+	 */
+	final String CHILD_LIST_CHANGE = INSTANZ + "/delta/childChange";
 
 	/**
 	 * {@link IEventBroker#DATA} maps to {@link LinkedValueChangeEvent}
@@ -36,7 +44,7 @@ public interface InstanzEventConstants {
 	 */
 	final String DELETE = INSTANZ + "/delta/delete";
 
-	final List<String> KNOWN_DELTA = List.of(NEW, NAME_CHANGE, VALUE_LIST_CHANGE, DELETE);
+	final List<String> KNOWN_DELTA = List.of(NEW, NAME_CHANGE, VALUE_LIST_CHANGE, CHILD_LIST_CHANGE, DELETE);
 
 	// data and the keys
 
@@ -49,10 +57,14 @@ public interface InstanzEventConstants {
 
 	}
 
+	public static enum ChangeType {
+		ADD, REMOVE;
+	}
+
+	static record LinkedChildChangeEvent(String _key, ChangeType _changeType, List<String> _valueKeys) {
+	}
+
 	static record LinkedValueChangeEvent(String _key, SingleValueType _singleValuetype, ChangeType _changeType,
 			List<String> _valueKeys) {
-		public static enum ChangeType {
-			ADD, REMOVE;
-		}
 	}
 }

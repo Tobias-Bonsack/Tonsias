@@ -14,4 +14,4 @@ Require-Bundle: de.tonsias.delta.view.ui;bundle-version="1.0.0",
  org.osgi.service.event;bundle-version="1.4.1"
 Automatic-Module-Name: de.tonsias.delta.view.ui.test
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-19
+Bundle-RequiredExecutionEnvironment: JavaSE-22

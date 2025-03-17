@@ -31,10 +31,10 @@ public interface IInstanzService {
 	/**
 	 * try to resolve keys, ignores none resolvable keys
 	 * 
-	 * @param children: keys to resolve
+	 * @param keys: keys to resolve
 	 * @return collection of resolvable {@link IInstanz}
 	 */
-	Collection<IInstanz> getInstanzes(Collection<String> children);
+	Collection<IInstanz> resolveInstanzes(Collection<String> keys);
 
 	/**
 	 * Creates a new {@link IInstanz}, but does not save it
@@ -43,6 +43,15 @@ public interface IInstanzService {
 	 * @return a new {@link IInstanz}
 	 */
 	IInstanz createInstanz(IInstanz parent);
+
+	/**
+	 * Add new child if not already present
+	 * 
+	 * @param parentKey of new instanz parent
+	 * @param childKey  of new instanz child
+	 * @return true, if newly added, else false
+	 */
+	boolean putChild(String parentKey, String childKey);
 
 	/**
 	 * saves all {@link IInstanz}, that are currently in the cache.

@@ -15,6 +15,7 @@ import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedValueChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ValueRenameEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
@@ -113,7 +114,10 @@ public class DeltaServiceImpl implements IDeltaService {
 		case InstanzEventConstants.NEW:
 			var value = InstanzEvent.class.cast(event.getProperty(IEventBroker.DATA));
 			instanzKeysToSave.add(value._key());
-			_instanzService.resolveKey(value._key()).ifPresent(i -> instanzKeysToSave.add(i.getParentKey()));
+			break;
+		case InstanzEventConstants.CHILD_LIST_CHANGE:
+			var value5 = LinkedChildChangeEvent.class.cast(event.getProperty(IEventBroker.DATA));
+			instanzKeysToSave.add(value5._key());
 			break;
 		case InstanzEventConstants.NAME_CHANGE:
 			var value2 = ValueRenameEvent.class.cast(event.getProperty(IEventBroker.DATA));
