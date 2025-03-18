@@ -29,6 +29,7 @@ import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ChangeType;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedValueChangeEvent;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ParentChange;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ValueRenameEvent;
 
 @Component
@@ -126,12 +127,12 @@ public class InstanzServiceImpl implements IInstanzService {
 	public boolean putChild(String parentKey, String childKey) {
 		Optional<IInstanz> parent = resolveKey(parentKey);
 		if (parent.isPresent()) {
-			boolean hasAddedAny = parent.get().addChildKeys(childKey);
-			if (hasAddedAny) {
-				var data = new LinkedChildChangeEvent(parentKey, ChangeType.ADD, List.of(childKey));
+			Map<Boolean, Collection<String>> addedNotAddedMap = parent.get().addChildKeys(childKey);
+			if (!addedNotAddedMap.get(true).isEmpty()) {
+				var data = new LinkedChildChangeEvent(parentKey, ChangeType.ADD, addedNotAddedMap.get(true));
 				_broker.post(InstanzEventConstants.CHILD_LIST_CHANGE, Map.of(IEventBroker.DATA, data));
+				return true;
 			}
-			return hasAddedAny;
 		}
 		return false;
 	}
@@ -215,6 +216,20 @@ public class InstanzServiceImpl implements IInstanzService {
 					List.of(valueKeyToRemove));
 			_broker.post(InstanzEventConstants.VALUE_LIST_CHANGE, Map.of(IEventBroker.DATA, data));
 		}
+		return true;
+	}
+
+	@Override
+	public boolean changeParent(String childKey, String parentKey) {
+		Optional<IInstanz> child = resolveKey(childKey);
+		Optional<IInstanz> parent = resolveKey(parentKey);
+		if (child.isEmpty() || parent.isEmpty() || child.get().getParentKey().equals(parentKey)) {
+			return false;
+		}
+
+		var data = new ParentChange(childKey, parentKey, child.get().getParentKey());
+		child.get().setParentKey(parentKey);
+		_broker.post(InstanzEventConstants.PARENT_CHANGE, Map.of(IEventBroker.DATA, data));
 		return true;
 	}
 }

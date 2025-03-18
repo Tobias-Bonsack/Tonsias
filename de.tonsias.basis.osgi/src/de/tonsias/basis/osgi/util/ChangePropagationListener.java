@@ -52,10 +52,10 @@ public class ChangePropagationListener {
 		switch (data._changeType()) {
 		case ADD:
 			// TODO: change parent service
+			data._instanzKeys().forEach(key -> _instanz.changeParent(key, data._key()));
 			break;
 		case REMOVE:
 			// TODO: removeparent? wird inkonsistent damit... remove == remove from cache?
-			data._valueKeys().forEach(_instanz::removeInstanz);
 			break;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + data._changeType());

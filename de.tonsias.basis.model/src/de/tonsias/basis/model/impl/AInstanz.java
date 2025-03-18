@@ -5,7 +5,10 @@ package de.tonsias.basis.model.impl;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -25,7 +28,7 @@ public abstract class AInstanz implements IInstanz {
 
 	private String _ownKey = null;
 
-	private Set<String> _childKeys = new HashSet<String>();
+	private Set<String> _childKeys = Collections.synchronizedSet(new HashSet<String>());
 
 	private BiMap<String, String> _singleStringKeyValueMap = HashBiMap.create();
 
@@ -55,8 +58,11 @@ public abstract class AInstanz implements IInstanz {
 	}
 
 	@Override
-	public boolean addChildKeys(String... children) {
-		return Stream.of(children).anyMatch(_childKeys::add);
+	public Map<Boolean, Collection<String>> addChildKeys(String... children) {
+		Map<Boolean, Collection<String>> result = Map.of(Boolean.TRUE, new LinkedList<String>(), Boolean.FALSE,
+				new LinkedList<String>());
+		Stream.of(children).forEach(i -> result.get(_childKeys.add(i)).add(i));
+		return result;
 	}
 
 	@Override

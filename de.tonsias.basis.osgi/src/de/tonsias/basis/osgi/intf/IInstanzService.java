@@ -115,4 +115,13 @@ public interface IInstanzService {
 	 *         <code>false</code>
 	 */
 	boolean deleteAll(Set<String> instanzKeysToDelete) throws CompletionException;
+
+	/**
+	 * Change its parent to the new one if not already is the new parent
+	 * 
+	 * @param childKey  of the child
+	 * @param parentKey of new parent
+	 * @return true, if set, else false
+	 */
+	boolean changeParent(String childKey, String parentKey);
 }

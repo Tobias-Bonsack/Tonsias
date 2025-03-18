@@ -1,6 +1,7 @@
 package de.tonsias.basis.model.interfaces;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.common.collect.BiMap;
@@ -25,12 +26,12 @@ public interface IInstanz extends IObject, ISavePathOwner {
 	Collection<String> getChildren();
 
 	/**
-	 * Try to add all keys, ignore duplicated
+	 * try to add children set
 	 * 
 	 * @param children to add
-	 * @return true, if any key is added, else false
+	 * @return map of true-added and false-not added
 	 */
-	boolean addChildKeys(String... children);
+	Map<Boolean, Collection<String>> addChildKeys(String... children);
 
 	void removeChildKeys(String... children);
 

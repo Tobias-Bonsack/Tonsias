@@ -1,5 +1,6 @@
 package de.tonsias.basis.osgi.intf.non.service;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.e4.core.services.events.IEventBroker;
@@ -35,6 +36,11 @@ public interface InstanzEventConstants {
 	final String CHILD_LIST_CHANGE = INSTANZ + "/delta/childChange";
 
 	/**
+	 * {@link IEventBroker#DATA} maps to {@link ParentChange}
+	 */
+	final String PARENT_CHANGE = INSTANZ + "/delta/parentChange";
+
+	/**
 	 * {@link IEventBroker#DATA} maps to {@link LinkedValueChangeEvent}
 	 */
 	final String VALUE_LIST_CHANGE = INSTANZ + "/delta/valueChange";
@@ -44,7 +50,8 @@ public interface InstanzEventConstants {
 	 */
 	final String DELETE = INSTANZ + "/delta/delete";
 
-	final List<String> KNOWN_DELTA = List.of(NEW, NAME_CHANGE, VALUE_LIST_CHANGE, CHILD_LIST_CHANGE, DELETE);
+	final List<String> KNOWN_DELTA = List.of(NEW, NAME_CHANGE, VALUE_LIST_CHANGE, CHILD_LIST_CHANGE, DELETE,
+			PARENT_CHANGE);
 
 	// data and the keys
 
@@ -61,10 +68,13 @@ public interface InstanzEventConstants {
 		ADD, REMOVE;
 	}
 
-	static record LinkedChildChangeEvent(String _key, ChangeType _changeType, List<String> _valueKeys) {
+	static record ParentChange(String _key, String _newParentKey, String _oldParentKey) {
+	}
+
+	static record LinkedChildChangeEvent(String _key, ChangeType _changeType, Collection<String> _instanzKeys) {
 	}
 
 	static record LinkedValueChangeEvent(String _key, SingleValueType _singleValuetype, ChangeType _changeType,
-			List<String> _valueKeys) {
+			Collection<String> _valueKeys) {
 	}
 }
