@@ -39,10 +39,10 @@ public interface IInstanzService {
 	/**
 	 * Creates a new {@link IInstanz}, but does not save it
 	 * 
-	 * @param parent of the new instance
+	 * @param parentKey of the new instance
 	 * @return a new {@link IInstanz}
 	 */
-	IInstanz createInstanz(IInstanz parent);
+	IInstanz createInstanz(String parentKey);
 
 	/**
 	 * Add new child if not already present

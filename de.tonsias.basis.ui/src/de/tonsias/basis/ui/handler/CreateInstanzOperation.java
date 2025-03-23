@@ -25,7 +25,7 @@ public class CreateInstanzOperation {
 	public void execute(IEventBroker broker) {
 		IInstanzService instanzS = OsgiUtil.getService(IInstanzService.class);
 		IInstanz parent = _parent == null ? instanzS.getRoot() : _parent;
-		_createdInstanz = instanzS.createInstanz(parent);
+		_createdInstanz = instanzS.createInstanz(parent.getOwnKey());
 	}
 
 	@CanExecute

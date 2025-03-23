@@ -76,10 +76,13 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public IInstanz createInstanz(IInstanz parent) {
+	public IInstanz createInstanz(String parentKey) {
+		if (parentKey == null || parentKey.isBlank()) {
+			return null;
+		}
 		String key = _keyService.generateKey();
 		Instanz instanz = new Instanz(key);
-		instanz.setParentKey(parent.getOwnKey());
+		instanz.setParentKey(parentKey);
 		_cache.put(key, instanz);
 
 		var data = new InstanzEvent(instanz.getOwnKey());
@@ -121,20 +124,6 @@ public class InstanzServiceImpl implements IInstanzService {
 		}
 		return result;
 
-	}
-
-	@Override
-	public boolean putChild(String parentKey, String childKey) {
-		Optional<IInstanz> parent = resolveKey(parentKey);
-		if (parent.isPresent()) {
-			Map<Boolean, Collection<String>> addedNotAddedMap = parent.get().addChildKeys(childKey);
-			if (!addedNotAddedMap.get(true).isEmpty()) {
-				var data = new LinkedChildChangeEvent(parentKey, ChangeType.ADD, addedNotAddedMap.get(true));
-				_broker.post(InstanzEventConstants.CHILD_LIST_CHANGE, Map.of(IEventBroker.DATA, data));
-				return true;
-			}
-		}
-		return false;
 	}
 
 	@Override
@@ -230,6 +219,23 @@ public class InstanzServiceImpl implements IInstanzService {
 		var data = new ParentChange(childKey, parentKey, child.get().getParentKey());
 		child.get().setParentKey(parentKey);
 		_broker.post(InstanzEventConstants.PARENT_CHANGE, Map.of(IEventBroker.DATA, data));
+		return true;
+	}
+
+	@Override
+	public boolean putChild(String parentKey, String childKey) {
+		Optional<IInstanz> parent = resolveKey(parentKey);
+		if (parent.isEmpty() || childKey == null || childKey.isBlank()) {
+			return false;
+		}
+
+		Map<Boolean, Collection<String>> addedNotAddedMap = parent.get().addChildKeys(childKey);
+		if (addedNotAddedMap.get(true).isEmpty()) {
+			return false;
+		}
+
+		var data = new LinkedChildChangeEvent(parentKey, ChangeType.ADD, addedNotAddedMap.get(true));
+		_broker.post(InstanzEventConstants.CHILD_LIST_CHANGE, Map.of(IEventBroker.DATA, data));
 		return true;
 	}
 }

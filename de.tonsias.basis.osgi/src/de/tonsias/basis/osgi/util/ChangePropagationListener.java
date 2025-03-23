@@ -11,6 +11,7 @@ import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ParentChange;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -60,6 +61,13 @@ public class ChangePropagationListener {
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + data._changeType());
 		}
+	}
+
+	@Inject
+	@Optional
+	private void changeParentListener(@EventTopic(InstanzEventConstants.PARENT_CHANGE) Event event) {
+		ParentChange data = (ParentChange) event.getProperty(IEventBroker.DATA);
+
 	}
 
 }
