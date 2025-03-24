@@ -40,19 +40,18 @@ public class ChangePropagationListener {
 
 	@Inject
 	@Optional
-	private void newInstanzListener(@EventTopic(InstanzEventConstants.NEW) Event event) {
+	public void newInstanzListener(@EventTopic(InstanzEventConstants.NEW) Event event) {
 		InstanzEvent data = (InstanzEvent) event.getProperty(IEventBroker.DATA);
-		_instanz.resolveKey(data._key()).ifPresent(child -> _instanz.putChild(child.getParentKey(), child.getOwnKey()));
+		_instanz.putChild(data._key(), data._parentKey());
 	}
 
 	@Inject
 	@Optional
-	private void changeChildCollectionListener(@EventTopic(InstanzEventConstants.CHILD_LIST_CHANGE) Event event) {
+	public void changeChildCollectionListener(@EventTopic(InstanzEventConstants.CHILD_LIST_CHANGE) Event event) {
 		LinkedChildChangeEvent data = (LinkedChildChangeEvent) event.getProperty(IEventBroker.DATA);
 
 		switch (data._changeType()) {
 		case ADD:
-			// TODO: change parent service
 			data._instanzKeys().forEach(key -> _instanz.changeParent(key, data._key()));
 			break;
 		case REMOVE:
@@ -65,7 +64,7 @@ public class ChangePropagationListener {
 
 	@Inject
 	@Optional
-	private void changeParentListener(@EventTopic(InstanzEventConstants.PARENT_CHANGE) Event event) {
+	public void changeParentListener(@EventTopic(InstanzEventConstants.PARENT_CHANGE) Event event) {
 		ParentChange data = (ParentChange) event.getProperty(IEventBroker.DATA);
 
 	}

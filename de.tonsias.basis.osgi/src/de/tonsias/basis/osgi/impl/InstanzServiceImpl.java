@@ -85,7 +85,7 @@ public class InstanzServiceImpl implements IInstanzService {
 		instanz.setParentKey(parentKey);
 		_cache.put(key, instanz);
 
-		var data = new InstanzEvent(instanz.getOwnKey());
+		var data = new InstanzEvent(instanz.getOwnKey(), parentKey);
 		_broker.post(InstanzEventConstants.NEW, Map.of(IEventBroker.DATA, data));
 		return instanz;
 	}
@@ -129,7 +129,7 @@ public class InstanzServiceImpl implements IInstanzService {
 	@Override
 	public boolean removeInstanz(String instanzKey) {
 		_cache.remove(instanzKey);
-		var event = new InstanzEvent(instanzKey);
+		var event = new InstanzEvent(instanzKey, null);
 		_broker.post(InstanzEventConstants.DELETE, Map.of(IEventBroker.DATA, event));
 		return false;
 	}

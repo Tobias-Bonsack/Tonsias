@@ -55,7 +55,7 @@ public interface InstanzEventConstants {
 
 	// data and the keys
 
-	static record InstanzEvent(String _key) {
+	static record InstanzEvent(String _key, String _parentKey) {
 
 	}
 

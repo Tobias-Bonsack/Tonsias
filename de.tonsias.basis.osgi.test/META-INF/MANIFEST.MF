@@ -13,7 +13,8 @@ Require-Bundle: de.tonsias.basis.osgi;bundle-version="1.0.0",
  org.mockito.junit-jupiter;bundle-version="5.14.0",
  org.mockito.mockito-core;bundle-version="5.14.0",
  de.tonsias.basis.data.access,
- de.tonsias.basis.model
+ de.tonsias.basis.model,
+ org.eclipse.e4.core.services
 Automatic-Module-Name: de.tonsias.basis.osgi.test
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-19

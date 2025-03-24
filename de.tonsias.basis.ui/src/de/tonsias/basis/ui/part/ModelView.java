@@ -89,7 +89,7 @@ public class ModelView {
 				}
 				TreeNodeWrapper node = (TreeNodeWrapper) selection[0].getData();
 				if (node.getObject() instanceof IInstanz instanz) {
-					InstanzEvent data = new InstanzEventConstants.InstanzEvent(instanz.getOwnKey());
+					InstanzEvent data = new InstanzEventConstants.InstanzEvent(instanz.getOwnKey(), null);
 					_broker.send(InstanzEventConstants.SELECTED, Map.of(IEventBroker.DATA, data));
 				}
 			}

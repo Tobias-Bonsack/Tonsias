@@ -117,7 +117,7 @@ public class InstanzViewLogic {
 			return;
 		case 2:
 			_changeJobs.clear();
-			InstanzEvent data = new InstanzEventConstants.InstanzEvent(shownInstanz.getOwnKey());
+			InstanzEvent data = new InstanzEventConstants.InstanzEvent(shownInstanz.getOwnKey(), null);
 			broker.send(InstanzEventConstants.SELECTED, Map.of(IEventBroker.DATA, data));
 			return;
 		}

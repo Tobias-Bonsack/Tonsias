@@ -18,7 +18,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tonsias.basis.data.access.osgi.intf.DeleteService;
@@ -54,8 +53,7 @@ public class InstanzServiceImplTest {
 	private InstanzServiceImpl _inse;
 
 	@BeforeEach
-	void setUp() {
-		MockitoAnnotations.openMocks(this);
+	void beforeEach() {
 		_cache = new HashMap<>();
 		_inse = new InstanzServiceImpl();
 
@@ -135,8 +133,9 @@ public class InstanzServiceImplTest {
 			var field = target.getClass().getDeclaredField(fieldName);
 			field.setAccessible(true);
 			field.set(target, value);
+			field.setAccessible(false);
 		} catch (NoSuchFieldException | IllegalAccessException e) {
-			throw new RuntimeException("Fehler beim Injizieren von " + fieldName, e);
+			throw new RuntimeException("Inject not possible: " + fieldName, e);
 		}
 	}
 
