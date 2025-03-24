@@ -42,7 +42,7 @@ public class ChangePropagationListener {
 	@Optional
 	public void newInstanzListener(@EventTopic(InstanzEventConstants.NEW) Event event) {
 		InstanzEvent data = (InstanzEvent) event.getProperty(IEventBroker.DATA);
-		_instanz.putChild(data._key(), data._parentKey());
+		_instanz.putChild(data._parentKey(), data._key());
 	}
 
 	@Inject
@@ -66,7 +66,7 @@ public class ChangePropagationListener {
 	@Optional
 	public void changeParentListener(@EventTopic(InstanzEventConstants.PARENT_CHANGE) Event event) {
 		ParentChange data = (ParentChange) event.getProperty(IEventBroker.DATA);
-
+		_instanz.putChild(data._newParentKey(), data._key());
 	}
 
 }
