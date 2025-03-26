@@ -6,6 +6,7 @@ import org.eclipse.e4.core.di.extensions.EventTopic;
 import org.eclipse.e4.core.services.events.IEventBroker;
 import org.osgi.service.event.Event;
 
+import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
@@ -56,7 +57,14 @@ public class ChangePropagationListener {
 			data._instanzKeys().forEach(key -> _instanz.changeParent(key, data._key(), IEventBrokerBridge.Type.SEND));
 			break;
 		case REMOVE:
-			// TODO: removeparent? wird inkonsistent damit... remove == remove from cache?
+			for (String key : data._instanzKeys()) {
+				java.util.Optional<IInstanz> child = _instanz.resolveKey(key);
+				if (child.isEmpty() // if parent is there and it is not the same
+						|| (child.get().getParentKey() != null && !data._key().equals(child.get().getParentKey()))) {
+					continue;
+				}
+				_instanz.removeInstanz(key, IEventBrokerBridge.Type.SEND);
+			}
 			break;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + data._changeType());

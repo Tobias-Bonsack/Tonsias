@@ -66,7 +66,7 @@ public class InstanzServiceImplTest {
 	}
 
 	@Test
-	void testPutChild_newChild() throws InterruptedException {
+	void testPutChild_moveChild() throws InterruptedException {
 		IInstanz oldParent = _inse.resolveKey(_parentKey).get();
 		IInstanz newParent = _inse.createInstanz(_parentKey, IEventBrokerBridge.Type.POST);
 		IInstanz toMove = _inse.createInstanz(_parentKey, IEventBrokerBridge.Type.POST);
