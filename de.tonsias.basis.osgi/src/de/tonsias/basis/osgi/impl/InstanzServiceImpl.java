@@ -22,6 +22,7 @@ import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.Instanz;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
@@ -76,21 +77,6 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public IInstanz createInstanz(String parentKey) {
-		if (parentKey == null || parentKey.isBlank()) {
-			return null;
-		}
-		String key = _keyService.generateKey();
-		Instanz instanz = new Instanz(key);
-		instanz.setParentKey(parentKey);
-		_cache.put(key, instanz);
-
-		var data = new InstanzEvent(instanz.getOwnKey(), parentKey);
-		_broker.post(InstanzEventConstants.NEW, Map.of(IEventBroker.DATA, data));
-		return instanz;
-	}
-
-	@Override
 	public Optional<IInstanz> resolveKey(String key) {
 		if (_cache.containsKey(key)) {
 			return Optional.of(_cache.get(key));
@@ -108,7 +94,7 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public Collection<IInstanz> resolveInstanzes(Collection<String> keys) {
+	public Collection<IInstanz> resolveKeys(Collection<String> keys) {
 		List<IInstanz> result = new ArrayList<>();
 		for (String key : keys) {
 			if (_cache.containsKey(key)) {
@@ -127,10 +113,26 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public boolean removeInstanz(String instanzKey) {
+	public IInstanz createInstanz(String parentKey, IEventBrokerBridge.Type eventType) {
+		if (parentKey == null || parentKey.isBlank()) {
+			return null;
+		}
+
+		String key = _keyService.generateKey();
+		Instanz instanz = new Instanz(key);
+		instanz.setParentKey(parentKey);
+		_cache.put(key, instanz);
+
+		var data = new InstanzEvent(instanz.getOwnKey(), parentKey);
+		fireEvent(eventType, InstanzEventConstants.NEW, data);
+		return instanz;
+	}
+
+	@Override
+	public boolean removeInstanz(String instanzKey, IEventBrokerBridge.Type eventType) {
 		_cache.remove(instanzKey);
 		var event = new InstanzEvent(instanzKey, null);
-		_broker.post(InstanzEventConstants.DELETE, Map.of(IEventBroker.DATA, event));
+		fireEvent(eventType, InstanzEventConstants.DELETE, event);
 		return false;
 	}
 
@@ -168,7 +170,8 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public void putSingleValue(String instanzKey, SingleValueType type, String key, String name) {
+	public void putSingleValue(String instanzKey, SingleValueType type, String key, String name,
+			IEventBrokerBridge.Type eventType) {
 		Optional<IInstanz> instanz = resolveKey(instanzKey);
 		if (instanz.isEmpty() || type == null || key.isBlank() || name.isBlank()) {
 			return;
@@ -177,12 +180,12 @@ public class InstanzServiceImpl implements IInstanzService {
 		instanz.get().getSingleValues(type).putIfAbsent(key, name);
 
 		var changeData = new LinkedValueChangeEvent(instanzKey, type, ChangeType.ADD, List.of(key));
-		Map<String, Object> data = Map.of(IEventBroker.DATA, changeData);
-		_broker.post(InstanzEventConstants.VALUE_LIST_CHANGE, data);
+		fireEvent(eventType, InstanzEventConstants.VALUE_LIST_CHANGE, changeData);
 	}
 
 	@Override
-	public void changeSingleValueName(String instanzKey, SingleValueType type, String key, String newName) {
+	public void changeSingleValueName(String instanzKey, SingleValueType type, String key, String newName,
+			IEventBrokerBridge.Type eventType) {
 		Optional<IInstanz> instanz = resolveKey(instanzKey);
 		if (instanz.isEmpty() || type == null || key.isBlank() || newName.isBlank()) {
 			return;
@@ -192,24 +195,24 @@ public class InstanzServiceImpl implements IInstanzService {
 		instanz.get().getSingleValues(type).put(key, newName);
 
 		var changeData = new ValueRenameEvent(instanzKey, type, key, oldName, newName);
-		Map<String, Object> data = Map.of(IEventBroker.DATA, changeData);
-		_broker.post(InstanzEventConstants.NAME_CHANGE, data);
+		fireEvent(eventType, InstanzEventConstants.NAME_CHANGE, changeData);
 	}
 
 	@Override
-	public boolean removeValueKey(Collection<String> instanzKeys, SingleValueType type, String valueKeyToRemove) {
-		Collection<IInstanz> instanzes = resolveInstanzes(instanzKeys);
+	public boolean removeValueKey(Collection<String> instanzKeys, SingleValueType type, String valueKeyToRemove,
+			IEventBrokerBridge.Type eventType) {
+		Collection<IInstanz> instanzes = resolveKeys(instanzKeys);
 		for (IInstanz instanz : instanzes) {
 			instanz.getSingleValues(type).remove(valueKeyToRemove);
 			var data = new LinkedValueChangeEvent(instanz.getOwnKey(), type, ChangeType.REMOVE,
 					List.of(valueKeyToRemove));
-			_broker.post(InstanzEventConstants.VALUE_LIST_CHANGE, Map.of(IEventBroker.DATA, data));
+			fireEvent(eventType, InstanzEventConstants.VALUE_LIST_CHANGE, data);
 		}
 		return true;
 	}
 
 	@Override
-	public boolean changeParent(String childKey, String parentKey) {
+	public boolean changeParent(String childKey, String parentKey, IEventBrokerBridge.Type eventType) {
 		Optional<IInstanz> child = resolveKey(childKey);
 		Optional<IInstanz> parent = resolveKey(parentKey);
 		if (child.isEmpty() || parent.isEmpty() || child.get().getParentKey().equals(parentKey)) {
@@ -218,12 +221,12 @@ public class InstanzServiceImpl implements IInstanzService {
 
 		var data = new ParentChange(childKey, parentKey, child.get().getParentKey());
 		child.get().setParentKey(parentKey);
-		_broker.post(InstanzEventConstants.PARENT_CHANGE, Map.of(IEventBroker.DATA, data));
+		fireEvent(eventType, InstanzEventConstants.PARENT_CHANGE, data);
 		return true;
 	}
 
 	@Override
-	public boolean putChild(String parentKey, String childKey) {
+	public boolean putChild(String parentKey, String childKey, IEventBrokerBridge.Type eventType) {
 		Optional<IInstanz> parent = resolveKey(parentKey);
 		if (parent.isEmpty() || childKey == null || childKey.isBlank()) {
 			return false;
@@ -235,7 +238,15 @@ public class InstanzServiceImpl implements IInstanzService {
 		}
 
 		var data = new LinkedChildChangeEvent(parentKey, ChangeType.ADD, addedNotAddedMap.get(true));
-		_broker.post(InstanzEventConstants.CHILD_LIST_CHANGE, Map.of(IEventBroker.DATA, data));
+		fireEvent(eventType, InstanzEventConstants.CHILD_LIST_CHANGE, data);
 		return true;
+	}
+
+	private void fireEvent(Type eventType, String eventName, Object data) {
+		switch (eventType) {
+		case POST -> _broker.post(eventName, Map.of(IEventBroker.DATA, data));
+		case SEND -> _broker.send(eventName, Map.of(IEventBroker.DATA, data));
+		default -> throw new IllegalArgumentException();
+		}
 	}
 }

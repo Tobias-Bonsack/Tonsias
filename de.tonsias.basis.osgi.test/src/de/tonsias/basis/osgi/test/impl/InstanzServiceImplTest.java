@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tonsias.basis.model.interfaces.IInstanz;
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.util.OsgiUtil;
 
@@ -28,14 +29,14 @@ public class InstanzServiceImplTest {
 
 	@Test
 	void testCreateInstanz_parentKeyInvalid() {
-		assertThat(_inse.createInstanz(null), is(nullValue()));
-		assertThat(_inse.createInstanz(""), is(nullValue()));
-		assertThat(_inse.createInstanz("  "), is(nullValue()));
+		assertThat(_inse.createInstanz(null, IEventBrokerBridge.Type.POST), is(nullValue()));
+		assertThat(_inse.createInstanz("", IEventBrokerBridge.Type.POST), is(nullValue()));
+		assertThat(_inse.createInstanz("  ", IEventBrokerBridge.Type.POST), is(nullValue()));
 	}
 
 	@Test
 	void testCreateInstanz_validParentKey() throws InterruptedException {
-		IInstanz instanz = _inse.createInstanz(_parentKey);
+		IInstanz instanz = _inse.createInstanz(_parentKey, IEventBrokerBridge.Type.POST);
 		assertThat(instanz.getOwnKey(), is("1"));
 		assertThat(instanz.getParentKey(), is(_parentKey));
 
@@ -47,30 +48,30 @@ public class InstanzServiceImplTest {
 
 	@Test
 	void testPutChild_parentKeyNotResolvable() {
-		assertThat(_inse.putChild("RandomKey", "test"), is(false));
+		assertThat(_inse.putChild("RandomKey", "test", IEventBrokerBridge.Type.POST), is(false));
 	}
 
 	@Test
 	void testPutChild_childKeyNotValid() {
-		assertThat(_inse.putChild(_parentKey, null), is(false));
-		assertThat(_inse.putChild(_parentKey, ""), is(false));
-		assertThat(_inse.putChild(_parentKey, "  "), is(false));
+		assertThat(_inse.putChild(_parentKey, null, IEventBrokerBridge.Type.POST), is(false));
+		assertThat(_inse.putChild(_parentKey, "", IEventBrokerBridge.Type.POST), is(false));
+		assertThat(_inse.putChild(_parentKey, "  ", IEventBrokerBridge.Type.POST), is(false));
 	}
 
 	@Test
 	void testPutChild_alreadyChild() {
 		_inse.resolveKey(_parentKey).get().addChildKeys("child");
 
-		assertThat(_inse.putChild(_parentKey, "child"), is(false));
+		assertThat(_inse.putChild(_parentKey, "child", IEventBrokerBridge.Type.POST), is(false));
 	}
 
 	@Test
 	void testPutChild_newChild() throws InterruptedException {
 		IInstanz oldParent = _inse.resolveKey(_parentKey).get();
-		IInstanz newParent = _inse.createInstanz(_parentKey);
-		IInstanz toMove = _inse.createInstanz(_parentKey);
+		IInstanz newParent = _inse.createInstanz(_parentKey, IEventBrokerBridge.Type.POST);
+		IInstanz toMove = _inse.createInstanz(_parentKey, IEventBrokerBridge.Type.POST);
 
-		assertThat(_inse.putChild(newParent.getOwnKey(), toMove.getOwnKey()), is(true));
+		assertThat(_inse.putChild(newParent.getOwnKey(), toMove.getOwnKey(), IEventBrokerBridge.Type.POST), is(true));
 
 		Thread.sleep(Duration.ofSeconds(2));
 

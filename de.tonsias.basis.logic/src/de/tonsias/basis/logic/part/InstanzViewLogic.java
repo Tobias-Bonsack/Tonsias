@@ -16,8 +16,8 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobGroup;
 import org.eclipse.e4.core.services.events.IEventBroker;
 
-import de.tonsias.basis.logic.function.QuadConsumer;
-import de.tonsias.basis.logic.function.TriFunction;
+import de.tonsias.basis.logic.function.PentaConsumer;
+import de.tonsias.basis.logic.function.QuadFunction;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
@@ -57,13 +57,14 @@ public class InstanzViewLogic {
 		return job;
 	}
 
-	public Job createQuadConsumerJob(QuadConsumer<String, SingleValueType, String, String> serviceConsumer,
+	public Job createPentaConsumerJob(
+			PentaConsumer<String, SingleValueType, String, String, IEventBrokerBridge.Type> serviceConsumer,
 			String ownKey, SingleValueType type, String key, String text) {
 		Job job = new Job("") {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				serviceConsumer.accept(ownKey, type, key, text);
+				serviceConsumer.accept(ownKey, type, key, text, IEventBrokerBridge.Type.SEND);
 				return Status.OK_STATUS;
 			}
 
@@ -78,15 +79,15 @@ public class InstanzViewLogic {
 		return job;
 	}
 
-	public Job createOneAndTriFunctionJob(Function<ISingleValue<?>, Boolean> function, ISingleValue<?> data,
-			TriFunction<Collection<String>, SingleValueType, String, Boolean> triFunction) {
+	public Job createOneAndQuadFunctionJob(Function<ISingleValue<?>, Boolean> function, ISingleValue<?> data,
+			QuadFunction<Collection<String>, SingleValueType, String, IEventBrokerBridge.Type, Boolean> quadFunction) {
 		Job job = new Job("") {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				function.apply(data);
-				triFunction.apply(data.getConnectedInstanzKeys(), SingleValueType.getByClass(data.getClass()).get(),
-						data.getOwnKey());
+				quadFunction.apply(data.getConnectedInstanzKeys(), SingleValueType.getByClass(data.getClass()).get(),
+						data.getOwnKey(), IEventBrokerBridge.Type.SEND);
 				return Status.OK_STATUS;
 			}
 

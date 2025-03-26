@@ -6,6 +6,7 @@ import org.eclipse.e4.core.di.extensions.EventTopic;
 import org.eclipse.e4.core.services.events.IEventBroker;
 import org.osgi.service.event.Event;
 
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
@@ -42,7 +43,7 @@ public class ChangePropagationListener {
 	@Optional
 	public void newInstanzListener(@EventTopic(InstanzEventConstants.NEW) Event event) {
 		InstanzEvent data = (InstanzEvent) event.getProperty(IEventBroker.DATA);
-		_instanz.putChild(data._parentKey(), data._key());
+		_instanz.putChild(data._parentKey(), data._key(), IEventBrokerBridge.Type.SEND);
 	}
 
 	@Inject
@@ -52,7 +53,7 @@ public class ChangePropagationListener {
 
 		switch (data._changeType()) {
 		case ADD:
-			data._instanzKeys().forEach(key -> _instanz.changeParent(key, data._key()));
+			data._instanzKeys().forEach(key -> _instanz.changeParent(key, data._key(), IEventBrokerBridge.Type.SEND));
 			break;
 		case REMOVE:
 			// TODO: removeparent? wird inkonsistent damit... remove == remove from cache?
@@ -66,7 +67,7 @@ public class ChangePropagationListener {
 	@Optional
 	public void changeParentListener(@EventTopic(InstanzEventConstants.PARENT_CHANGE) Event event) {
 		ParentChange data = (ParentChange) event.getProperty(IEventBroker.DATA);
-		_instanz.putChild(data._newParentKey(), data._key());
+		_instanz.putChild(data._newParentKey(), data._key(), IEventBrokerBridge.Type.SEND);
 	}
 
 }

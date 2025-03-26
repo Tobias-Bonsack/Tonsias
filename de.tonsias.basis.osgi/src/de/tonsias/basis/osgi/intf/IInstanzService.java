@@ -34,7 +34,7 @@ public interface IInstanzService {
 	 * @param keys: keys to resolve
 	 * @return collection of resolvable {@link IInstanz}
 	 */
-	Collection<IInstanz> resolveInstanzes(Collection<String> keys);
+	Collection<IInstanz> resolveKeys(Collection<String> keys);
 
 	/**
 	 * Creates a new {@link IInstanz}, but does not save it
@@ -42,7 +42,7 @@ public interface IInstanzService {
 	 * @param parentKey of the new instance
 	 * @return a new {@link IInstanz}
 	 */
-	IInstanz createInstanz(String parentKey);
+	IInstanz createInstanz(String parentKey, IEventBrokerBridge.Type eventType);
 
 	/**
 	 * Add new child if not already present
@@ -51,7 +51,7 @@ public interface IInstanzService {
 	 * @param childKey  of new instanz child
 	 * @return true, if newly added, else false
 	 */
-	boolean putChild(String parentKey, String childKey);
+	boolean putChild(String parentKey, String childKey, IEventBrokerBridge.Type eventType);
 
 	/**
 	 * saves all {@link IInstanz}, that are currently in the cache.
@@ -66,7 +66,8 @@ public interface IInstanzService {
 	 * @param key        of the attribute to change
 	 * @param newName    of the attribute
 	 */
-	void changeSingleValueName(String instanzKey, SingleValueType type, String key, String newName);
+	void changeSingleValueName(String instanzKey, SingleValueType type, String key, String newName,
+			IEventBrokerBridge.Type eventType);
 
 	/**
 	 * Add attribute to instanz
@@ -76,7 +77,8 @@ public interface IInstanzService {
 	 * @param key        of the attribute to change
 	 * @param name       of the attribute
 	 */
-	void putSingleValue(String instanzKey, SingleValueType type, String key, String name);
+	void putSingleValue(String instanzKey, SingleValueType type, String key, String name,
+			IEventBrokerBridge.Type eventType);
 
 	/**
 	 * Removes the given key from the given {@link IInstanz} keys in the
@@ -87,7 +89,8 @@ public interface IInstanzService {
 	 * @param valueKeyToRemove {@link ISingleValue} key to remove
 	 * @return true if no given {@link IInstanz} has the key anymore
 	 */
-	boolean removeValueKey(Collection<String> instanzKeys, SingleValueType type, String valueKeyToRemove);
+	boolean removeValueKey(Collection<String> instanzKeys, SingleValueType type, String valueKeyToRemove,
+			IEventBrokerBridge.Type eventType);
 
 	/**
 	 * Mark the {@link IInstanz} as delete, remove from cache, nothing else
@@ -95,7 +98,7 @@ public interface IInstanzService {
 	 * @param instanzKeys
 	 * @return
 	 */
-	boolean removeInstanz(String instanzKey);
+	boolean removeInstanz(String instanzKey, IEventBrokerBridge.Type eventType);
 
 	/**
 	 * saves all {@link IInstanz} from the collection, if possible
@@ -123,5 +126,5 @@ public interface IInstanzService {
 	 * @param parentKey of new parent
 	 * @return true, if set, else false
 	 */
-	boolean changeParent(String childKey, String parentKey);
+	boolean changeParent(String childKey, String parentKey, IEventBrokerBridge.Type eventType);
 }

@@ -8,6 +8,10 @@ import org.osgi.service.event.EventHandler;
 
 public interface IEventBrokerBridge {
 
+	public static enum Type {
+		SEND, POST;
+	}
+
 	/**
 	 * Publish event synchronously (the method does not return until the event is
 	 * processed).

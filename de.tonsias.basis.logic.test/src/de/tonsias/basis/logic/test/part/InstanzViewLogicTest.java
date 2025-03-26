@@ -41,7 +41,7 @@ public class InstanzViewLogicTest {
 
 	@Test
 	void testCreateQuadConsumerJob_validExecution() throws OperationCanceledException, InterruptedException {
-		Job job = _logic.createQuadConsumerJob((a, b, c, d) -> {
+		Job job = _logic.createPentaConsumerJob((a, b, c, d, e) -> {
 		}, "a", SingleValueType.SINGLE_STRING, "c", "d");
 		job.schedule();
 		assertThat(Job.getJobManager().find(_logic), arrayWithSize(1));
@@ -53,7 +53,7 @@ public class InstanzViewLogicTest {
 		var value = mock(SingleStringValue.class);
 		when(value.getConnectedInstanzKeys()).thenReturn(Collections.emptyList());
 
-		Job job = _logic.createOneAndTriFunctionJob((a) -> true, value, (a, b, c) -> true);
+		Job job = _logic.createOneAndQuadFunctionJob((a) -> true, value, (a, b, c, d) -> true);
 		job.schedule();
 		assertThat(Job.getJobManager().find(_logic), arrayWithSize(1));
 		Job.getJobManager().join(_logic, new NullProgressMonitor());

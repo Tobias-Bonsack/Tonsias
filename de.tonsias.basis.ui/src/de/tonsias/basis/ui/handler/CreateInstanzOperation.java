@@ -5,6 +5,7 @@ import org.eclipse.e4.core.di.annotations.Execute;
 import org.eclipse.e4.core.services.events.IEventBroker;
 
 import de.tonsias.basis.model.interfaces.IInstanz;
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.util.OsgiUtil;
 
@@ -25,7 +26,7 @@ public class CreateInstanzOperation {
 	public void execute(IEventBroker broker) {
 		IInstanzService instanzS = OsgiUtil.getService(IInstanzService.class);
 		IInstanz parent = _parent == null ? instanzS.getRoot() : _parent;
-		_createdInstanz = instanzS.createInstanz(parent.getOwnKey());
+		_createdInstanz = instanzS.createInstanz(parent.getOwnKey(), IEventBrokerBridge.Type.POST);
 	}
 
 	@CanExecute

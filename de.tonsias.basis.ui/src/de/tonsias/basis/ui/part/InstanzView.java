@@ -202,7 +202,7 @@ public class InstanzView {
 					parent.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_RED));
 				}
 
-				_logic.createOneAndTriFunctionJob(_singleService::removeValue, data, _instanzService::removeValueKey);
+				_logic.createOneAndQuadFunctionJob(_singleService::removeValue, data, _instanzService::removeValueKey);
 				_part.setDirty(true);
 
 			}
@@ -219,7 +219,7 @@ public class InstanzView {
 	private void onSingleValueNameModify(Entry<String, String> attribute, SingleValueType type, ModifyEvent event) {
 		Text text = (Text) event.widget;
 		text.setBackground(text.getDisplay().getSystemColor(SWT.COLOR_GREEN));
-		_logic.createQuadConsumerJob(_instanzService::putSingleValue, _shownInstanz.getOwnKey(), type,
+		_logic.createPentaConsumerJob(_instanzService::putSingleValue, _shownInstanz.getOwnKey(), type,
 				attribute.getKey(), ((Text) event.widget).getText());
 		_part.setDirty(true);
 	}
