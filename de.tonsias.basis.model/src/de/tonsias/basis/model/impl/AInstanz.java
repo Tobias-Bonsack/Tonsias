@@ -66,9 +66,11 @@ public abstract class AInstanz implements IInstanz {
 	}
 
 	@Override
-	public void removeChildKeys(String... children) {
-		Stream.of(children).forEach(child -> _childKeys.remove(child));
-
+	public Map<Boolean, Collection<String>> removeChildKeys(String... children) {
+		Map<Boolean, Collection<String>> result = Map.of(Boolean.TRUE, new LinkedList<String>(), Boolean.FALSE,
+				new LinkedList<String>());
+		Stream.of(children).forEach(i -> result.get(_childKeys.remove(i)).add(i));
+		return result;
 	}
 
 	@Override

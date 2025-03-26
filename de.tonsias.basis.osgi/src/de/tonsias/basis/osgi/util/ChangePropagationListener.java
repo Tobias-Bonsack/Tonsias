@@ -68,6 +68,7 @@ public class ChangePropagationListener {
 	public void changeParentListener(@EventTopic(InstanzEventConstants.PARENT_CHANGE) Event event) {
 		ParentChange data = (ParentChange) event.getProperty(IEventBroker.DATA);
 		_instanz.putChild(data._newParentKey(), data._key(), IEventBrokerBridge.Type.SEND);
+		_instanz.removeChild(data._oldParentKey(), data._key(), IEventBrokerBridge.Type.SEND);
 	}
 
 }

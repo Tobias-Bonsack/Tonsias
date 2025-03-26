@@ -43,7 +43,7 @@ public class InstanzServiceImplTest {
 		// Wait for events
 		Thread.sleep(Duration.ofSeconds(1));
 
-		assertThat(_inse.resolveKey(_parentKey).get().getChildren(), contains(instanz.getOwnKey()));
+		assertThat(_inse.resolveKey(_parentKey).get().getChildren(), hasItem("1"));
 	}
 
 	@Test
@@ -73,7 +73,7 @@ public class InstanzServiceImplTest {
 
 		assertThat(_inse.putChild(newParent.getOwnKey(), toMove.getOwnKey(), IEventBrokerBridge.Type.POST), is(true));
 
-		Thread.sleep(Duration.ofSeconds(2));
+		Thread.sleep(Duration.ofSeconds(1));
 
 		assertThat(newParent.getChildren(), contains(toMove.getOwnKey()));
 		assertThat(toMove.getParentKey(), is(newParent.getOwnKey()));

@@ -33,7 +33,13 @@ public interface IInstanz extends IObject, ISavePathOwner {
 	 */
 	Map<Boolean, Collection<String>> addChildKeys(String... children);
 
-	void removeChildKeys(String... children);
+	/**
+	 * try to remove children set
+	 * 
+	 * @param children to remove
+	 * @return map of true-removed and false-not removed
+	 */
+	Map<Boolean, Collection<String>> removeChildKeys(String... children);
 
 	// single value section
 

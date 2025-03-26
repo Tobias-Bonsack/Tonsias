@@ -77,7 +77,7 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public Optional<IInstanz> resolveKey(String key) {
+	public synchronized Optional<IInstanz> resolveKey(String key) {
 		if (_cache.containsKey(key)) {
 			return Optional.of(_cache.get(key));
 		}
@@ -94,7 +94,7 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public Collection<IInstanz> resolveKeys(Collection<String> keys) {
+	public synchronized Collection<IInstanz> resolveKeys(Collection<String> keys) {
 		List<IInstanz> result = new ArrayList<>();
 		for (String key : keys) {
 			if (_cache.containsKey(key)) {
@@ -238,6 +238,23 @@ public class InstanzServiceImpl implements IInstanzService {
 		}
 
 		var data = new LinkedChildChangeEvent(parentKey, ChangeType.ADD, addedNotAddedMap.get(true));
+		fireEvent(eventType, InstanzEventConstants.CHILD_LIST_CHANGE, data);
+		return true;
+	}
+
+	@Override
+	public boolean removeChild(String parentKey, String childKey, Type eventType) {
+		Optional<IInstanz> parent = resolveKey(parentKey);
+		if (parent.isEmpty() || childKey == null || childKey.isBlank()) {
+			return false;
+		}
+
+		Map<Boolean, Collection<String>> removeNotRemovedMap = parent.get().removeChildKeys(childKey);
+		if (removeNotRemovedMap.get(true).isEmpty()) {
+			return false;
+		}
+
+		var data = new LinkedChildChangeEvent(parentKey, ChangeType.REMOVE, removeNotRemovedMap.get(true));
 		fireEvent(eventType, InstanzEventConstants.CHILD_LIST_CHANGE, data);
 		return true;
 	}

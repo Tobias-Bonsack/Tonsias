@@ -54,6 +54,15 @@ public interface IInstanzService {
 	boolean putChild(String parentKey, String childKey, IEventBrokerBridge.Type eventType);
 
 	/**
+	 * Add new child if not already present
+	 * 
+	 * @param parentKey of new instanz parent
+	 * @param childKey  of new instanz child
+	 * @return true, if newly added, else false
+	 */
+	boolean removeChild(String parentKey, String childKey, IEventBrokerBridge.Type eventType);
+
+	/**
 	 * saves all {@link IInstanz}, that are currently in the cache.
 	 */
 	void saveAll();
