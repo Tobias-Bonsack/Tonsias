@@ -3,17 +3,34 @@ package de.tonsias.basis.osgi.test.impl;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
+import java.lang.reflect.Field;
+import java.util.Map;
+
+import org.eclipse.e4.core.services.events.IEventBroker;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventHandler;
 
 import de.tonsias.basis.model.interfaces.IInstanz;
+import de.tonsias.basis.osgi.impl.InstanzServiceImpl;
+import de.tonsias.basis.osgi.intf.IDeltaService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.IInstanzService;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.util.OsgiUtil;
 
 public class InstanzServiceImplTest {
@@ -24,6 +41,32 @@ public class InstanzServiceImplTest {
 	@BeforeEach
 	void beforeEach() {
 		_inse = OsgiUtil.getService(IInstanzService.class);
+	}
+
+	@AfterEach
+	void afterEach() {
+		OsgiUtil.getService(IDeltaService.class).saveDeltas();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	void testRemoveInstanz_propageteAllChildren()
+			throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+		IInstanz instanz = _inse.createInstanz(_parentKey, Type.SEND);
+		IInstanz instanz2 = _inse.createInstanz(instanz.getOwnKey(), Type.SEND);
+
+		Field field = InstanzServiceImpl.class.getDeclaredField("_cache");
+		field.setAccessible(true);
+		Map<String, IInstanz> cache = (Map<String, IInstanz>) field.get(_inse);
+		assertThat(cache, notNullValue());
+		assertThat(cache.keySet(), hasItems(instanz.getOwnKey(), instanz2.getOwnKey()));
+
+		_inse.removeInstanz(instanz.getOwnKey(), Type.SEND);
+
+		cache = (Map<String, IInstanz>) field.get(_inse);
+		assertThat(cache.keySet(), notNullValue());
+		assertThat(cache.keySet(), not(hasItems(instanz.getOwnKey(), instanz2.getOwnKey())));
+		field.setAccessible(false);
 	}
 
 	@Test
@@ -40,14 +83,24 @@ public class InstanzServiceImplTest {
 	}
 
 	@Test
-	void testRemovChild_validRemoved() {
-		IInstanz toRemove = _inse.createInstanz(_parentKey, Type.SEND);
+	void testRemoveChild_validRemoved() {
+		IInstanz toDelete = _inse.createInstanz(_parentKey, Type.SEND);
+		EventHandler eventSpy = spy(new EventHandler() {
+			@Override
+			public void handleEvent(Event event) {
+				InstanzEventConstants.InstanzEvent property = (InstanzEvent) event.getProperty(IEventBroker.DATA);
+				assertThat(property._key(), is(toDelete.getOwnKey()));
+				assertThat(property._parentKey(), is(null));
+			}
+		});
+		OsgiUtil.getService(IEventBrokerBridge.class).subscribe(InstanzEventConstants.DELETE, eventSpy, true);
 		IInstanz notToRemove = _inse.createInstanz(_parentKey, Type.SEND);
 
-		boolean isRemoved = _inse.removeChild(_parentKey, toRemove.getOwnKey(), Type.SEND);
+		boolean isRemoved = _inse.removeChild(_parentKey, toDelete.getOwnKey(), Type.SEND);
 		assertThat(isRemoved, is(true));
 		assertThat(_inse.resolveKey(_parentKey).get().getChildren(), hasItem(notToRemove.getOwnKey()));
-		assertThat(_inse.resolveKey(_parentKey).get().getChildren(), not(hasItem(toRemove.getOwnKey())));
+		assertThat(_inse.resolveKey(_parentKey).get().getChildren(), not(hasItem(toDelete.getOwnKey())));
+		verify(eventSpy, times(1)).handleEvent(any());
 	}
 
 	@Test

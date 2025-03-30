@@ -130,7 +130,17 @@ public class InstanzServiceImpl implements IInstanzService {
 
 	@Override
 	public boolean removeInstanz(String instanzKey, IEventBrokerBridge.Type eventType) {
+		// Remove parent relation
+		Optional<IInstanz> instanz = resolveKey(instanzKey);
 		_cache.remove(instanzKey);
+		instanz.ifPresent(i -> {
+			resolveKey(i.getParentKey()).ifPresent(parent -> {
+				parent.removeChildKeys(i.getOwnKey());
+				_cache.remove(parent.getOwnKey());
+			});
+			i.setParentKey(null);
+		});
+
 		var event = new InstanzEvent(instanzKey, null);
 		fireEvent(eventType, InstanzEventConstants.DELETE, event);
 		return false;
@@ -158,7 +168,7 @@ public class InstanzServiceImpl implements IInstanzService {
 			try {
 				_deleteService.deleteFile(key);
 			} catch (IOException e) {
-				ex.addSuppressed(ex);
+				ex.addSuppressed(e);
 			}
 		}
 

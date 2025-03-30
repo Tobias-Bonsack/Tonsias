@@ -8,6 +8,7 @@ import org.osgi.service.event.Event;
 
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
@@ -77,6 +78,16 @@ public class ChangePropagationListener {
 		ParentChange data = (ParentChange) event.getProperty(IEventBroker.DATA);
 		_instanz.putChild(data._newParentKey(), data._key(), IEventBrokerBridge.Type.SEND);
 		_instanz.removeChild(data._oldParentKey(), data._key(), IEventBrokerBridge.Type.SEND);
+	}
+
+	@Inject
+	@Optional
+	public void deleteInstanzListener(@EventTopic(InstanzEventConstants.DELETE) Event event) {
+		InstanzEvent data = (InstanzEvent) event.getProperty(IEventBroker.DATA);
+		java.util.Optional<IInstanz> instanz = _instanz.resolveKey(data._key());
+		instanz.ifPresent(i -> {
+			i.getChildren().forEach(child -> _instanz.removeInstanz(child, Type.SEND));
+		});
 	}
 
 }
