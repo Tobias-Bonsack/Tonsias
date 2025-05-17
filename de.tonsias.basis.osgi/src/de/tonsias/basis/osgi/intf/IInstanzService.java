@@ -107,7 +107,7 @@ public interface IInstanzService {
 	 * @param instanzKeys
 	 * @return
 	 */
-	boolean removeInstanz(String instanzKey, IEventBrokerBridge.Type eventType);
+	boolean deleteInstanz(String instanzKey, IEventBrokerBridge.Type eventType);
 
 	/**
 	 * saves all {@link IInstanz} from the collection, if possible

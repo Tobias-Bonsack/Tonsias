@@ -2,19 +2,18 @@ package de.tonsias.basis.osgi.test.impl;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.lang.reflect.Field;
-import java.util.Map;
+import java.util.concurrent.CompletionException;
 
 import org.eclipse.e4.core.services.events.IEventBroker;
 import org.junit.jupiter.api.AfterEach;
@@ -24,7 +23,6 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventHandler;
 
 import de.tonsias.basis.model.interfaces.IInstanz;
-import de.tonsias.basis.osgi.impl.InstanzServiceImpl;
 import de.tonsias.basis.osgi.intf.IDeltaService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
@@ -45,32 +43,29 @@ public class InstanzServiceImplTest {
 
 	@AfterEach
 	void afterEach() {
-		OsgiUtil.getService(IDeltaService.class).saveDeltas();
+		try {
+			OsgiUtil.getService(IDeltaService.class).saveDeltas();
+		} catch (CompletionException e) {
+		}
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
-	void testRemoveInstanz_propageteAllChildren()
+	void testDeleteInstanz_propageteAllChildren()
 			throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
 		IInstanz instanz = _inse.createInstanz(_parentKey, Type.SEND);
 		IInstanz instanz2 = _inse.createInstanz(instanz.getOwnKey(), Type.SEND);
 
-		Field field = InstanzServiceImpl.class.getDeclaredField("_cache");
-		field.setAccessible(true);
-		Map<String, IInstanz> cache = (Map<String, IInstanz>) field.get(_inse);
-		assertThat(cache, notNullValue());
-		assertThat(cache.keySet(), hasItems(instanz.getOwnKey(), instanz2.getOwnKey()));
+		_inse.deleteInstanz(instanz.getOwnKey(), Type.SEND);
 
-		_inse.removeInstanz(instanz.getOwnKey(), Type.SEND);
-
-		cache = (Map<String, IInstanz>) field.get(_inse);
-		assertThat(cache.keySet(), notNullValue());
-		assertThat(cache.keySet(), not(hasItems(instanz.getOwnKey(), instanz2.getOwnKey())));
-		field.setAccessible(false);
+		assertThat(instanz.getParentKey(), is(emptyOrNullString()));
+		assertThat(instanz2.getParentKey(), is(emptyOrNullString()));
+		assertThat(instanz.getChildren(), hasSize(0));
+		assertThat(instanz2.getChildren(), hasSize(0));
 	}
 
 	@Test
-	void testRemoveChild_inputNotValid() {
+	void testDeleteInstanz_inputNotValid() {
 		assertThat(_inse.removeChild("invalid", "1", Type.SEND), is(false));
 		assertThat(_inse.removeChild("0", null, Type.SEND), is(false));
 		assertThat(_inse.removeChild("0", "", Type.SEND), is(false));
@@ -78,12 +73,12 @@ public class InstanzServiceImplTest {
 	}
 
 	@Test
-	void testRemoveChild_nothingRemoved() {
+	void testDeleteInstanz_nothingRemoved() {
 		assertThat(_inse.removeChild("0", "invalid", Type.SEND), is(false));
 	}
 
 	@Test
-	void testRemoveChild_validRemoved() {
+	void testDeleteInstanz_validRemoved() {
 		IInstanz toDelete = _inse.createInstanz(_parentKey, Type.SEND);
 		EventHandler eventSpy = spy(new EventHandler() {
 			@Override

@@ -78,6 +78,10 @@ public class InstanzServiceImpl implements IInstanzService {
 
 	@Override
 	public synchronized Optional<IInstanz> resolveKey(String key) {
+		if (key == null) {
+			return Optional.empty();
+		}
+
 		if (_cache.containsKey(key)) {
 			return Optional.of(_cache.get(key));
 		}
@@ -129,21 +133,23 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public boolean removeInstanz(String instanzKey, IEventBrokerBridge.Type eventType) {
+	public boolean deleteInstanz(String instanzKey, IEventBrokerBridge.Type eventType) {
 		// Remove parent relation
 		Optional<IInstanz> instanz = resolveKey(instanzKey);
-		_cache.remove(instanzKey);
 		instanz.ifPresent(i -> {
-			resolveKey(i.getParentKey()).ifPresent(parent -> {
-				parent.removeChildKeys(i.getOwnKey());
-				_cache.remove(parent.getOwnKey());
-			});
+			String parentKey = i.getParentKey();
+			if (parentKey == null) {
+				return;
+			}
 			i.setParentKey(null);
+			resolveKey(parentKey).ifPresent(parent -> {
+				removeChild(parent.getOwnKey(), instanzKey, eventType);
+			});
+			var event = new InstanzEvent(instanzKey, null);
+			fireEvent(eventType, InstanzEventConstants.DELETE, event);
 		});
 
-		var event = new InstanzEvent(instanzKey, null);
-		fireEvent(eventType, InstanzEventConstants.DELETE, event);
-		return false;
+		return instanz.isPresent() && instanz.get().getParentKey() == null;
 	}
 
 	@Override

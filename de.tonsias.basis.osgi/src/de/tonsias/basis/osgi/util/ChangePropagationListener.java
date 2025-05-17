@@ -64,7 +64,7 @@ public class ChangePropagationListener {
 						|| (child.get().getParentKey() != null && !data._key().equals(child.get().getParentKey()))) {
 					continue;
 				}
-				_instanz.removeInstanz(key, IEventBrokerBridge.Type.SEND);
+				_instanz.deleteInstanz(key, IEventBrokerBridge.Type.SEND);
 			}
 			break;
 		default:
@@ -86,7 +86,7 @@ public class ChangePropagationListener {
 		InstanzEvent data = (InstanzEvent) event.getProperty(IEventBroker.DATA);
 		java.util.Optional<IInstanz> instanz = _instanz.resolveKey(data._key());
 		instanz.ifPresent(i -> {
-			i.getChildren().forEach(child -> _instanz.removeInstanz(child, Type.SEND));
+			i.getChildren().forEach(child -> _instanz.deleteInstanz(child, Type.SEND));
 		});
 	}
 
