@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -103,6 +104,24 @@ public class InstanzServiceImplTest {
 	void testRemoveChild_validRemoved() {
 		IInstanz instanz = _inse.createInstanz(_parentKey, Type.SEND);
 
+		_inse.removeChild(_parentKey, instanz.getOwnKey(), Type.SEND);
+
+		assertThat(_inse.resolveKey(_parentKey).get().getChildren(), not(hasItem(instanz.getOwnKey())));
+		assertThat(instanz.getParentKey(), is(nullValue()));
+	}
+
+	@Test
+	void testRemoveChild_notHisChild_nothingHappens() {
+		IInstanz instanz = _inse.createInstanz(_parentKey, Type.SEND);
+		IInstanz instanz2 = _inse.createInstanz(_parentKey, Type.SEND);
+
+		boolean removeChild = _inse.removeChild(instanz.getOwnKey(), instanz2.getOwnKey(), Type.SEND);
+
+		assertThat(removeChild, is(false));
+		assertThat(_inse.resolveKey(_parentKey).get().getChildren(),
+				hasItems(instanz.getOwnKey(), instanz2.getOwnKey()));
+		assertThat(instanz.getParentKey(), is(_parentKey));
+		assertThat(instanz2.getParentKey(), is(_parentKey));
 	}
 
 	@Test

@@ -58,13 +58,13 @@ public class ChangePropagationListener {
 			data._instanzKeys().forEach(key -> _instanz.changeParent(key, data._key(), IEventBrokerBridge.Type.SEND));
 			break;
 		case REMOVE:
-			for (String key : data._instanzKeys()) {
-				java.util.Optional<IInstanz> child = _instanz.resolveKey(key);
+			for (String childKey : data._instanzKeys()) {
+				java.util.Optional<IInstanz> child = _instanz.resolveKey(childKey);
 				if (child.isEmpty() // if parent is there and it is not the same
 						|| (child.get().getParentKey() != null && !data._key().equals(child.get().getParentKey()))) {
 					continue;
 				}
-				_instanz.deleteInstanz(key, IEventBrokerBridge.Type.SEND);
+				_instanz.deleteInstanz(childKey, IEventBrokerBridge.Type.SEND);
 			}
 			break;
 		default:
