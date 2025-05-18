@@ -86,7 +86,7 @@ public class ChangePropagationListener {
 		InstanzEvent data = (InstanzEvent) event.getProperty(IEventBroker.DATA);
 		java.util.Optional<IInstanz> instanz = _instanz.resolveKey(data._key());
 		instanz.ifPresent(i -> {
-			i.getChildren().forEach(child -> _instanz.deleteInstanz(child, Type.SEND));
+			i.getChildren().forEach(child -> _instanz.markInstanzAsDelete(child, Type.SEND));
 		});
 	}
 

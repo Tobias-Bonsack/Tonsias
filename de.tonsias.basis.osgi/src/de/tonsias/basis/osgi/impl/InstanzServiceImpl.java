@@ -136,20 +136,30 @@ public class InstanzServiceImpl implements IInstanzService {
 	public boolean deleteInstanz(String instanzKey, IEventBrokerBridge.Type eventType) {
 		// Remove parent relation
 		Optional<IInstanz> instanz = resolveKey(instanzKey);
-		instanz.ifPresent(i -> {
-			String parentKey = i.getParentKey();
-			if (parentKey == null) {
-				return;
-			}
-			i.setParentKey(null);
-			resolveKey(parentKey).ifPresent(parent -> {
-				removeChild(parent.getOwnKey(), instanzKey, eventType);
-			});
-			var event = new InstanzEvent(instanzKey, null);
-			fireEvent(eventType, InstanzEventConstants.DELETE, event);
+		if (instanz.isEmpty()) {
+			return false;
+		}
+
+		// check if already parent removed
+		String parentKey = instanz.get().getParentKey();
+		if (parentKey == null) {
+			return false;
+		}
+
+		// remove parent and tell parent to remove child
+		instanz.get().setParentKey(null);
+		resolveKey(parentKey).ifPresent(parent -> {
+			removeChild(parent.getOwnKey(), instanzKey, eventType);
 		});
 
-		return instanz.isPresent() && instanz.get().getParentKey() == null;
+		markInstanzAsDelete(instanzKey, eventType);
+		return true;
+	}
+
+	@Override
+	public void markInstanzAsDelete(String instanzKey, Type eventType) {
+		var event = new InstanzEvent(instanzKey, null);
+		fireEvent(eventType, InstanzEventConstants.DELETE, event);
 	}
 
 	@Override

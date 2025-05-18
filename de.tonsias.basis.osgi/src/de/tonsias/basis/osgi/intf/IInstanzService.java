@@ -9,6 +9,7 @@ import de.tonsias.basis.data.access.osgi.intf.DeleteService;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.osgi.util.ChangePropagationListener;
 
 public interface IInstanzService {
 
@@ -54,10 +55,12 @@ public interface IInstanzService {
 	boolean putChild(String parentKey, String childKey, IEventBrokerBridge.Type eventType);
 
 	/**
-	 * Add new child if not already present
+	 * Remove new child if not already present. If called remove child is same as
+	 * delete child {@link IInstanz}
 	 * 
 	 * @param parentKey of new instanz parent
 	 * @param childKey  of new instanz child
+	 * @param eventType decide if events should be POST or SEND
 	 * @return true, if newly added, else false
 	 */
 	boolean removeChild(String parentKey, String childKey, IEventBrokerBridge.Type eventType);
@@ -102,12 +105,20 @@ public interface IInstanzService {
 			IEventBrokerBridge.Type eventType);
 
 	/**
-	 * Mark the {@link IInstanz} as delete, remove from cache, nothing else
+	 * Mark the {@link IInstanz} as delete and remove parent if needed
 	 * 
-	 * @param instanzKeys
+	 * @param instanzKey to remove
 	 * @return
 	 */
 	boolean deleteInstanz(String instanzKey, IEventBrokerBridge.Type eventType);
+
+	/**
+	 * Mark the {@link IInstanz} as delete, nothing else. Should only be called from
+	 * {@link ChangePropagationListener}
+	 * 
+	 * @param instanzKey to fire delete event
+	 */
+	void markInstanzAsDelete(String instanzKey, IEventBrokerBridge.Type eventType);
 
 	/**
 	 * saves all {@link IInstanz} from the collection, if possible
@@ -118,7 +129,7 @@ public interface IInstanzService {
 	boolean saveAll(Set<String> instanzKeysToSave);
 
 	/**
-	 * Delete Files
+	 * Delete Files!
 	 * 
 	 * @param instanzKeysToDelete Key of {@link IInstanz} to delete
 	 * @throws {@link CompletionException} with all suppressed exceptions. Look into

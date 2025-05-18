@@ -27,6 +27,7 @@ import de.tonsias.basis.osgi.intf.IDeltaService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.IInstanzService;
+import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.util.OsgiUtil;
@@ -59,8 +60,8 @@ public class InstanzServiceImplTest {
 		_inse.deleteInstanz(instanz.getOwnKey(), Type.SEND);
 
 		assertThat(instanz.getParentKey(), is(emptyOrNullString()));
-		assertThat(instanz2.getParentKey(), is(emptyOrNullString()));
-		assertThat(instanz.getChildren(), hasSize(0));
+		assertThat(instanz2.getParentKey(), is(instanz.getOwnKey()));
+		assertThat(instanz.getChildren(), hasItem(instanz2.getOwnKey()));
 		assertThat(instanz2.getChildren(), hasSize(0));
 	}
 
@@ -99,6 +100,12 @@ public class InstanzServiceImplTest {
 	}
 
 	@Test
+	void testRemoveChild_validRemoved() {
+		IInstanz instanz = _inse.createInstanz(_parentKey, Type.SEND);
+
+	}
+
+	@Test
 	void testCreateInstanz_parentKeyInvalid() {
 		assertThat(_inse.createInstanz(null, IEventBrokerBridge.Type.SEND), is(nullValue()));
 		assertThat(_inse.createInstanz("", IEventBrokerBridge.Type.SEND), is(nullValue()));
@@ -107,10 +114,11 @@ public class InstanzServiceImplTest {
 
 	@Test
 	void testCreateInstanz_validParentKey() throws InterruptedException {
+		String previewNextKey = OsgiUtil.getService(IKeyService.class).previewNextKey();
 		IInstanz instanz = _inse.createInstanz(_parentKey, IEventBrokerBridge.Type.SEND);
-		assertThat(instanz.getOwnKey(), is("1"));
+		assertThat(instanz.getOwnKey(), is(previewNextKey));
 		assertThat(instanz.getParentKey(), is(_parentKey));
-		assertThat(_inse.resolveKey(_parentKey).get().getChildren(), hasItem("1"));
+		assertThat(_inse.resolveKey(_parentKey).get().getChildren(), hasItem(previewNextKey));
 	}
 
 	@Test
