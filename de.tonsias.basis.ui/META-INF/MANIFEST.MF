@@ -24,4 +24,4 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0",
 Bundle-Vendor: TONSIAS
 Automatic-Module-Name: de.tonsias.basis.ui
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-22
+Bundle-RequiredExecutionEnvironment: JavaSE-24

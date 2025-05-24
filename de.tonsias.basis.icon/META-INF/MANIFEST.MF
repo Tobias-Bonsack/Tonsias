@@ -6,4 +6,4 @@ Bundle-Version: 1.0.0.qualifier
 Export-Package: de.tonsias.basis.icon
 Automatic-Module-Name: de.tonsias.basis.icon
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-22
+Bundle-RequiredExecutionEnvironment: JavaSE-24

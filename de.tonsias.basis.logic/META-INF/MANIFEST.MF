@@ -5,7 +5,7 @@ Bundle-SymbolicName: de.tonsias.basis.logic
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: de.tonsias.basis.logic
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-22
+Bundle-RequiredExecutionEnvironment: JavaSE-24
 Export-Package: de.tonsias.basis.logic.dialog,
  de.tonsias.basis.logic.function,
  de.tonsias.basis.logic.part

@@ -18,6 +18,6 @@ Require-Bundle: org.eclipse.e4.ui.model.workbench;bundle-version="2.4.20
  sion="1.0.0",de.tonsias.basis.icon;bundle-version=1.0.0
 Automatic-Module-Name: de.tonsias.delta.view.ui
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-22
+Bundle-RequiredExecutionEnvironment: JavaSE-24
 Model-Fragment: fragment.e4xmi
 

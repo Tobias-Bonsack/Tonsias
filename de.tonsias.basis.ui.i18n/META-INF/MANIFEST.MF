@@ -6,4 +6,4 @@ Bundle-Version: 1.0.0.qualifier
 Export-Package: de.tonsias.basis.ui.i18n;x-friends:="de.tonsias.basis.ui"
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0"
 Automatic-Module-Name: de.tonsias.basis.ui.i18n
-Bundle-RequiredExecutionEnvironment: JavaSE-22
+Bundle-RequiredExecutionEnvironment: JavaSE-24
