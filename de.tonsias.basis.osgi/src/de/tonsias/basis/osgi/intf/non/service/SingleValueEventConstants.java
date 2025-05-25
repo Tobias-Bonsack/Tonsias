@@ -1,5 +1,6 @@
 package de.tonsias.basis.osgi.intf.non.service;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.e4.core.services.events.IEventBroker;
@@ -37,7 +38,7 @@ public interface SingleValueEventConstants {
 
 	// data and the keys
 
-	static record SingleValueEvent(String _key) {
+	static record SingleValueEvent(String _key, Collection<String> _ownerKeys) {
 
 	}
 

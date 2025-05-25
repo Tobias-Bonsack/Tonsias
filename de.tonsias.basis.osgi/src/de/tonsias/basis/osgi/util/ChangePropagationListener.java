@@ -12,9 +12,9 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ParentChange;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.*;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.*;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -88,6 +88,17 @@ public class ChangePropagationListener {
 		instanz.ifPresent(i -> {
 			i.getChildren().forEach(child -> _instanz.markInstanzAsDelete(child, Type.SEND));
 		});
+	}
+
+	/**
+	 * ------------- Start SingleValue Events -------------
+	 */
+
+	@Inject
+	@Optional
+	public void newSingleValueListener(@EventTopic(SingleValueEventConstants.NEW) Event event) {
+		SingleValueEvent data = (SingleValueEvent) event.getProperty(IEventBroker.DATA);
+		data.
 	}
 
 }

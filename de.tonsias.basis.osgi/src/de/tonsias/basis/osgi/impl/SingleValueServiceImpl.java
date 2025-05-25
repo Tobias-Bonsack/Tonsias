@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -89,7 +90,7 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		singleValue.tryToSetValue(value);
 		_cache.put(singleValue.getOwnKey(), singleValue);
 
-		var data = new SingleValueEventConstants.SingleValueEvent(singleValue.getOwnKey());
+		var data = new SingleValueEventConstants.SingleValueEvent(singleValue.getOwnKey(), List.of(parentKey));
 		_broker.post(SingleValueEventConstants.NEW, Map.of(IEventBroker.DATA, data));
 
 		return singleValue;
@@ -144,7 +145,7 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	@Override
 	public boolean removeValue(ISingleValue<?> valueToDelete) {
 		boolean removeFromCache = this.removeFromCache(valueToDelete.getOwnKey());
-		var data = new SingleValueEventConstants.SingleValueEvent(valueToDelete.getOwnKey());
+		var data = new SingleValueEventConstants.SingleValueEvent(valueToDelete.getOwnKey(), valueToDelete.getConnectedInstanzKeys());
 		_broker.send(SingleValueEventConstants.DELETE, Map.of(IEventBroker.DATA, data));
 		return removeFromCache;
 	}
