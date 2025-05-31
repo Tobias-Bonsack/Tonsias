@@ -26,6 +26,7 @@ import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 
 @Component
@@ -79,7 +80,8 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	}
 
 	@Override
-	public <E extends ISingleValue<?>> E createNew(Class<E> clazz, String parentKey, Object value) {
+	public <E extends ISingleValue<?>> E createNew(Class<E> clazz, String parentKey, String parameterName,
+			Object value, IEventBrokerBridge.Type eventType) {
 		Optional<SingleValueType> type = SingleValueType.getByClass(clazz);
 		if (type.isEmpty()) {
 			return null;
@@ -90,8 +92,9 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		singleValue.tryToSetValue(value);
 		_cache.put(singleValue.getOwnKey(), singleValue);
 
-		var data = new SingleValueEventConstants.SingleValueEvent(singleValue.getOwnKey(), List.of(parentKey));
-		_broker.post(SingleValueEventConstants.NEW, Map.of(IEventBroker.DATA, data));
+		var data = new SingleValueEventConstants.SingleValueNewEvent(type.get(), singleValue.getOwnKey(), parameterName,
+				List.of(parentKey));
+		fireEvent(eventType, SingleValueEventConstants.NEW, data);
 
 		return singleValue;
 	}
@@ -145,8 +148,11 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	@Override
 	public boolean removeValue(ISingleValue<?> valueToDelete) {
 		boolean removeFromCache = this.removeFromCache(valueToDelete.getOwnKey());
-		var data = new SingleValueEventConstants.SingleValueEvent(valueToDelete.getOwnKey(), valueToDelete.getConnectedInstanzKeys());
-		_broker.send(SingleValueEventConstants.DELETE, Map.of(IEventBroker.DATA, data));
+		SingleValueType.getByClass(valueToDelete.getClass()).ifPresent(type -> {
+			var data = new SingleValueEventConstants.SingleValueDeleteEvent(type, valueToDelete.getOwnKey(),
+					valueToDelete.getConnectedInstanzKeys());
+			_broker.send(SingleValueEventConstants.DELETE, Map.of(IEventBroker.DATA, data));
+		});
 		return removeFromCache;
 	}
 
@@ -167,5 +173,12 @@ public class SingleValueServiceImpl implements ISingleValueService {
 
 		return true;
 	}
-
+	
+	private void fireEvent(Type eventType, String eventName, Object data) {
+		switch (eventType) {
+		case POST -> _broker.post(eventName, Map.of(IEventBroker.DATA, data));
+		case SEND -> _broker.send(eventName, Map.of(IEventBroker.DATA, data));
+		default -> throw new IllegalArgumentException();
+		}
+	}
 }

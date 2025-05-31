@@ -97,8 +97,10 @@ public class ChangePropagationListener {
 	@Inject
 	@Optional
 	public void newSingleValueListener(@EventTopic(SingleValueEventConstants.NEW) Event event) {
-		SingleValueEvent data = (SingleValueEvent) event.getProperty(IEventBroker.DATA);
-		data.
+		SingleValueNewEvent data = (SingleValueNewEvent) event.getProperty(IEventBroker.DATA);
+		for (String ownerKey : data._ownerKeys()) {
+			_instanz.putSingleValue(ownerKey, data._type(), data._key(), data._name(), Type.SEND);
+		}
 	}
 
 }

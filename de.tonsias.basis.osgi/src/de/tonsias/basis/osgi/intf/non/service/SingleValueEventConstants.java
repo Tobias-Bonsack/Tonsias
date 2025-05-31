@@ -38,8 +38,12 @@ public interface SingleValueEventConstants {
 
 	// data and the keys
 
-	static record SingleValueEvent(String _key, Collection<String> _ownerKeys) {
+	static record SingleValueNewEvent(SingleValueType _type, String _key, String _name, Collection<String> _ownerKeys) {
 
+	}
+
+	static record SingleValueDeleteEvent(SingleValueType _type, String _key, Collection<String> _ownerKeys) {
+		
 	}
 
 	static record ValueChangeEvent(String _key, SingleValueType _type, Object _oldValue, Object _newValue) {

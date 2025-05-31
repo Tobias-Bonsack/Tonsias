@@ -15,7 +15,8 @@ Require-Bundle: de.tonsias.basis.osgi;bundle-version="1.0.0",
  de.tonsias.basis.data.access,
  de.tonsias.basis.model,
  org.eclipse.e4.core.services,
- jakarta.inject.jakarta.inject-api
+ jakarta.inject.jakarta.inject-api,
+ com.google.guava;bundle-version="33.1.0"
 Automatic-Module-Name: de.tonsias.basis.osgi.test
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-19

@@ -14,15 +14,9 @@ import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedValueChangeEvent;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ParentChange;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ValueRenameEvent;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.*;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
-import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.LinkedInstanzChangeEvent;
-import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueEvent;
-import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.ValueChangeEvent;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.*;
 import jakarta.inject.Inject;
 
 /**
@@ -90,7 +84,7 @@ public class DeltaServiceImpl implements IDeltaService {
 			Set<String> singlevalueKeysToDelete) {
 		switch (event.getTopic()) {
 		case SingleValueEventConstants.NEW:
-			var value = SingleValueEvent.class.cast(event.getProperty(IEventBroker.DATA));
+			var value = SingleValueNewEvent.class.cast(event.getProperty(IEventBroker.DATA));
 			singlevalueKeysToSave.add(value._key());
 			break;
 		case SingleValueEventConstants.VALUE_CHANGE:
@@ -102,7 +96,7 @@ public class DeltaServiceImpl implements IDeltaService {
 			singlevalueKeysToSave.add(value3._key());
 			break;
 		case SingleValueEventConstants.DELETE:
-			var value4 = SingleValueEvent.class.cast(event.getProperty(IEventBroker.DATA));
+			var value4 = SingleValueDeleteEvent.class.cast(event.getProperty(IEventBroker.DATA));
 			singlevalueKeysToDelete.add(value4._key());
 			break;
 		default:

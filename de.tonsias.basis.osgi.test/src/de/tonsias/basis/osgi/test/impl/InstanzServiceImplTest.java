@@ -51,7 +51,6 @@ public class InstanzServiceImplTest {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	void testDeleteInstanz_propageteAllChildren()
 			throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {

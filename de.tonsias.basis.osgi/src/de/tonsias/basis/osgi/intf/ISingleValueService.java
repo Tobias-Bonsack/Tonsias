@@ -40,10 +40,11 @@ public interface ISingleValueService {
 	 * @param <E>       created class
 	 * @param clazz     identification
 	 * @param parentKey Key of the parent {@link IInstanz}
+	 * @param parameterName name of the parameter that holds the {@link IInstanz}
 	 * @param value     of the new created {@link ISingleValue}
 	 * @return new instance of {@link ISingleValue} or null
 	 */
-	<E extends ISingleValue<?>> E createNew(Class<E> clazz, String parentKey, Object value);
+	<E extends ISingleValue<?>> E createNew(Class<E> clazz, String parentKey, String parameterName, Object value, IEventBrokerBridge.Type eventType);
 
 	/**
 	 * saves all {@link ISingleValue}, that are currently in the cache.

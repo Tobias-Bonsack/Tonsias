@@ -24,9 +24,12 @@ public class StringValueDialog extends AValueDialog<SingleStringValue> {
 	protected void okPressed() {
 		if (_value.isEmpty()) {
 			_value = Optional.of(//
-					_sVService.createNew(SingleStringValue.class, _instanz.getOwnKey(), _valueText.getText()));
-			_iService.putSingleValue(_instanz.getOwnKey(), _type, _value.get().getOwnKey(), _nameText.getText(),
-					IEventBrokerBridge.Type.POST);
+					_sVService.createNew(SingleStringValue.class, //
+							_instanz.getOwnKey(), //
+							_nameText.getText(), //
+							_valueText.getText(), //
+							IEventBrokerBridge.Type.POST//
+					));
 		} else {
 			_iService.changeSingleValueName(_instanz.getOwnKey(), _type, _value.get().getOwnKey(), _nameText.getText(),
 					IEventBrokerBridge.Type.POST);
