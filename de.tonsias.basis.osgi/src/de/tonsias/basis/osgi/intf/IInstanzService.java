@@ -10,6 +10,7 @@ import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.util.ChangePropagationListener;
+import jakarta.annotation.Nullable;
 
 public interface IInstanzService {
 
@@ -89,7 +90,7 @@ public interface IInstanzService {
 	 * @param key        of the attribute to change
 	 * @param name       of the attribute
 	 */
-	void putSingleValue(String instanzKey, SingleValueType type, String key, String name,
+	void putSingleValue(String instanzKey, SingleValueType type, String key, @Nullable  String name,
 			IEventBrokerBridge.Type eventType);
 
 	/**

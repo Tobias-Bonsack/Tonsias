@@ -17,6 +17,6 @@ public interface ISingleValue<T> extends IValue {
 
 	Collection<String> getConnectedInstanzKeys();
 
-	void addConnectedInstanzKey(String key);
+	boolean addConnectedInstanzKey(String key);
 
 }

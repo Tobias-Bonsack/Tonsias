@@ -51,8 +51,8 @@ public interface SingleValueEventConstants {
 	}
 
 	static record LinkedInstanzChangeEvent(String _key, SingleValueType _singleValuetype, ChangeType _changeType,
-			List<String> _instanzKeys) {
-		static enum ChangeType {
+			Collection<String> _instanzKeys) {
+		public static enum ChangeType {
 			ADD, REMOVE;
 		}
 	}

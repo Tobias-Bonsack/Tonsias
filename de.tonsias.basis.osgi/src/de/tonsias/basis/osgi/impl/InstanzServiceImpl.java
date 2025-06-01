@@ -32,6 +32,7 @@ import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildC
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedValueChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ParentChange;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ValueRenameEvent;
+import jakarta.annotation.Nullable;
 
 @Component
 public class InstanzServiceImpl implements IInstanzService {
@@ -199,14 +200,16 @@ public class InstanzServiceImpl implements IInstanzService {
 	public void putSingleValue(String instanzKey, SingleValueType type, String key, String name,
 			IEventBrokerBridge.Type eventType) {
 		Optional<IInstanz> instanz = resolveKey(instanzKey);
-		if (instanz.isEmpty() || type == null || key.isBlank() || name.isBlank()) {
+		if (instanz.isEmpty() || type == null || key.isBlank()) {
 			return;
 		}
 
-		instanz.get().getSingleValues(type).putIfAbsent(key, name);
-
-		var changeData = new LinkedValueChangeEvent(instanzKey, type, ChangeType.ADD, List.of(key));
-		fireEvent(eventType, InstanzEventConstants.VALUE_LIST_CHANGE, changeData);
+		String paramName = name == null || name.isBlank() ? key : name;
+		boolean isAdded = instanz.get().getSingleValues(type).putIfAbsent(key, paramName) == null;
+		if(isAdded) {
+			var changeData = new LinkedValueChangeEvent(instanzKey, type, ChangeType.ADD, List.of(key));
+			fireEvent(eventType, InstanzEventConstants.VALUE_LIST_CHANGE, changeData);
+		}
 	}
 
 	@Override

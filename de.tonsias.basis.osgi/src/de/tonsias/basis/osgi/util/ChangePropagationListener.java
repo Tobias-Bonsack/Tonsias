@@ -91,7 +91,28 @@ public class ChangePropagationListener {
 	}
 
 	/**
-	 * ------------- Start SingleValue Events -------------
+	 * ------------- Start cross Instanz to SingleValue Events -------------
+	 */
+
+	@Inject
+	@Optional
+	public void putSingleValueListener(@EventTopic(InstanzEventConstants.VALUE_LIST_CHANGE) Event event) {
+		LinkedValueChangeEvent data = (LinkedValueChangeEvent) event.getProperty(IEventBroker.DATA);
+		switch (data._changeType()) {
+		case ADD:
+			data._valueKeys()
+					.forEach(svKey -> _singleValue.addToParent(data._singleValuetype(),svKey, data._key(), Type.SEND));
+			break;
+		case REMOVE:
+			// TODO: add logic
+			break;
+		default:
+			throw new IllegalArgumentException("Unexpected value: " + data._changeType());
+		}
+	}
+
+	/**
+	 * ------------- Start cross SingleValue to Instanz Events -------------
 	 */
 
 	@Inject
@@ -102,5 +123,25 @@ public class ChangePropagationListener {
 			_instanz.putSingleValue(ownerKey, data._type(), data._key(), data._name(), Type.SEND);
 		}
 	}
+
+	@Inject
+	@Optional
+	public void addToParentListener(@EventTopic(SingleValueEventConstants.INSTANZ_LIST_CHANGE) Event event) {
+		LinkedInstanzChangeEvent data = (LinkedInstanzChangeEvent) event.getProperty(IEventBroker.DATA);
+		switch (data._changeType()) {
+		case ADD:
+			data._instanzKeys().forEach(instanzKey -> _instanz.putSingleValue(instanzKey, data._singleValuetype(), data._key(), null, Type.SEND));
+			break;
+		case REMOVE:
+			//TODO: add logic
+			break;
+		default:
+			throw new IllegalArgumentException("Unexpected value: " + data._changeType());
+		}
+	}
+
+	/**
+	 * ------------- Start SingleValue Events -------------
+	 */
 
 }

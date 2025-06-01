@@ -3,9 +3,11 @@ package de.tonsias.basis.osgi.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletionException;
@@ -28,6 +30,8 @@ import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.*;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.LinkedInstanzChangeEvent.ChangeType;;
 
 @Component
 public class SingleValueServiceImpl implements ISingleValueService {
@@ -80,8 +84,12 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	}
 
 	@Override
-	public <E extends ISingleValue<?>> E createNew(Class<E> clazz, String parentKey, String parameterName,
-			Object value, IEventBrokerBridge.Type eventType) {
+	public <E extends ISingleValue<?>> E createNew(Class<E> clazz, String parentKey, String parameterName, Object value,
+			IEventBrokerBridge.Type eventType) {
+		Objects.requireNonNull(parentKey);
+		Objects.requireNonNull(parameterName);
+		Objects.requireNonNull(value);
+		Objects.requireNonNull(value);
 		Optional<SingleValueType> type = SingleValueType.getByClass(clazz);
 		if (type.isEmpty()) {
 			return null;
@@ -173,12 +181,27 @@ public class SingleValueServiceImpl implements ISingleValueService {
 
 		return true;
 	}
-	
+
 	private void fireEvent(Type eventType, String eventName, Object data) {
 		switch (eventType) {
 		case POST -> _broker.post(eventName, Map.of(IEventBroker.DATA, data));
 		case SEND -> _broker.send(eventName, Map.of(IEventBroker.DATA, data));
 		default -> throw new IllegalArgumentException();
 		}
+	}
+
+	@Override
+	public boolean addToParent(SingleValueType type, String valueKey, String parentKey, Type eventType) {
+		Optional<? extends ISingleValue<?>> sv = resolveKey(type.getPath(), valueKey, type.getClazz());
+		if (sv.isEmpty()) {
+			return false;
+		}
+
+		boolean isAdded = sv.get().addConnectedInstanzKey(parentKey);
+		if (isAdded) {
+			LinkedInstanzChangeEvent data = new LinkedInstanzChangeEvent(valueKey, type, ChangeType.ADD, Collections.singleton(parentKey));
+			fireEvent(eventType, SingleValueEventConstants.INSTANZ_LIST_CHANGE, data);
+		}
+		return isAdded;
 	}
 }

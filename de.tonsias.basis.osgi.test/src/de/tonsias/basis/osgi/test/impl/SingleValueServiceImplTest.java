@@ -49,7 +49,7 @@ public class SingleValueServiceImplTest {
 	}
 
 	@Test
-	void testCreateNew_test() {
+	void testCreateNew_validCreate() {
 		SingleStringValue stringValue = _svs.createNew(SingleStringValue.class, _instanz.getOwnKey(), "parName",
 				"value", Type.SEND);
 
@@ -57,6 +57,17 @@ public class SingleValueServiceImplTest {
 		assertThat(stringValue.getConnectedInstanzKeys(), hasSize(1));
 		assertThat(stringValue.getConnectedInstanzKeys(), hasItem(_instanz.getOwnKey()));
 		assertThat(_instanz.getSingleValues(SingleValueType.SINGLE_STRING).size(), is(1));
+	}
+	
+	@Test
+	void testAddToParent_validAdd() {
+		SingleStringValue stringValue = _svs.createNew(SingleStringValue.class, _instanz.getOwnKey(), "parName",
+				"value", Type.SEND);
+		
+		IInstanz instanz = _ins.createInstanz(_originKey, Type.SEND);
+		boolean toParent = _svs.addToParent(SingleValueType.SINGLE_STRING, stringValue.getOwnKey(), instanz.getOwnKey(), Type.SEND);
+		
+		assertThat(toParent, is(true));
 	}
 
 }

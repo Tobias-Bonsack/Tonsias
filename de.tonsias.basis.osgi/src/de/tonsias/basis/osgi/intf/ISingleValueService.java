@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.concurrent.CompletionException;
 
 import de.tonsias.basis.data.access.osgi.intf.DeleteService;
+import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 
@@ -96,5 +97,14 @@ public interface ISingleValueService {
 	 *         <code>false</code>
 	 */
 	boolean deleteAll(Set<String> singlevalueKeysToDelete) throws CompletionException;
+	
+	/**
+	 * Adds {@link ISingleValue} to {@link IInstanz} if not already happened
+	 * @param type of SV
+	 * @param valueKey of SV
+	 * @param parentKey of Instanz
+	 * @return true if added, else false
+	 */
+	boolean addToParent(SingleValueType type, String valueKey, String parentKey, IEventBrokerBridge.Type eventType);
 
 }

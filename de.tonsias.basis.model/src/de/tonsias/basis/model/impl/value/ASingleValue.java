@@ -50,8 +50,8 @@ public abstract class ASingleValue<T> implements ISingleValue<T> {
 	}
 
 	@Override
-	public void addConnectedInstanzKey(String key) {
-		_connectedInstanzes.add(key);
+	public boolean addConnectedInstanzKey(String key) {
+		return _connectedInstanzes.add(key);
 	}
 
 }
