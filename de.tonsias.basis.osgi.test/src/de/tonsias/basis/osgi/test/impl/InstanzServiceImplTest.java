@@ -57,7 +57,7 @@ public class InstanzServiceImplTest {
 		IInstanz instanz = _inse.createInstanz(_parentKey, Type.SEND);
 		IInstanz instanz2 = _inse.createInstanz(instanz.getOwnKey(), Type.SEND);
 
-		_inse.deleteInstanz(instanz.getOwnKey(), Type.SEND);
+		_inse.removeSubtreeInstanz(instanz.getOwnKey(), Type.SEND);
 
 		assertThat(instanz.getParentKey(), is(emptyOrNullString()));
 		assertThat(instanz2.getParentKey(), is(instanz.getOwnKey()));

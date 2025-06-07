@@ -19,4 +19,6 @@ public interface ISingleValue<T> extends IValue {
 
 	boolean addConnectedInstanzKey(String key);
 
+	boolean removeConnection(Collection<String> connectedInstanzKeys);
+
 }

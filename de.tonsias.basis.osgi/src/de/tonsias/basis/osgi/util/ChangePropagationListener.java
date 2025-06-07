@@ -64,7 +64,7 @@ public class ChangePropagationListener {
 						|| (child.get().getParentKey() != null && !data._key().equals(child.get().getParentKey()))) {
 					continue;
 				}
-				_instanz.deleteInstanz(childKey, IEventBrokerBridge.Type.SEND);
+				_instanz.removeSubtreeInstanz(childKey, IEventBrokerBridge.Type.SEND);
 			}
 			break;
 		default:
@@ -101,7 +101,7 @@ public class ChangePropagationListener {
 		switch (data._changeType()) {
 		case ADD:
 			data._valueKeys()
-					.forEach(svKey -> _singleValue.addToParent(data._singleValuetype(),svKey, data._key(), Type.SEND));
+					.forEach(svKey -> _singleValue.addToParent(data._singleValuetype(), svKey, data._key(), Type.SEND));
 			break;
 		case REMOVE:
 			// TODO: add logic
@@ -126,14 +126,22 @@ public class ChangePropagationListener {
 
 	@Inject
 	@Optional
+	public void removeSingleValueListener(@EventTopic(SingleValueEventConstants.DELETE) Event event) {
+		SingleValueDeleteEvent data = (SingleValueDeleteEvent) event.getProperty(IEventBroker.DATA);
+		_instanz.removeValueKey(data._ownerKeys(), data._type(), data._key(), Type.SEND);
+	}
+
+	@Inject
+	@Optional
 	public void addToParentListener(@EventTopic(SingleValueEventConstants.INSTANZ_LIST_CHANGE) Event event) {
 		LinkedInstanzChangeEvent data = (LinkedInstanzChangeEvent) event.getProperty(IEventBroker.DATA);
 		switch (data._changeType()) {
 		case ADD:
-			data._instanzKeys().forEach(instanzKey -> _instanz.putSingleValue(instanzKey, data._singleValuetype(), data._key(), null, Type.SEND));
+			data._instanzKeys().forEach(instanzKey -> _instanz.putSingleValue(instanzKey, data._singleValuetype(),
+					data._key(), null, Type.SEND));
 			break;
 		case REMOVE:
-			//TODO: add logic
+			// TODO: add logic
 			break;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + data._changeType());

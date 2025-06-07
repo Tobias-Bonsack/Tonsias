@@ -106,12 +106,12 @@ public interface IInstanzService {
 			IEventBrokerBridge.Type eventType);
 
 	/**
-	 * Mark the {@link IInstanz} as delete and remove parent if needed
+	 * Mark the {@link IInstanz} as delete and remove from parent if needed
 	 * 
 	 * @param instanzKey to remove
 	 * @return
 	 */
-	boolean deleteInstanz(String instanzKey, IEventBrokerBridge.Type eventType);
+	boolean removeSubtreeInstanz(String instanzKey, IEventBrokerBridge.Type eventType);
 
 	/**
 	 * Mark the {@link IInstanz} as delete, nothing else. Should only be called from

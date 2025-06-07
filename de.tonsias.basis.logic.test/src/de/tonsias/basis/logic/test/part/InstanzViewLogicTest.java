@@ -53,7 +53,7 @@ public class InstanzViewLogicTest {
 		var value = mock(SingleStringValue.class);
 		when(value.getConnectedInstanzKeys()).thenReturn(Collections.emptyList());
 
-		Job job = _logic.createOneAndQuadFunctionJob((a) -> true, value, (a, b, c, d) -> true);
+		Job job = _logic.createBiAndQuadFunctionJob((a, b) -> true, value, (a, b, c, d) -> true);
 		job.schedule();
 		assertThat(Job.getJobManager().find(_logic), arrayWithSize(1));
 		Job.getJobManager().join(_logic, new NullProgressMonitor());

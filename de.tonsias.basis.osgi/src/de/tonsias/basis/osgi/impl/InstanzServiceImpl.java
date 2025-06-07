@@ -134,7 +134,7 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public boolean deleteInstanz(String instanzKey, IEventBrokerBridge.Type eventType) {
+	public boolean removeSubtreeInstanz(String instanzKey, IEventBrokerBridge.Type eventType) {
 		// Remove parent relation
 		Optional<IInstanz> instanz = resolveKey(instanzKey);
 		if (instanz.isEmpty()) {

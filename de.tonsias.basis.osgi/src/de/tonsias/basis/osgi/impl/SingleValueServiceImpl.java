@@ -141,27 +141,36 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	}
 
 	@Override
-	public boolean changeValue(String ownKey, Object newValue) {
+	public boolean changeValue(String ownKey, Object newValue, IEventBrokerBridge.Type eventType) {
 		ISingleValue<?> value = _cache.get(ownKey);
 		Object oldValue = value.getValue();
 		boolean isChanged = value.tryToSetValue(newValue);
 		if (isChanged) {
 			var type = SingleValueType.getByClass(value.getClass()).orElseGet(() -> null);
 			var data = new SingleValueEventConstants.ValueChangeEvent(ownKey, type, oldValue, newValue);
-			_broker.post(SingleValueEventConstants.VALUE_CHANGE, Map.of(IEventBroker.DATA, data));
+			fireEvent(eventType, SingleValueEventConstants.VALUE_CHANGE, data);
 		}
 		return isChanged;
 	}
 
 	@Override
-	public boolean removeValue(ISingleValue<?> valueToDelete) {
-		boolean removeFromCache = this.removeFromCache(valueToDelete.getOwnKey());
+	public boolean removeValue(ISingleValue<?> valueToDelete, IEventBrokerBridge.Type eventType) {
 		SingleValueType.getByClass(valueToDelete.getClass()).ifPresent(type -> {
-			var data = new SingleValueEventConstants.SingleValueDeleteEvent(type, valueToDelete.getOwnKey(),
-					valueToDelete.getConnectedInstanzKeys());
-			_broker.send(SingleValueEventConstants.DELETE, Map.of(IEventBroker.DATA, data));
+			markSingleValueAsDelete(valueToDelete.getOwnKey(), eventType);
 		});
-		return removeFromCache;
+		return true;
+	}
+
+	@Override
+	public void markSingleValueAsDelete(String singleValueKeyToMark, Type eventType) {
+		var value = _cache.get(singleValueKeyToMark);
+		Optional<SingleValueType> optional = SingleValueType.getByClass(value.getClass());
+		optional.ifPresent(type -> {
+			Collection<String> connectedInstanzKeys = value.getConnectedInstanzKeys();
+			value.removeConnection(connectedInstanzKeys);
+			var data = new SingleValueEventConstants.SingleValueDeleteEvent(type, singleValueKeyToMark, connectedInstanzKeys);
+			fireEvent(eventType, SingleValueEventConstants.DELETE, data);
+		});
 	}
 
 	@Override
@@ -199,7 +208,8 @@ public class SingleValueServiceImpl implements ISingleValueService {
 
 		boolean isAdded = sv.get().addConnectedInstanzKey(parentKey);
 		if (isAdded) {
-			LinkedInstanzChangeEvent data = new LinkedInstanzChangeEvent(valueKey, type, ChangeType.ADD, Collections.singleton(parentKey));
+			LinkedInstanzChangeEvent data = new LinkedInstanzChangeEvent(valueKey, type, ChangeType.ADD,
+					Collections.singleton(parentKey));
 			fireEvent(eventType, SingleValueEventConstants.INSTANZ_LIST_CHANGE, data);
 		}
 		return isAdded;

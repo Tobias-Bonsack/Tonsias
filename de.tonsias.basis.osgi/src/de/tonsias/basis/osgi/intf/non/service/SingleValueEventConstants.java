@@ -30,7 +30,7 @@ public interface SingleValueEventConstants {
 	String INSTANZ_LIST_CHANGE = SINGLE_VALUE + "/delta/linkedInstanzChange";
 
 	/**
-	 * {@link IEventBroker#DATA} maps to {@link SingleValueEvent}
+	 * {@link IEventBroker#DATA} maps to {@link SingleValueDeleteEvent}
 	 */
 	String DELETE = SINGLE_VALUE + "/delta/delete";
 

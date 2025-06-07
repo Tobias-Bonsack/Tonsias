@@ -18,6 +18,7 @@ import org.eclipse.e4.core.services.events.IEventBroker;
 
 import de.tonsias.basis.logic.function.PentaConsumer;
 import de.tonsias.basis.logic.function.QuadFunction;
+import de.tonsias.basis.logic.function.TriFunction;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
@@ -36,6 +37,26 @@ public class InstanzViewLogic {
 		_jobGroup = new JobGroup("InstanzViewLogic JobGroup", 1, 0);
 	}
 
+	public Job createTriFunctionJob(TriFunction<String, String, IEventBrokerBridge.Type, Boolean> serviceFunction, String valueKey,
+			String newValue) {
+		Job job = new Job("") {
+			
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				serviceFunction.apply(valueKey, newValue, IEventBrokerBridge.Type.SEND);
+				return Status.OK_STATUS;
+			}
+			
+			@Override
+			public boolean belongsTo(Object family) {
+				return family == InstanzViewLogic.this;
+			}
+			
+		};
+		job.setJobGroup(_jobGroup);
+		_changeJobs.add(job);
+		return job;
+	}
 	public Job createBiFunctionJob(BiFunction<String, String, Boolean> serviceFunction, String valueKey,
 			String newValue) {
 		Job job = new Job("") {
@@ -79,13 +100,13 @@ public class InstanzViewLogic {
 		return job;
 	}
 
-	public Job createOneAndQuadFunctionJob(Function<ISingleValue<?>, Boolean> function, ISingleValue<?> data,
+	public Job createBiAndQuadFunctionJob(BiFunction<ISingleValue<?>, IEventBrokerBridge.Type, Boolean> function, ISingleValue<?> data,
 			QuadFunction<Collection<String>, SingleValueType, String, IEventBrokerBridge.Type, Boolean> quadFunction) {
 		Job job = new Job("") {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				function.apply(data);
+				function.apply(data, IEventBrokerBridge.Type.SEND);
 				quadFunction.apply(data.getConnectedInstanzKeys(), SingleValueType.getByClass(data.getClass()).get(),
 						data.getOwnKey(), IEventBrokerBridge.Type.SEND);
 				return Status.OK_STATUS;

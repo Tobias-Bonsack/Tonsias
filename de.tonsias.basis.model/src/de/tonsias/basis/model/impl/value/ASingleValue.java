@@ -1,6 +1,7 @@
 package de.tonsias.basis.model.impl.value;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -46,12 +47,17 @@ public abstract class ASingleValue<T> implements ISingleValue<T> {
 
 	@Override
 	public Collection<String> getConnectedInstanzKeys() {
-		return _connectedInstanzes;
+		return Collections.unmodifiableSet(_connectedInstanzes);
 	}
 
 	@Override
 	public boolean addConnectedInstanzKey(String key) {
 		return _connectedInstanzes.add(key);
+	}
+	
+	@Override
+	public boolean removeConnection(Collection<String> connectedInstanzKeys) {
+		return _connectedInstanzes.removeAll(connectedInstanzKeys);
 	}
 
 }

@@ -154,7 +154,7 @@ public class ModelView {
 				SingleValueType type = SingleValueType.getByClass(value.getClass()).get();
 
 				_broker.post(EventConstants.OPEN_OPERATION, null);
-				_singleService.removeValue(value);
+				_singleService.removeValue(value, IEventBrokerBridge.Type.SEND);
 				_instanzService.removeValueKey(connectedInstanzKeys, type, value.getOwnKey(),
 						IEventBrokerBridge.Type.POST);
 				_broker.post(EventConstants.CLOSE_OPERATION, null);

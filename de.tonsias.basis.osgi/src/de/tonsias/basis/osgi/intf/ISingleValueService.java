@@ -67,7 +67,7 @@ public interface ISingleValueService {
 	 * @param newValue Possible new value
 	 * @return boolean if the change was successful or not
 	 */
-	boolean changeValue(String ownKey, Object newValue);
+	boolean changeValue(String ownKey, Object newValue, IEventBrokerBridge.Type eventType);
 
 	/**
 	 * Delete SingleValue from cache. It´s still available as file! Deletion will be
@@ -76,7 +76,13 @@ public interface ISingleValueService {
 	 * @param valueToDelete {@link ISingleValue} to remove
 	 * @return true if remove
 	 */
-	boolean removeValue(ISingleValue<?> valueToDelete);
+	boolean removeValue(ISingleValue<?> valueToDelete, IEventBrokerBridge.Type eventType);
+	
+	/**
+	 * 
+	 * @param singleValueKeyToMark
+	 */
+	void markSingleValueAsDelete(String singleValueKeyToMark, IEventBrokerBridge.Type eventType);
 
 	/**
 	 * saves all {@link ISingleValue} from the collection, if possible. Can only
@@ -88,7 +94,7 @@ public interface ISingleValueService {
 	boolean saveAll(Set<String> singlevalueKeysToSave);
 
 	/**
-	 * Delete Files
+	 * Delete Files, should only called in any save environment!
 	 * 
 	 * @param singlevalueKeysToDelete Keys of {@link ISingleValue} to delete
 	 * @throws {@link CompletionException} with all suppressed exceptions. Look into
