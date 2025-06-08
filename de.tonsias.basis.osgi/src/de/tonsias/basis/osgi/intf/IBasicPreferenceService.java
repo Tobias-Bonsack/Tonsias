@@ -14,17 +14,23 @@ public interface IBasicPreferenceService extends IPreferences {
 	 * WARNING: if you change a key, change in {@link PreferenceEventConstants} too
 	 */
 	enum Key {
-		MODEL_VIEW_TEXT("ModelViewText"), //
-		SHOW_VALUES("EnableValues");
+		MODEL_VIEW_TEXT("ModelViewText", "Name"), //
+		SHOW_VALUES("EnableValues", "true");
 
 		private final String _key;
+		private String _initValue;
 
-		Key(String key) {
+		Key(String key, String initValue) {
 			_key = key;
+			_initValue = initValue;
 		}
 
 		public final String getKey() {
 			return _key;
+		}
+		
+		public final String getInitValue() {
+			return _initValue;
 		}
 	}
 

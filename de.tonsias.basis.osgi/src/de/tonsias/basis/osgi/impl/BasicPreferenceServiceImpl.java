@@ -87,7 +87,22 @@ public class BasicPreferenceServiceImpl implements IBasicPreferenceService {
 
 	@Override
 	public IEclipsePreferences getNode() {
-		return InstanceScope.INSTANCE.getNode("BasicPreference");
+		IEclipsePreferences node = InstanceScope.INSTANCE.getNode("BasicPreference");
+		try {
+			initMissingBasicPref(node);
+		} catch (BackingStoreException e) {
+			e.printStackTrace();
+		}
+		return node;
+	}
+
+	private void initMissingBasicPref(IEclipsePreferences node) throws BackingStoreException {
+		for (var entry : Key.values()) {
+			if (node.get(entry.getKey(), null) == null) {
+				node.put(entry.getKey(), entry.getInitValue());
+			}
+		}
+		node.flush();
 	}
 
 	private Object getEventObject(String oldValue, Object value) {
