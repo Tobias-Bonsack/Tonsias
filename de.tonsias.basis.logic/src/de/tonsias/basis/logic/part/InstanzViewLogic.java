@@ -47,7 +47,7 @@ public class InstanzViewLogic {
 			return;
 		}
 
-		Job job = new Job("Change SV-Value: "+ valueKey) {
+		Job job = new Job("Change SV-Value: " + valueKey) {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				_svService.changeValue(valueKey, newValue, Type.SEND);
@@ -64,7 +64,7 @@ public class InstanzViewLogic {
 	}
 
 	public boolean isInDelete(ISingleValue<?> singleValue) {
-		return _modifySvMap.containsKey(singleValue.getOwnKey());
+		return _deleteSvMap.containsKey(singleValue.getOwnKey());
 	}
 
 	public void createDeleteSvJob(ISingleValue<?> singleValue) {
@@ -93,9 +93,9 @@ public class InstanzViewLogic {
 		if (_deleteSvMap.containsKey(sv.getOwnKey())) {
 			return;
 		}
-		
+
 		Job job = new Job("Change SV-Name: ") {
-			
+
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				Optional<SingleValueType> svType = SingleValueType.getByClass(sv.getClass());
@@ -119,17 +119,11 @@ public class InstanzViewLogic {
 			changeJobs.addAll(_modifySvMap.values());
 			changeJobs.addAll(_modifySvNameMap.values());
 			changeJobs.addAll(_deleteSvMap.values());
-			
-			
+
 			addConsumerOperation(broker, EventConstants.OPEN_OPERATION, changeJobs::addFirst);
 			addConsumerOperation(broker, EventConstants.CLOSE_OPERATION, changeJobs::addLast);
-			
+
 			changeJobs.forEach(j -> j.schedule());
-			try {
-				Job.getJobManager().join(this, new NullProgressMonitor());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 			clear();
 			return;
 		case 1:
@@ -142,15 +136,19 @@ public class InstanzViewLogic {
 			return;
 		}
 	}
-	
 
 	private void addConsumerOperation(IEventBrokerBridge broker, String openOperation, Consumer<Job> consumer) {
 		Job job = new Job(openOperation) {
-			
+
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				broker.send(openOperation, null);
 				return Status.OK_STATUS;
+			}
+
+			@Override
+			public boolean belongsTo(Object family) {
+				return family == InstanzViewLogic.this;
 			}
 		};
 		job.setJobGroup(_jobGroup);

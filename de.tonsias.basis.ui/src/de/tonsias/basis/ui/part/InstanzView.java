@@ -164,7 +164,7 @@ public class InstanzView {
 				Optional<? extends ISingleValue<?>> singleValue = _singleService.resolveKey(type.getPath(),
 						svKeyToName.getKey(), type.getClazz());
 				if (singleValue.isPresent()) {
-					createSingleValueNameText(typeGroup, singleValue.get(), type);
+					createSingleValueNameText(typeGroup, singleValue.get(),svKeyToName.getValue(), type);
 					createSinlgeValueTexts(typeGroup, singleValue.get());
 				} // TODO: is there always a resolvable single value?
 			}
@@ -219,11 +219,11 @@ public class InstanzView {
 		_part.setDirty(true);
 	}
 
-	private void createSingleValueNameText(Group parent, ISingleValue<?> singleValue, SingleValueType type) {
+	private void createSingleValueNameText(Group parent, ISingleValue<?> singleValue,String parameterName, SingleValueType type) {
 		TextFactory.newText(SWT.None)//
 				.enabled(true)//
 				.layoutData(GridDataFactory.fillDefaults().create())//
-				.text(singleValue.getValue().toString())//
+				.text(parameterName)//
 				.onModify(event -> onSingleValueNameModify(singleValue, type, event))//
 				.create(parent);
 	}
