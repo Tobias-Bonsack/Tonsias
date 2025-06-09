@@ -59,7 +59,7 @@ public class InstanzView {
 	@Inject
 	private IEventBrokerBridge _broker;
 
-	private final InstanzViewLogic _logic = new InstanzViewLogic();
+	private InstanzViewLogic _logic;
 
 	private IInstanz _shownInstanz = null;
 
@@ -71,6 +71,8 @@ public class InstanzView {
 
 	@PostConstruct
 	public void postConstruct(Composite parent) {
+		_logic = new InstanzViewLogic(_instanzService, _singleService);
+
 		GridLayoutFactory.fillDefaults().applyTo(parent);
 		_parent = parent;
 
@@ -158,27 +160,26 @@ public class InstanzView {
 			GridLayoutFactory.fillDefaults().numColumns(3).applyTo(typeGroup);
 
 			BiMap<String, String> singleValues = _shownInstanz.getSingleValues(type);
-			for (Entry<String, String> attribute : singleValues.entrySet()) {
-				createSingleValueNameText(typeGroup, attribute, type);
-
+			for (Entry<String, String> svKeyToName : singleValues.entrySet()) {
 				Optional<? extends ISingleValue<?>> singleValue = _singleService.resolveKey(type.getPath(),
-						attribute.getKey(), type.getClazz());
+						svKeyToName.getKey(), type.getClazz());
 				if (singleValue.isPresent()) {
-					createSinlgeValueTexts(typeGroup, singleValue);
+					createSingleValueNameText(typeGroup, singleValue.get(), type);
+					createSinlgeValueTexts(typeGroup, singleValue.get());
 				} // TODO: is there always a resolvable single value?
 			}
 		}
 	}
 
-	private void createSinlgeValueTexts(Group typeGroup, Optional<? extends ISingleValue<?>> singleValue) {
+	private void createSinlgeValueTexts(Group typeGroup, ISingleValue<?> singleValue) {
 		TextFactory.newText(SWT.None)//
-				.text(singleValue.get().getValue().toString())//
+				.text(singleValue.getValue().toString())//
 				.onModify(event -> onSingleValueModify(singleValue, event))
 				.layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
 				.create(typeGroup);
 
 		Label keyLabel = LabelFactory.newLabel(SWT.None)//
-				.text(_messages.constant_key + ": " + singleValue.get().getOwnKey())//
+				.text(_messages.constant_key + ": " + singleValue.getOwnKey())//
 				.layoutData(GridDataFactory.fillDefaults().create())//
 				.create(typeGroup);
 
@@ -187,7 +188,7 @@ public class InstanzView {
 		keyLabel.setMenu(labelCM);
 
 		MenuItem deleteMI = new MenuItem(labelCM, SWT.PUSH);
-		deleteMI.setData(singleValue.get());
+		deleteMI.setData(singleValue);
 		deleteMI.setText(_messages.mi_delete);
 		deleteMI.addSelectionListener(deleteSingleValueSelectionListener());
 	}
@@ -196,41 +197,42 @@ public class InstanzView {
 		return new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				ISingleValue<?> data = (ISingleValue<?>) e.widget.getData();
+				ISingleValue<?> singleValue = (ISingleValue<?>) e.widget.getData();
 				if (e.getSource() instanceof MenuItem mi) {
 					Control parent = (Control) mi.getParent().getData();
 					parent.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_RED));
 				}
-
-				_logic.createBiAndQuadFunctionJob(_singleService::removeValue, data, _instanzService::removeValueKey);
+				_logic.createDeleteSvJob(singleValue);
 				_part.setDirty(true);
-
 			}
 		};
 	}
 
-	private void onSingleValueModify(Optional<? extends ISingleValue<?>> singleValue, ModifyEvent event) {
+	private void onSingleValueModify(ISingleValue<?> singleValue, ModifyEvent event) {
+		if (_logic.isInDelete(singleValue)) {
+			return;
+		}
+
 		Text text = (Text) event.widget;
 		text.setBackground(text.getDisplay().getSystemColor(SWT.COLOR_GREEN));
-		_logic.createTriFunctionJob(_singleService::changeValue, singleValue.get().getOwnKey(), text.getText());
+		_logic.createModifySvJob(singleValue.getOwnKey(), text.getText());
 		_part.setDirty(true);
 	}
 
-	private void onSingleValueNameModify(Entry<String, String> attribute, SingleValueType type, ModifyEvent event) {
-		Text text = (Text) event.widget;
-		text.setBackground(text.getDisplay().getSystemColor(SWT.COLOR_GREEN));
-		_logic.createPentaConsumerJob(_instanzService::putSingleValue, _shownInstanz.getOwnKey(), type,
-				attribute.getKey(), ((Text) event.widget).getText());
-		_part.setDirty(true);
-	}
-
-	private void createSingleValueNameText(Group parent, Entry<String, String> attribute, SingleValueType type) {
+	private void createSingleValueNameText(Group parent, ISingleValue<?> singleValue, SingleValueType type) {
 		TextFactory.newText(SWT.None)//
 				.enabled(true)//
 				.layoutData(GridDataFactory.fillDefaults().create())//
-				.text(attribute.getValue())//
-				.onModify(event -> onSingleValueNameModify(attribute, type, event))//
+				.text(singleValue.getValue().toString())//
+				.onModify(event -> onSingleValueNameModify(singleValue, type, event))//
 				.create(parent);
+	}
+
+	private void onSingleValueNameModify(ISingleValue<?> singleValue, SingleValueType type, ModifyEvent event) {
+		Text text = (Text) event.widget;
+		text.setBackground(text.getDisplay().getSystemColor(SWT.COLOR_GREEN));
+		_logic.createSvNameModifyJob(_shownInstanz.getOwnKey(), ((Text) event.widget).getText(), singleValue);
+		_part.setDirty(true);
 	}
 
 	@Inject

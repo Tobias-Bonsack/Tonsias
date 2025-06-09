@@ -1,12 +1,7 @@
 package de.tonsias.basis.logic.part;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.function.BiFunction;
+import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -16,151 +11,155 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobGroup;
 import org.eclipse.e4.core.services.events.IEventBroker;
 
-import de.tonsias.basis.logic.function.PentaConsumer;
-import de.tonsias.basis.logic.function.QuadFunction;
-import de.tonsias.basis.logic.function.TriFunction;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
+import de.tonsias.basis.osgi.intf.IInstanzService;
+import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 
 public class InstanzViewLogic {
 
-	private final List<Job> _changeJobs = new LinkedList<Job>();
+	private final Map<String, Job> _modifySvMap = new HashMap<>();
+
+	private final Map<String, Job> _modifySvNameMap = new HashMap<>();
+
+	private final Map<String, Job> _deleteSvMap = new HashMap<>();
 
 	private final JobGroup _jobGroup;
 
-	public InstanzViewLogic() {
+	private ISingleValueService _svService;
+
+	private IInstanzService _inService;
+
+	public InstanzViewLogic(IInstanzService inService, ISingleValueService svService) {
+		_inService = inService;
+		_svService = svService;
 		_jobGroup = new JobGroup("InstanzViewLogic JobGroup", 1, 0);
 	}
 
-	public Job createTriFunctionJob(TriFunction<String, String, IEventBrokerBridge.Type, Boolean> serviceFunction, String valueKey,
-			String newValue) {
-		Job job = new Job("") {
+	public void createModifySvJob(String valueKey, Object newValue) {
+		if (_deleteSvMap.containsKey(valueKey)) {
+			return;
+		}
+
+		Job job = new Job("Change SV-Value: "+ valueKey) {
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				_svService.changeValue(valueKey, newValue, Type.SEND);
+				return Status.OK_STATUS;
+			}
+
+			@Override
+			public boolean belongsTo(Object family) {
+				return family == InstanzViewLogic.this;
+			}
+		};
+		job.setJobGroup(_jobGroup);
+		_modifySvMap.put(valueKey, job);
+	}
+
+	public boolean isInDelete(ISingleValue<?> singleValue) {
+		return _modifySvMap.containsKey(singleValue.getOwnKey());
+	}
+
+	public void createDeleteSvJob(ISingleValue<?> singleValue) {
+		String ownKey = singleValue.getOwnKey();
+		Job job = new Job("Delete SV: " + ownKey) {
+
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				_svService.removeValue(singleValue, Type.SEND);
+				return Status.OK_STATUS;
+			}
+
+			@Override
+			public boolean belongsTo(Object family) {
+				return family == InstanzViewLogic.this;
+			}
+		};
+		job.setJobGroup(_jobGroup);
+		_modifySvMap.remove(ownKey);
+		_modifySvNameMap.remove(ownKey);
+		_deleteSvMap.put(ownKey, job);
+
+	}
+
+	public void createSvNameModifyJob(String instanzKey, String newName, ISingleValue<?> sv) {
+		if (_deleteSvMap.containsKey(sv.getOwnKey())) {
+			return;
+		}
+		
+		Job job = new Job("Change SV-Name: ") {
 			
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				serviceFunction.apply(valueKey, newValue, IEventBrokerBridge.Type.SEND);
+				Optional<SingleValueType> svType = SingleValueType.getByClass(sv.getClass());
+				_inService.changeSingleValueName(instanzKey, svType.get(), sv.getOwnKey(), newName, Type.SEND);
 				return Status.OK_STATUS;
 			}
-			
+
 			@Override
 			public boolean belongsTo(Object family) {
 				return family == InstanzViewLogic.this;
 			}
-			
 		};
 		job.setJobGroup(_jobGroup);
-		_changeJobs.add(job);
-		return job;
-	}
-	public Job createBiFunctionJob(BiFunction<String, String, Boolean> serviceFunction, String valueKey,
-			String newValue) {
-		Job job = new Job("") {
-
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				serviceFunction.apply(valueKey, newValue);
-				return Status.OK_STATUS;
-			}
-
-			@Override
-			public boolean belongsTo(Object family) {
-				return family == InstanzViewLogic.this;
-			}
-
-		};
-		job.setJobGroup(_jobGroup);
-		_changeJobs.add(job);
-		return job;
-	}
-
-	public Job createPentaConsumerJob(
-			PentaConsumer<String, SingleValueType, String, String, IEventBrokerBridge.Type> serviceConsumer,
-			String ownKey, SingleValueType type, String key, String text) {
-		Job job = new Job("") {
-
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				serviceConsumer.accept(ownKey, type, key, text, IEventBrokerBridge.Type.SEND);
-				return Status.OK_STATUS;
-			}
-
-			@Override
-			public boolean belongsTo(Object family) {
-				return family == InstanzViewLogic.this;
-			}
-
-		};
-		job.setJobGroup(_jobGroup);
-		_changeJobs.add(job);
-		return job;
-	}
-
-	public Job createBiAndQuadFunctionJob(BiFunction<ISingleValue<?>, IEventBrokerBridge.Type, Boolean> function, ISingleValue<?> data,
-			QuadFunction<Collection<String>, SingleValueType, String, IEventBrokerBridge.Type, Boolean> quadFunction) {
-		Job job = new Job("") {
-
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				function.apply(data, IEventBrokerBridge.Type.SEND);
-				quadFunction.apply(data.getConnectedInstanzKeys(), SingleValueType.getByClass(data.getClass()).get(),
-						data.getOwnKey(), IEventBrokerBridge.Type.SEND);
-				return Status.OK_STATUS;
-			}
-
-			@Override
-			public boolean belongsTo(Object family) {
-				return family == InstanzViewLogic.this;
-			}
-		};
-		_changeJobs.add(job);
-		return job;
+		_modifySvNameMap.put(sv.getOwnKey(), job);
 	}
 
 	public void executeChanges(int dialogReturn, IEventBrokerBridge broker, IInstanz shownInstanz) {
 		switch (dialogReturn) {
 		case 0:
-			addConsumerOperation(broker, EventConstants.OPEN_OPERATION, _changeJobs::addFirst);
-			addConsumerOperation(broker, EventConstants.CLOSE_OPERATION, _changeJobs::addLast);
-			_changeJobs.forEach(j -> j.schedule());
+			List<Job> changeJobs = new ArrayList<>();
+			changeJobs.addAll(_modifySvMap.values());
+			changeJobs.addAll(_modifySvNameMap.values());
+			changeJobs.addAll(_deleteSvMap.values());
+			
+			
+			addConsumerOperation(broker, EventConstants.OPEN_OPERATION, changeJobs::addFirst);
+			addConsumerOperation(broker, EventConstants.CLOSE_OPERATION, changeJobs::addLast);
+			
+			changeJobs.forEach(j -> j.schedule());
 			try {
 				Job.getJobManager().join(this, new NullProgressMonitor());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			_changeJobs.clear();
+			clear();
 			return;
 		case 1:
-			_changeJobs.clear();
+			clear();
 			return;
 		case 2:
-			_changeJobs.clear();
+			clear();
 			InstanzEvent data = new InstanzEventConstants.InstanzEvent(shownInstanz.getOwnKey(), null);
 			broker.send(InstanzEventConstants.SELECTED, Map.of(IEventBroker.DATA, data));
 			return;
 		}
 	}
+	
 
-	private void addConsumerOperation(IEventBrokerBridge broker, String topic, Consumer<Job> changeJobFunction) {
-		Job job = new Job("") {
-
+	private void addConsumerOperation(IEventBrokerBridge broker, String openOperation, Consumer<Job> consumer) {
+		Job job = new Job(openOperation) {
+			
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				broker.post(topic, null);
+				broker.send(openOperation, null);
 				return Status.OK_STATUS;
-			}
-
-			@Override
-			public boolean belongsTo(Object family) {
-				return family == InstanzViewLogic.this;
 			}
 		};
 		job.setJobGroup(_jobGroup);
-		changeJobFunction.accept(job);
+		consumer.accept(job);
 	}
 
+	private void clear() {
+		_modifySvMap.clear();
+		_modifySvNameMap.clear();
+		_deleteSvMap.clear();
+	}
 }
