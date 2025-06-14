@@ -3,6 +3,7 @@ package de.tonsias.basis.osgi.intf;
 import java.util.List;
 import java.util.Optional;
 
+import org.eclipse.core.runtime.Platform;
 import org.osgi.service.prefs.BackingStoreException;
 
 import de.tonsias.basis.osgi.intf.non.service.IPreferences;
@@ -13,24 +14,34 @@ public interface IBasicPreferenceService extends IPreferences {
 	/**
 	 * WARNING: if you change a key, change in {@link PreferenceEventConstants} too
 	 */
-	enum Key {
-		MODEL_VIEW_TEXT("ModelViewText", "Name"), //
-		SHOW_VALUES("EnableValues", "true");
+	enum Key implements PreferenceKeyEnum {
+		MODEL_VIEW_TEXT("ModelViewText", "Name", true), //
+		SHOW_VALUES("EnableValues", "true", true), //
+		SAVE_PATH("ModelRootPath", Platform.getInstanceLocation().getURL().getPath().toString(), false);
 
 		private final String _key;
-		private String _initValue;
+		private final String _initValue;
+		private final boolean _enabled;
 
-		Key(String key, String initValue) {
+		Key(String key, String initValue, boolean isEnabled) {
 			_key = key;
 			_initValue = initValue;
+			_enabled = isEnabled;
 		}
 
-		public final String getKey() {
+		@Override
+		public String getKey() {
 			return _key;
 		}
-		
-		public final String getInitValue() {
+
+		@Override
+		public String getInitValue() {
 			return _initValue;
+		}
+
+		@Override
+		public boolean isEnabled() {
+			return _enabled;
 		}
 	}
 

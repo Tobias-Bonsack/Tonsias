@@ -118,4 +118,9 @@ public class BasicPreferenceServiceImpl implements IBasicPreferenceService {
 		hashMap.put(EventConstants.NEW_VAlUE, value);
 		return hashMap;
 	}
+
+	@Override
+	public PreferenceKeyEnum[] getKeys() {
+		return Key.values();
+	}
 }

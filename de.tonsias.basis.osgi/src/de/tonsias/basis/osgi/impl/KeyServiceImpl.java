@@ -100,4 +100,9 @@ public class KeyServiceImpl implements IKeyService {
 	public String previewNextKey() {
 		return countKeyUp(getCurrentKey().toCharArray());
 	}
+
+	@Override
+	public PreferenceKeyEnum[] getKeys() {
+		return Key.values();
+	}
 }

@@ -13,6 +13,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.Collection;
 import java.util.Map;
 
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -22,8 +23,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.osgi.service.prefs.BackingStoreException;
-
 import de.tonsias.basis.logic.dialog.PreferencesDialogLogic;
+import de.tonsias.basis.logic.dialog.PreferencesDialogLogic.PreferenceFeature;
 import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.non.service.IPreferences;
@@ -46,19 +47,11 @@ public class PreferencesDialogLogicTest {
 	@Test
 	void testGetPreferences_validRequest() throws BackingStoreException {
 		doReturn(_basicPrefService).when(_map).get(anyString());
+		doReturn(IBasicPreferenceService.Key.values()).when(_basicPrefService).getKeys();
 
-		IEclipsePreferences mockedPreferences = mock(IEclipsePreferences.class);
-		doReturn(new String[] { "a", "b" }).when(mockedPreferences).keys();
-		doReturn("aa").when(mockedPreferences).get(eq("a"), anyString());
-		doReturn("bb").when(mockedPreferences).get(eq("b"), anyString());
+		Collection<PreferenceFeature> preferences = _logic.getPreferences("");
 
-		doReturn(mockedPreferences).when(_basicPrefService).getNode();
-
-		Map<String, String> preferences = _logic.getPreferences("");
-
-		assertThat(preferences.size(), is(2));
-		assertThat(preferences.get("a"), is("aa"));
-		assertThat(preferences.get("b"), is("bb"));
+		assertThat(preferences.size(), is(3));
 	}
 
 	@Test
@@ -72,7 +65,7 @@ public class PreferencesDialogLogicTest {
 
 		doReturn(mockedPreferences).when(_basicPrefService).getNode();
 
-		Map<String, String> preferences = _logic.getPreferences("");
+		Collection<PreferenceFeature> preferences = _logic.getPreferences("");
 
 		assertThat(preferences.size(), is(0));
 	}

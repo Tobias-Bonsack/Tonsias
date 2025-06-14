@@ -1,6 +1,9 @@
 package de.tonsias.basis.ui.dialog;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -12,21 +15,25 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.jface.notifications.NotificationPopup;
 import org.eclipse.jface.widgets.GroupFactory;
 import org.eclipse.jface.widgets.LabelFactory;
 import org.eclipse.jface.widgets.TextFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import de.tonsias.basis.logic.dialog.PreferencesDialogLogic;
+import de.tonsias.basis.logic.dialog.PreferencesDialogLogic.PreferenceFeature;
 
 public class PreferencesDialog extends Dialog {
 
@@ -40,6 +47,11 @@ public class PreferencesDialog extends Dialog {
 
 	public PreferencesDialog(Shell parentShell) {
 		super(parentShell);
+	}
+	
+	@Override
+	protected Point getInitialSize() {
+		return new Point(300, 200);
 	}
 
 	@Override
@@ -126,22 +138,30 @@ public class PreferencesDialog extends Dialog {
 	private void refreshRightSide(String name) {
 		Arrays.stream(_preferenceParent.getChildren()).forEach(i -> i.dispose());
 		_texts.clear();
-		Map<String, String> preferences = _logic.getPreferences(name);
+		Collection<PreferenceFeature> preferences = _logic.getPreferences(name);
 
-		for (var pair : preferences.entrySet()) {
-			LabelFactory.newLabel(SWT.None).data(GridDataFactory.fillDefaults().create()).text(pair.getKey())
+		for (var pair : preferences) {
+			LabelFactory.newLabel(SWT.None).data(GridDataFactory.fillDefaults().create()).text(pair.name())
 					.create(_preferenceParent);
 			Text text = TextFactory.newText(SWT.None)//
-					.text(pair.getValue())//
+					.text(pair.value())//
 					.layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
 					.onModify(event -> {
 						getButton(SAVE_ID).setEnabled(true);
 					})//
 					.create(_preferenceParent);
-			_texts.put(pair.getKey(), text);
+			text.setEditable(pair.editable());
+			if(!pair.editable()) {
+				text.addListener(SWT.MouseDown, event -> {
+					Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text.getText()), null);
+					NotificationPopup.forDisplay(Display.getCurrent()).delay(2_000).title("Copy Parameter", true).text(String.format("%s: \n%s",pair.name(), pair.value())).build().open();
+				});
+			}
+			
+			_texts.put(pair.name(), text);
 		}
 
 		_preferenceParent.layout();
 	}
-
+	
 }

@@ -3,6 +3,7 @@ package de.tonsias.basis.logic.dialog;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -35,17 +36,15 @@ public class PreferencesDialogLogic {
 		return _map.keySet();
 	}
 
-	public Map<String, String> getPreferences(String name) {
-		String[] keys;
-		try {
-			keys = _map.get(name).getNode().keys();
-			Map<String, String> result = Arrays.stream(keys)
-					.collect(Collectors.toMap(key -> key, key -> _map.get(name).getNode().get(key, "")));
-			return result;
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
-			return Collections.emptyMap();
-		}
+	public Collection<PreferenceFeature> getPreferences(String name) {
+		IPreferences iPreferences = _map.get(name);
+		return Arrays.stream(iPreferences.getKeys())//
+				.map(pref -> new PreferenceFeature(//
+						pref.getKey(), //
+						pref.getInitValue() == null ? iPreferences.getNode().get(pref.getKey(), "")
+								: pref.getInitValue(), //
+						pref.isEnabled()))//
+				.collect(Collectors.toUnmodifiableList());
 	}
 
 	public void savePreference(Map<String, String> texts) {
@@ -56,6 +55,10 @@ public class PreferencesDialogLogic {
 				e.printStackTrace();
 			}
 		});
+	}
+
+	public record PreferenceFeature(String name, String value, boolean editable) {
+		//
 	}
 
 }

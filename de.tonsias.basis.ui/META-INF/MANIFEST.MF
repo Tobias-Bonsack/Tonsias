@@ -20,7 +20,8 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0",
  org.eclipse.e4.ui.model.workbench;bundle-version="2.4.200",
  de.tonsias.basis.logic;bundle-version="1.0.0",
  org.osgi.service.event;bundle-version="1.4.1",
- de.tonsias.basis.ui.i18n
+ de.tonsias.basis.ui.i18n,
+ org.eclipse.jface.notifications;bundle-version="0.7.400"
 Bundle-Vendor: TONSIAS
 Automatic-Module-Name: de.tonsias.basis.ui
 Bundle-ActivationPolicy: lazy
