@@ -51,7 +51,9 @@ public class PreferencesDialog extends Dialog {
 	
 	@Override
 	protected Point getInitialSize() {
-		return new Point(300, 200);
+		Point point = new Point(800, 500);
+		getShell().setMinimumSize(point);
+		return point;
 	}
 
 	@Override
@@ -70,7 +72,6 @@ public class PreferencesDialog extends Dialog {
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(_preferenceParent);
 		refreshRightSide(_logic.getPreferenceNames().iterator().next());
 
-		getShell().setMinimumSize(500, 300);
 		return composite;
 	}
 
