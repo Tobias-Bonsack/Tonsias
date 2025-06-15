@@ -2,7 +2,12 @@ package de.tonsias.basis.ui.dialog;
 
 import java.util.Optional;
 
+import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.jface.widgets.TextFactory;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
@@ -41,5 +46,10 @@ public class StringValueDialog extends AValueDialog<SingleStringValue> {
 	@Override
 	SingleValueType getType() {
 		return SingleValueType.SINGLE_STRING;
+	}
+	
+	@Override
+	protected Text getValueText(Composite composite, String valueString) {
+		return TextFactory.newText(SWT.MULTI | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL).layoutData(GridDataFactory.fillDefaults().grab(true, true).create()).text(valueString).enabled(true).create(composite);
 	}
 }

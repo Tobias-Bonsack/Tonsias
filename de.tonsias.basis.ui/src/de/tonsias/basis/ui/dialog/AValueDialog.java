@@ -9,6 +9,7 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.widgets.LabelFactory;
 import org.eclipse.jface.widgets.TextFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -56,6 +57,18 @@ public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 	}
 
 	abstract SingleValueType getType();
+	
+	@Override
+	protected Point getInitialLocation(Point initialSize) {
+		Point point = new Point(400, 600);
+		getShell().setMinimumSize(point);
+		return point;
+	}
+	
+	@Override
+	protected boolean isResizable() {
+		return true;
+	}
 
 	@Override
 	protected Control createDialogArea(Composite parent) {
@@ -120,8 +133,11 @@ public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 		GridDataFactory.fillDefaults().applyTo(valueLabel);
 
 		String valueString = _value.map(v -> v.getValue().toString()).orElse("");
-		_valueText = TextFactory.newText(SWT.None).text(valueString).enabled(true).create(composite);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(_valueText);
+		_valueText = getValueText(composite, valueString);
+	}
+
+	protected Text getValueText(Composite composite, String valueString) {
+		return TextFactory.newText(SWT.None).text(valueString).layoutData(GridDataFactory.fillDefaults().grab(true, false).create()).enabled(true).create(composite);
 	}
 
 	public T getSingleValue() {
