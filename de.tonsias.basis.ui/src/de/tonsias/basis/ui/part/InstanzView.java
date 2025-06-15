@@ -164,7 +164,7 @@ public class InstanzView {
 				Optional<? extends ISingleValue<?>> singleValue = _singleService.resolveKey(type.getPath(),
 						svKeyToName.getKey(), type.getClazz());
 				if (singleValue.isPresent()) {
-					createSingleValueNameText(typeGroup, singleValue.get(),svKeyToName.getValue(), type);
+					createSingleValueNameText(typeGroup, singleValue.get(), svKeyToName.getValue(), type);
 					createSinlgeValueTexts(typeGroup, singleValue.get());
 				} // TODO: is there always a resolvable single value?
 			}
@@ -172,11 +172,22 @@ public class InstanzView {
 	}
 
 	private void createSinlgeValueTexts(Group typeGroup, ISingleValue<?> singleValue) {
-		TextFactory.newText(SWT.None)//
-				.text(singleValue.getValue().toString())//
-				.onModify(event -> onSingleValueModify(singleValue, event))
-				.layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
-				.create(typeGroup);
+		switch (SingleValueType.getByClass(singleValue.getClass()).get()) {
+		case SINGLE_INTEGER:
+			TextFactory.newText(SWT.None)//
+					.text(singleValue.getValue().toString())//
+					.onModify(event -> onSingleValueModify(singleValue, event))
+					.layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
+					.create(typeGroup);
+			break;
+		case SINGLE_STRING:
+			TextFactory.newText(SWT.MULTI | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL)//
+					.text(singleValue.getValue().toString())//
+					.onModify(event -> onSingleValueModify(singleValue, event))//
+					.layoutData(GridDataFactory.fillDefaults().grab(true, false).hint(SWT.DEFAULT, 100).create())//
+					.create(typeGroup);
+			break;
+		}
 
 		Label keyLabel = LabelFactory.newLabel(SWT.None)//
 				.text(_messages.constant_key + ": " + singleValue.getOwnKey())//
@@ -219,10 +230,11 @@ public class InstanzView {
 		_part.setDirty(true);
 	}
 
-	private void createSingleValueNameText(Group parent, ISingleValue<?> singleValue,String parameterName, SingleValueType type) {
+	private void createSingleValueNameText(Group parent, ISingleValue<?> singleValue, String parameterName,
+			SingleValueType type) {
 		TextFactory.newText(SWT.None)//
 				.enabled(true)//
-				.layoutData(GridDataFactory.fillDefaults().create())//
+				.layoutData(GridDataFactory.swtDefaults().align(SWT.BEGINNING, SWT.BEGINNING).create())//
 				.text(parameterName)//
 				.onModify(event -> onSingleValueNameModify(singleValue, type, event))//
 				.create(parent);
