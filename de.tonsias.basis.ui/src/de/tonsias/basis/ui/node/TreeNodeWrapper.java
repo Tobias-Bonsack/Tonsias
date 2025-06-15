@@ -90,10 +90,7 @@ public class TreeNodeWrapper {
 	}
 
 	public Class<? extends IObject> getObjectClass() {
-		if (_object instanceof IInstanz) {
-			return IInstanz.class;
-		}
-		return IObject.class;
+		return _object.getClass();
 	}
 
 	public IObject getObject() {

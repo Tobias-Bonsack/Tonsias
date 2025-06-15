@@ -13,6 +13,8 @@ import org.eclipse.e4.ui.di.UIEventTopic;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.MouseAdapter;
@@ -120,16 +122,32 @@ public class ModelView {
 
 		tree.setMenu(menu);
 
+		
+		tree.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if(e.keyCode == 'n' && e.stateMask == SWT.CONTROL) {
+					var event = new org.eclipse.swt.widgets.Event();
+					event.widget = tree;
+					tree.notifyListeners(SWT.MenuDetect, event);
+					menu.setVisible(true);
+				}
+			}
+		});
+		
 		tree.addMenuDetectListener(new MenuDetectListener() {
 			@Override
 			public void menuDetected(MenuDetectEvent e) {
 				TreeItem[] selection = ((Tree) e.widget).getSelection();
 				if (selection.length == 1) {
 					TreeNodeWrapper selectedItem = (TreeNodeWrapper) selection[0].getData();
-					Class<? extends IObject> objectClass = selectedItem.getObjectClass();
 					_menuItems.values().stream().flatMap(i -> i.stream()).forEach(i -> i.setEnabled(false));
-					_menuItems.getOrDefault(objectClass, Collections.emptyList()).stream()
-							.forEach(i -> i.setEnabled(true));
+					Class<? extends IObject> objectClass = selectedItem.getObjectClass();
+					for (var declaredClass : _menuItems.keySet()) {
+						if(declaredClass.isAssignableFrom(objectClass)) {
+							_menuItems.get(declaredClass).stream().forEach(i -> i.setEnabled(true));
+						}
+					}
 				} else {
 					_menuItems.values().stream().flatMap(i -> i.stream()).forEach(i -> i.setEnabled(false));
 				}
