@@ -41,7 +41,7 @@ public class PreferencesDialogLogic {
 		return Arrays.stream(iPreferences.getKeys())//
 				.map(pref -> new PreferenceFeature(//
 						pref.getKey(), //
-						pref.getInitValue() == null ? iPreferences.getNode().get(pref.getKey(), "")
+						iPreferences.getNode().get(pref.getKey(), null) != null ? iPreferences.getNode().get(pref.getKey(),"")
 								: pref.getInitValue(), //
 						pref.isEnabled()))//
 				.collect(Collectors.toUnmodifiableList());
