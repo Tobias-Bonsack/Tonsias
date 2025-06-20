@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Optional;
 
 import org.eclipse.core.runtime.jobs.JobGroup;
-import org.eclipse.swt.events.SelectionEvent;
 
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
@@ -34,26 +33,36 @@ public class CreateInstanzDialogLogic {
 		_basic = basic;
 		_jobGroup = new JobGroup("CreateInstanzDialogLogic JobGroup", 1, 0);
 
-		Optional<String> parameterName = _basic.getValue(IBasicPreferenceService.Key.MODEL_VIEW_TEXT.getKey(), String.class);
+		Optional<String> parameterName = _basic.getValue(IBasicPreferenceService.Key.MODEL_VIEW_TEXT.getKey(),
+				String.class);
 		if (parameterName.isPresent()) {
+			_tableInput.add(new TableRecord(SingleValueType.SINGLE_STRING, parameterName.get(), "Model View Name"));
 		}
 	}
 
-	public void addNewEntry(SelectionEvent event) {
-		// TODO Auto-generated method stub
-
+	public void addNewEntry() {
+		_tableInput.add(new TableRecord(SingleValueType.SINGLE_STRING, "parameterName", "Value"));
 	}
 
-	public void removeSelectedEntry(SelectionEvent selectionevent1) {
-		// TODO Auto-generated method stub
+	public void removeSelectedEntry(Object object) {
+		_tableInput.remove(object);
 	}
 
 	public Collection<TableRecord> getInput() {
 		return _tableInput;
 	}
 
-	public record TableRecord(SingleValueType type, String parameterName, Object value) {
+	public class TableRecord {
+		public SingleValueType type;
+		public String parameterName;
+		public Object value;
 
+		public TableRecord(SingleValueType type, String parameterName, Object value) {
+			this.type = type;
+			this.parameterName = parameterName;
+			this.value = value;
+
+		}
 	}
 
 	public void setInstanzParent(IInstanz iParent) {

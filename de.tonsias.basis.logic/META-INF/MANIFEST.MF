@@ -15,5 +15,4 @@ Require-Bundle: de.tonsias.basis.osgi,
  org.eclipse.equinox.registry,
  de.tonsias.basis.model,
  org.eclipse.e4.core.services,
- org.osgi.service.event,
- org.eclipse.swt
+ org.osgi.service.event
