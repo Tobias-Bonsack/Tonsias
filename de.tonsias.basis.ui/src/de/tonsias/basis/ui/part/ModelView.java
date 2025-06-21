@@ -36,6 +36,7 @@ import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.IObject;
 import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
 import de.tonsias.basis.osgi.intf.IDeltaService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
@@ -43,7 +44,9 @@ import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
+import de.tonsias.basis.osgi.util.OsgiUtil;
 import de.tonsias.basis.osgi.intf.non.service.PreferenceEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 import de.tonsias.basis.ui.dialog.IntegerValueDialog;
 import de.tonsias.basis.ui.dialog.StringValueDialog;
 import de.tonsias.basis.ui.handler.CreateInstanzOperation;
@@ -122,11 +125,10 @@ public class ModelView {
 
 		tree.setMenu(menu);
 
-		
 		tree.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
-				if(e.keyCode == 'n' && e.stateMask == SWT.CONTROL) {
+				if (e.keyCode == 'n' && e.stateMask == SWT.CONTROL) {
 					var event = new org.eclipse.swt.widgets.Event();
 					event.widget = tree;
 					tree.notifyListeners(SWT.MenuDetect, event);
@@ -134,7 +136,7 @@ public class ModelView {
 				}
 			}
 		});
-		
+
 		tree.addMenuDetectListener(new MenuDetectListener() {
 			@Override
 			public void menuDetected(MenuDetectEvent e) {
@@ -144,7 +146,7 @@ public class ModelView {
 					_menuItems.values().stream().flatMap(i -> i.stream()).forEach(i -> i.setEnabled(false));
 					Class<? extends IObject> objectClass = selectedItem.getObjectClass();
 					for (var declaredClass : _menuItems.keySet()) {
-						if(declaredClass.isAssignableFrom(objectClass)) {
+						if (declaredClass.isAssignableFrom(objectClass)) {
 							_menuItems.get(declaredClass).stream().forEach(i -> i.setEnabled(true));
 						}
 					}
@@ -196,7 +198,7 @@ public class ModelView {
 					TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
 					IInstanz parentObject = (IInstanz) parent.getObject();
 					CreateInstanzOperation newInstanzOperation = new CreateInstanzOperation(parentObject);
-					newInstanzOperation.execute(_broker.getEclipseBroker());
+					newInstanzOperation.execute(_broker.getEclipseBroker(), _instanzService);
 					IInstanz createdInstanz = newInstanzOperation.get_createdInstanz();
 					new TreeNodeWrapper(createdInstanz, parent);
 					_treeViewer.refresh(parent);
@@ -267,6 +269,19 @@ public class ModelView {
 	@Optional
 	private void newInstanzListener(@UIEventTopic(InstanzEventConstants.NEW) Event data) {
 		_treeViewer.refresh();
+	}
+
+	@Inject
+	@Optional
+	private void newSvListener(@UIEventTopic(SingleValueEventConstants.NEW) Event data) {
+		IBasicPreferenceService _prefService = OsgiUtil.getService(IBasicPreferenceService.class);
+		String shownVariable = _prefService.getValue(IBasicPreferenceService.Key.MODEL_VIEW_TEXT.getKey(), String.class)
+				.orElse("");
+		Object property = data.getProperty(IEventBroker.DATA);
+		if (property instanceof SingleValueEventConstants.SingleValueNewEvent newData
+				&& newData._name().equalsIgnoreCase(shownVariable)) {
+			_treeViewer.refresh();
+		}
 	}
 
 	@Inject

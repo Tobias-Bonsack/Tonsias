@@ -86,10 +86,11 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	@Override
 	public <E extends ISingleValue<?>> E createNew(Class<E> clazz, String parentKey, String parameterName, Object value,
 			IEventBrokerBridge.Type eventType) {
+		Objects.requireNonNull(clazz);
 		Objects.requireNonNull(parentKey);
 		Objects.requireNonNull(parameterName);
 		Objects.requireNonNull(value);
-		Objects.requireNonNull(value);
+		
 		Optional<SingleValueType> type = SingleValueType.getByClass(clazz);
 		if (type.isEmpty()) {
 			return null;

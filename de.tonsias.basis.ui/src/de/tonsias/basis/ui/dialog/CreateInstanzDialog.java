@@ -30,6 +30,7 @@ import de.tonsias.basis.logic.dialog.CreateInstanzDialogLogic.TableRecord;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.util.OsgiUtil;
@@ -153,7 +154,7 @@ public class CreateInstanzDialog extends Dialog {
 
 	@Override
 	protected void okPressed() {
-		// TODO Auto-generated method stub
+		_logic.okPressed(OsgiUtil.getService(IEventBrokerBridge.class));
 		super.okPressed();
 	}
 

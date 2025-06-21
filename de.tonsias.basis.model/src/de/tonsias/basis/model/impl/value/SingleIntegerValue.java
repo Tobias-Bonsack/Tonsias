@@ -23,11 +23,10 @@ public class SingleIntegerValue extends ASingleValue<Integer> {
 			try {
 				Integer i = Integer.valueOf(s);
 				return setValue(i);
-			} catch (Exception e) {
-				throw e;
+			} catch (NumberFormatException e) {
+				return false;
 			}
 		}
-
 		return false;
 	}
 
