@@ -133,6 +133,7 @@ public class ModelView {
 					event.widget = tree;
 					tree.notifyListeners(SWT.MenuDetect, event);
 					menu.setVisible(true);
+					e.doit = false;
 				}
 			}
 		});
