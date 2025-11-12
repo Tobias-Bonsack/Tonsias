@@ -9,6 +9,8 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.widgets.LabelFactory;
 import org.eclipse.jface.widgets.TextFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -90,6 +92,18 @@ public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 	protected Control createButtonBar(Composite parent) {
 		Control buttonBar = super.createButtonBar(parent);
 		getButton(IDialogConstants.CANCEL_ID).setText(_messages.constant_cancel);
+		
+		getButton(IDialogConstants.OK_ID).addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.keyCode == SWT.CR && e.stateMask == SWT.CONTROL) {
+					e.doit = false;
+					okPressed();
+				}
+			}
+		});
+		
+		
 		return buttonBar;
 	}
 
@@ -143,5 +157,6 @@ public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 	public T getSingleValue() {
 		return _value.get();
 	}
+	
 
 }
