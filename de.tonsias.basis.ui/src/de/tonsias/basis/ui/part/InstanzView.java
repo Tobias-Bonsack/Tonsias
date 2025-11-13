@@ -14,6 +14,8 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.widgets.LabelFactory;
 import org.eclipse.jface.widgets.TextFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -83,6 +85,15 @@ public class InstanzView {
 		createSingleValueGroup();
 		createChildren();
 		createParent();
+		
+		parent.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.keyCode == SWT.F5) {
+					updateView();
+				}
+			}
+		});
 	}
 
 	private void createInstanzInfos() {
@@ -102,7 +113,7 @@ public class InstanzView {
 
 	}
 
-	private void updateView() {
+	public void updateView() {
 		if (_ownKeyLabel == null) {
 			createInstanzInfos();
 		}
@@ -284,7 +295,7 @@ public class InstanzView {
 			int index = MessageDialog.open(MessageDialog.QUESTION, new Shell(), _messages.dialog_save_title,
 					_messages.dialog_save_text, SWT.None, _messages.constant_yes, _messages.constant_no,
 					_messages.constant_cancel);
-			_logic.executeChanges(index, _broker, _shownInstanz);
+			performSafeAction(index);
 			if (index == 2) {
 				return;
 			}
@@ -294,4 +305,10 @@ public class InstanzView {
 		_part.setDirty(false);
 		updateView();
 	}
+
+	public void performSafeAction(int index) {
+		_logic.executeChanges(index, _broker, _shownInstanz);
+	}
+	
+	
 }

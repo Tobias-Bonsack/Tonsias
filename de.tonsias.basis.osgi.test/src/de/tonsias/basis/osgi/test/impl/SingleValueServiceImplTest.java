@@ -6,8 +6,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
-import static org.mockito.ArgumentMatchers.isNotNull;
-
 import java.util.concurrent.CompletionException;
 
 import org.junit.jupiter.api.AfterEach;

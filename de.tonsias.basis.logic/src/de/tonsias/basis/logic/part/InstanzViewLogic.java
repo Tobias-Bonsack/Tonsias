@@ -5,7 +5,6 @@ import java.util.function.Consumer;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobGroup;
@@ -111,7 +110,12 @@ public class InstanzViewLogic {
 		job.setJobGroup(_jobGroup);
 		_modifySvNameMap.put(sv.getOwnKey(), job);
 	}
-
+	/**
+	 * 
+	 * @param dialogReturn 0=apply, 1=cancel, 2=apply and reselect
+	 * @param broker
+	 * @param shownInstanz
+	 */
 	public void executeChanges(int dialogReturn, IEventBrokerBridge broker, IInstanz shownInstanz) {
 		switch (dialogReturn) {
 		case 0:
