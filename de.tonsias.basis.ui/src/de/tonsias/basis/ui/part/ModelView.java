@@ -286,6 +286,35 @@ public class ModelView {
 
 	@Inject
 	@Optional
+	private void changeOfModelViewText(@UIEventTopic(SingleValueEventConstants.VALUE_CHANGE) Event data) {
+		Object property = data.getProperty(IEventBroker.DATA);
+		if (!(property instanceof SingleValueEventConstants.ValueChangeEvent changeEvent)
+				|| changeEvent._type() != SingleValueType.SINGLE_STRING) {
+			return;
+		}
+
+		IBasicPreferenceService prefService = OsgiUtil.getService(IBasicPreferenceService.class);
+		String shownVariable = prefService.getValue(IBasicPreferenceService.Key.MODEL_VIEW_TEXT.getKey(), String.class)
+				.orElse("");
+
+		java.util.Optional<? extends ISingleValue<?>> sv = _singleService.resolveKey(changeEvent._type().getPath(),
+				changeEvent._key(), changeEvent._type().getClazz());
+		if (sv.isEmpty()) {
+			return;
+		}
+		String ownKey = sv.get().getOwnKey();
+
+		Collection<IInstanz> linkedInstanzen = _instanzService.resolveKeys(sv.get().getConnectedInstanzKeys());
+		if (linkedInstanzen.stream()
+				.filter(instanz -> instanz.getSingleValues(changeEvent._type()).containsKey(ownKey))
+				.anyMatch(instanz -> instanz.getSingleValues(changeEvent._type()).get(ownKey)
+						.equals(shownVariable))) {
+			_treeViewer.refresh();
+		}
+	}
+
+	@Inject
+	@Optional
 	private void basicShowValueListener(@UIEventTopic(PreferenceEventConstants.SHOW_VALUE_TOPIC) Event event) {
 		_treeViewer.refresh();
 	}
