@@ -55,12 +55,26 @@ public interface InstanzEventConstants {
 
 	// data and the keys
 
-	static record InstanzEvent(String _key, String _parentKey) {
+	interface KeyEvent {
+		String getKey();
+	}
+
+	static record InstanzEvent(String _key, String _parentKey) implements KeyEvent {
+
+		@Override
+		public String getKey() {
+			return _key;
+		}
 
 	}
 
 	static record ValueRenameEvent(String _key, SingleValueType _type, String _attrKey, String _oldName,
-			String _newName) {
+			String _newName) implements KeyEvent {
+
+		@Override
+		public String getKey() {
+			return _key;
+		}
 
 	}
 
@@ -68,13 +82,32 @@ public interface InstanzEventConstants {
 		ADD, REMOVE;
 	}
 
-	static record ParentChange(String _key, String _newParentKey, String _oldParentKey) {
+	static record ParentChange(String _key, String _newParentKey, String _oldParentKey) implements KeyEvent {
+
+		@Override
+		public String getKey() {
+			return _key;
+		}
+
 	}
 
-	static record LinkedChildChangeEvent(String _key, ChangeType _changeType, Collection<String> _instanzKeys) {
+	static record LinkedChildChangeEvent(String _key, ChangeType _changeType, Collection<String> _instanzKeys)
+			implements KeyEvent {
+
+		@Override
+		public String getKey() {
+			return _key;
+		}
+
 	}
 
 	static record LinkedValueChangeEvent(String _key, SingleValueType _singleValuetype, ChangeType _changeType,
-			Collection<String> _valueKeys) {
+			Collection<String> _valueKeys) implements KeyEvent {
+
+		@Override
+		public String getKey() {
+			return _key;
+		}
+
 	}
 }

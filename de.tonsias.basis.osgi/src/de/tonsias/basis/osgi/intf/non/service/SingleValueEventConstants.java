@@ -37,21 +37,69 @@ public interface SingleValueEventConstants {
 	final List<String> KNOWN_DELTA = List.of(NEW, VALUE_CHANGE, INSTANZ_LIST_CHANGE, DELETE);
 
 	// data and the keys
+	interface SingleValueEvent {
+		String getKey();
 
-	static record SingleValueNewEvent(SingleValueType _type, String _key, String _name, Collection<String> _ownerKeys) {
+		SingleValueType getType();
+	}
+
+	static record SingleValueNewEvent(SingleValueType _type, String _key, String _name, Collection<String> _ownerKeys)
+			implements SingleValueEvent {
+
+		@Override
+		public String getKey() {
+			return _key;
+		}
+
+		@Override
+		public SingleValueType getType() {
+			return _type;
+		}
 
 	}
 
-	static record SingleValueDeleteEvent(SingleValueType _type, String _key, Collection<String> _ownerKeys) {
-		
+	static record SingleValueDeleteEvent(SingleValueType _type, String _key, Collection<String> _ownerKeys)
+			implements SingleValueEvent {
+
+		@Override
+		public String getKey() {
+			return _key;
+		}
+
+		@Override
+		public SingleValueType getType() {
+			return _type;
+		}
+
 	}
 
-	static record ValueChangeEvent(String _key, SingleValueType _type, Object _oldValue, Object _newValue) {
+	static record ValueChangeEvent(String _key, SingleValueType _type, Object _oldValue, Object _newValue)
+			implements SingleValueEvent {
 
+		@Override
+		public String getKey() {
+			return _key;
+		}
+
+		@Override
+		public SingleValueType getType() {
+			return _type;
+		}
 	}
 
 	static record LinkedInstanzChangeEvent(String _key, SingleValueType _singleValuetype, ChangeType _changeType,
-			Collection<String> _instanzKeys) {
+			Collection<String> _instanzKeys) implements SingleValueEvent {
+
+		@Override
+		public String getKey() {
+			return _key;
+		}
+
+		@Override
+		public SingleValueType getType() {
+			return _singleValuetype;
+		}
+
 		public static enum ChangeType {
 			ADD, REMOVE;
 		}

@@ -85,7 +85,7 @@ public class InstanzView {
 		createSingleValueGroup();
 		createChildren();
 		createParent();
-		
+
 		parent.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
@@ -323,6 +323,24 @@ public class InstanzView {
 		_logic.executeChanges(index, _broker, _shownInstanz);
 		_part.setDirty(false);
 		updateView();
+	}
+
+	@Inject
+	@org.eclipse.e4.core.di.annotations.Optional
+	private void instanzDeltaEventListener(@UIEventTopic(InstanzEventConstants.ALL_DELTA_TOPIC) InstanzEventConstants.KeyEvent event) {
+		if (_shownInstanz == null || !event.getKey().equals(_shownInstanz.getOwnKey())) {
+			return;
+		}
+		updateView();
+	}
+	@Inject
+	@org.eclipse.e4.core.di.annotations.Optional
+	private void singlevalueDeltaEventListener(@UIEventTopic(SingleValueEventConstants.ALL_DELTA_TOPIC) SingleValueEventConstants.SingleValueEvent event) {
+		_singleService.resolveKey(event.getType().getPath(), event.getKey(), event.getType().getClazz()).ifPresent(sv -> {
+			if(sv.getConnectedInstanzKeys().contains(_shownInstanz.getOwnKey())) {
+				updateView();
+			}
+		});
 	}
 	
 	
