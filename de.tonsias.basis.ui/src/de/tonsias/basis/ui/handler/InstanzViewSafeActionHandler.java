@@ -16,8 +16,6 @@ public class InstanzViewSafeActionHandler {
 	public void execute(Shell shell) {
 		if (activePart.getObject() instanceof InstanzView view) {
 			view.performSafeAction(0);
-			activePart.setDirty(false);
-			view.updateView();
 		}
 	}
 }
