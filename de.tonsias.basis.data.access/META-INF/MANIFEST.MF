@@ -8,7 +8,8 @@ Require-Bundle: org.osgi.service.component.annotations;bundle-version="1.5.1";re
  org.eclipse.core.runtime;bundle-version="3.31.0",
  com.google.guava;bundle-version="33.1.0",
  com.google.gson;bundle-version="2.10.1",
- de.tonsias.basis.model;bundle-version="1.0.0"
+ de.tonsias.basis.model;bundle-version="1.0.0",
+ de.tonsias.basis.osgi.interface;bundle-version="1.0.0"
 Bundle-Vendor: TONSIAS
 Automatic-Module-Name: de.tonsias.basis.data.access
 Bundle-ActivationPolicy: lazy
