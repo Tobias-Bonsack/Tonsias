@@ -166,7 +166,7 @@ public class InstanzView {
 		SingleValueType[] values = SingleValueType.values();
 		for (SingleValueType type : values) {
 			Group typeGroup = new Group(parent, SWT.None);
-			typeGroup.setText(type.name()); // TODO: translation for type names
+			typeGroup.setText(type.name()); 
 			GridDataFactory.fillDefaults().grab(true, false).applyTo(typeGroup);
 			GridLayoutFactory.fillDefaults().numColumns(3).applyTo(typeGroup);
 
@@ -258,7 +258,7 @@ public class InstanzView {
 			SingleValueType type) {
 		TextFactory.newText(SWT.None)//
 				.enabled(true)//
-				.layoutData(GridDataFactory.swtDefaults().align(SWT.BEGINNING, SWT.BEGINNING).create())//
+				.layoutData(GridDataFactory.fillDefaults().grab(true, false).align(SWT.FILL, SWT.BEGINNING).create())//
 				.text(parameterName)//
 				.onModify(event -> onSingleValueNameModify(singleValue, type, event))//
 				.create(parent);
