@@ -4,9 +4,7 @@ Bundle-Name: Osgi
 Bundle-SymbolicName: de.tonsias.basis.osgi
 Bundle-Version: 1.0.0.qualifier
 Export-Package: de.tonsias.basis.osgi.impl;x-friends:="de.tonsias.basis.osgi.test",
- de.tonsias.basis.osgi.intf,
- de.tonsias.basis.osgi.intf.non.service,
- de.tonsias.basis.osgi.util
+ de.tonsias.basis.osgi.impl.util
 Require-Bundle: org.osgi.service.component.annotations;bundle-version="1.5.1",
  org.osgi.service.event;bundle-version="1.4.1",
  org.eclipse.e4.core.services;bundle-version="2.4.300",
@@ -18,7 +16,8 @@ Require-Bundle: org.osgi.service.component.annotations;bundle-version="1.5.1",
  jakarta.annotation-api;bundle-version="2.1.1",
  de.tonsias.basis.model;bundle-version="0.0.0",
  de.tonsias.basis.data.access;bundle-version="1.0.0",
- com.google.guava
+ com.google.guava,
+ de.tonsias.basis.osgi.interface;bundle-version="1.0.0"
 Bundle-Vendor: TONSIAS
 Automatic-Module-Name: de.tonsias.basis.osgi
 Bundle-ActivationPolicy: lazy
@@ -27,5 +26,7 @@ Service-Component: OSGI-INF/de.tonsias.basis.osgi.impl.BasicPreferenceServiceImp
  OSGI-INF/de.tonsias.basis.osgi.impl.InstanzServiceImpl.xml,
  OSGI-INF/de.tonsias.basis.osgi.impl.KeyServiceImpl.xml,
  OSGI-INF/de.tonsias.basis.osgi.impl.SingleValueServiceImpl.xml,
+ OSGI-INF/de.tonsias.basis.osgi.impl.util.DeltaServiceContextFunction.xml,
+ OSGI-INF/de.tonsias.basis.osgi.impl.util.EventBrokerContextFunction.xml,
  OSGI-INF/de.tonsias.basis.osgi.util.DeltaServiceContextFunction.xml,
  OSGI-INF/de.tonsias.basis.osgi.util.EventBrokerContextFunction.xml

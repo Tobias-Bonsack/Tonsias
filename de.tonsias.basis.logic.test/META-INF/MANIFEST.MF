@@ -15,4 +15,5 @@ Require-Bundle: org.hamcrest;bundle-version="2.2.0",
  org.mockito.mockito-core;bundle-version="5.14.0",
  de.tonsias.basis.logic;bundle-version="1.0.0",
  de.tonsias.basis.osgi,
- de.tonsias.basis.model
+ de.tonsias.basis.model,
+ de.tonsias.basis.osgi.interface;bundle-version="1.0.0"

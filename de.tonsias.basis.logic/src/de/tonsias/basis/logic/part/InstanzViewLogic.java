@@ -1,6 +1,10 @@
 package de.tonsias.basis.logic.part;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -110,6 +114,7 @@ public class InstanzViewLogic {
 		job.setJobGroup(_jobGroup);
 		_modifySvNameMap.put(sv.getOwnKey(), job);
 	}
+
 	/**
 	 * 
 	 * @param dialogReturn 0=apply, 1=cancel, 2=apply and reselect

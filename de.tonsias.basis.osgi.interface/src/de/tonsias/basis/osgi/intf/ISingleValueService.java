@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletionException;
 
-import de.tonsias.basis.data.access.osgi.intf.DeleteService;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;

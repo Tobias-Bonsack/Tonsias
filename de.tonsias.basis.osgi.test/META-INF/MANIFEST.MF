@@ -3,8 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Test
 Bundle-SymbolicName: de.tonsias.basis.osgi.test
 Bundle-Version: 1.0.0.qualifier
-Require-Bundle: de.tonsias.basis.osgi;bundle-version="1.0.0",
- org.osgi.service.event;bundle-version="1.4.1",
+Require-Bundle: org.osgi.service.event;bundle-version="1.4.1",
  org.hamcrest;bundle-version="2.2.0",
  org.eclipse.core.runtime;bundle-version="3.31.0",
  junit-jupiter-api;bundle-version="5.11.1",
@@ -16,7 +15,9 @@ Require-Bundle: de.tonsias.basis.osgi;bundle-version="1.0.0",
  de.tonsias.basis.model,
  org.eclipse.e4.core.services,
  jakarta.inject.jakarta.inject-api,
- com.google.guava;bundle-version="33.1.0"
+ com.google.guava;bundle-version="33.1.0",
+ de.tonsias.basis.osgi.interface;bundle-version="1.0.0",
+ de.tonsias.basis.osgi;bundle-version="1.0.0"
 Automatic-Module-Name: de.tonsias.basis.osgi.test
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-19

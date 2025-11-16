@@ -39,5 +39,5 @@
   <addons xmi:id="_k4GElfmbEe6DqPOwG-kyMA" elementId="org.eclipse.e4.ui.workbench.contexts.model" contributionURI="bundleclass://org.eclipse.e4.ui.workbench/org.eclipse.e4.ui.internal.workbench.addons.ContextProcessingAddon"/>
   <addons xmi:id="_k4GElvmbEe6DqPOwG-kyMA" elementId="org.eclipse.e4.ui.workbench.bindings.model" contributionURI="bundleclass://org.eclipse.e4.ui.workbench.swt/org.eclipse.e4.ui.workbench.swt.util.BindingProcessingAddon"/>
   <addons xmi:id="_k4GEl_mbEe6DqPOwG-kyMA" elementId="org.eclipse.e4.ui.workbench.handler.model" contributionURI="bundleclass://org.eclipse.e4.ui.workbench/org.eclipse.e4.ui.internal.workbench.addons.HandlerProcessingAddon"/>
-  <addons xmi:id="_90U5UAKfEfCLTOPBtofiNQ" elementId="de.tonsias.basis.ui.addon.0" contributionURI="bundleclass://de.tonsias.basis.osgi/de.tonsias.basis.osgi.util.ChangePropagationListener"/>
+  <addons xmi:id="_90U5UAKfEfCLTOPBtofiNQ" elementId="de.tonsias.basis.ui.addon.0" contributionURI="bundleclass://de.tonsias.basis.osgi/de.tonsias.basis.osgi.impl.util.ChangePropagationListener"/>
 </application:Application>

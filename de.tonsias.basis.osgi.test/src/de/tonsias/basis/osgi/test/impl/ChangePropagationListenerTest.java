@@ -2,7 +2,7 @@ package de.tonsias.basis.osgi.test.impl;
 
 import org.junit.jupiter.api.Test;
 
-import de.tonsias.basis.osgi.util.ChangePropagationListener;
+import de.tonsias.basis.osgi.impl.util.ChangePropagationListener;
 
 public class ChangePropagationListenerTest {
 

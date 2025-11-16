@@ -1,4 +1,4 @@
-package de.tonsias.basis.osgi.util;
+package de.tonsias.basis.osgi.impl.util;
 
 import org.eclipse.e4.core.di.annotations.Creatable;
 import org.eclipse.e4.core.di.annotations.Optional;
@@ -15,6 +15,7 @@ import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.*;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.*;
+import de.tonsias.basis.osgi.util.OsgiUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

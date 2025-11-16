@@ -1,4 +1,4 @@
-package de.tonsias.basis.osgi.util;
+package de.tonsias.basis.osgi.impl.util;
 
 import org.eclipse.e4.core.contexts.ContextFunction;
 import org.eclipse.e4.core.contexts.ContextInjectionFactory;
@@ -8,22 +8,20 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.component.annotations.Component;
 
-import de.tonsias.basis.osgi.impl.DeltaServiceImpl;
-import de.tonsias.basis.osgi.intf.IDeltaService;
+import de.tonsias.basis.osgi.impl.EventBrokerBridgeImpl;
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 
 @Component(service = IContextFunction.class, //
-		property = "service.context.key=de.tonsias.basis.osgi.intf.IDeltaService")
-public class DeltaServiceContextFunction extends ContextFunction {
+		property = "service.context.key=de.tonsias.basis.osgi.intf.IEventBrokerBridge")
+public class EventBrokerContextFunction extends ContextFunction {
 
 	@Override
 	public Object compute(IEclipseContext context) {
-		var deltaServiceImpl = ContextInjectionFactory.make(DeltaServiceImpl.class, context);
-		deltaServiceImpl.postConstruct();
+		var eventBrokerBridge = ContextInjectionFactory.make(EventBrokerBridgeImpl.class, context);
 
 		BundleContext bundleContext = FrameworkUtil.getBundle(getClass()).getBundleContext();
-		bundleContext.registerService(IDeltaService.class, deltaServiceImpl, null);
+		bundleContext.registerService(IEventBrokerBridge.class, eventBrokerBridge, null);
 
-		return deltaServiceImpl;
+		return eventBrokerBridge;
 	}
-
 }
