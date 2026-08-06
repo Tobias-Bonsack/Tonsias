@@ -5,6 +5,7 @@
 	 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
 		 <repository location="https://download.eclipse.org/releases/2025-06"/>
 		 <unit id="org.eclipse.sdk.feature.group" version="4.36.0.v20250528-2229"/>
+		 <unit id="org.eclipse.equinox.executable.feature.group" version="0.0.0"/>
 	 </location>
 	 <location includeDependencyDepth="infinite" includeDependencyScopes="compile" includeSource="true" missingManifest="generate" type="Maven">
 
@@ -57,31 +58,37 @@
 			 <dependency>
 				 <groupId>org.junit.jupiter</groupId>
 				 <artifactId>junit-jupiter-api</artifactId>
-				 <version>5.11.1</version>
+				 <version>5.14.4</version>
 				 <type>jar</type>
 			 </dependency>
 			 <dependency>
 				 <groupId>org.junit.jupiter</groupId>
 				 <artifactId>junit-jupiter-engine</artifactId>
-				 <version>5.11.1</version>
+				 <version>5.14.4</version>
 				 <type>jar</type>
 			 </dependency>
 			 <dependency>
 				 <groupId>org.junit.jupiter</groupId>
 				 <artifactId>junit-jupiter-params</artifactId>
-				 <version>5.11.1</version>
+				 <version>5.14.4</version>
+				 <type>jar</type>
+			 </dependency>
+			 <dependency>
+				 <groupId>org.junit.platform</groupId>
+				 <artifactId>junit-platform-launcher</artifactId>
+				 <version>1.14.4</version>
 				 <type>jar</type>
 			 </dependency>
 			 <dependency>
 				 <groupId>org.mockito</groupId>
 				 <artifactId>mockito-core</artifactId>
-				 <version>5.14.0</version>
+				 <version>5.23.0</version>
 				 <type>jar</type>
 			 </dependency>
 			 <dependency>
 				 <groupId>org.mockito</groupId>
 				 <artifactId>mockito-junit-jupiter</artifactId>
-				 <version>5.14.0</version>
+				 <version>5.23.0</version>
 				 <type>jar</type>
 			 </dependency>
 		 </dependencies>
