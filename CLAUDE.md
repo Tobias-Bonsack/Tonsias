@@ -9,22 +9,24 @@ Tonsias is an **Eclipse RCP / e4 desktop application** developed as an **Eclipse
 ## Commands
 
 ```bash
-./mvnw clean verify                              # compile every bundle, run all test bundles, build the product
+./mvnw clean verify                                    # compile every bundle, run all test bundles, build the product
 ./mvnw clean verify -Dmaven.test.failure.ignore=true   # keep going past failing tests to see every result
-./mvnw clean verify -pl de.tonsias.basis.osgi.test     # one test bundle (add -am to build its dependencies)
 ./mvnw clean verify -Dtest=KeyServiceImplTest          # a single test class
 ./mvnw clean verify -DskipTests                        # compile only
 ```
 
 Requires a JDK 24 in `JAVA_HOME` (the bundles' highest BREE). The wrapper downloads Maven itself; no local Maven install is needed.
 
+**Do not use `-pl` to build a single module.** Tycho derives the reactor from the OSGi manifests, not from Maven dependencies, so `-pl <module> -am` does not pull in the bundles that module requires and fails with "Missing requirement". Build the whole reactor and narrow with `-Dtest=` instead.
+
 ## Working in this repo
 
 - **Target platform**: `target-platform/target-platform.target` — Eclipse SDK 4.36 (2025-06) + Maven-sourced Guava 33.1.0, Gson 2.10.1, JUnit Jupiter 5.14.4, Mockito 5.23.0. It is the single source of truth for **both** the IDE and the Tycho build (consumed as an `eclipse-target-definition` module), so edit it rather than the poms when changing dependencies. Set it as the active target platform in the IDE before anything resolves.
 - **Run the app**: launch `de.tonsias.basis.product/tonsias.product` (E4Application, `-clearPersistedState`). Note `autoStart` config for `org.apache.felix.scr` and `org.eclipse.equinox.event` — DS and the event admin must be running or none of the services resolve. The Tycho test runtime configures the same two bundles for the same reason.
 - **Tests** are JUnit 5, and all three bundles need an OSGi runtime — run them as an **Eclipse JUnit Plug-in Test** in the IDE, or via `./mvnw verify`. What differs is how they obtain their subject:
-  - `BasicPreferenceServiceImplTest`, `KeyServiceImplTest`, `EventTreeNodeWrapperTest`, `InstanzViewLogicTest` construct it directly or with `@InjectMocks`, so they pass headlessly.
-  - `InstanzServiceImplTest` and `SingleValueServiceImplTest` call `OsgiUtil.getService(...)`. These **cannot pass in a plain DS runtime**: `InstanzServiceImpl` has a mandatory `@Reference IEventBrokerBridge`, and that bridge is only produced by `EventBrokerContextFunction`, an e4 `IContextFunction` that runs only when an `IEclipseContext` requests the key. Headless, nothing requests it, so the component never activates and `getService` returns `null`. They need a running e4 application context. `InstanzServiceImplTest` also writes real files to the instance location.
+  - Most tests construct it directly or with `@InjectMocks` and need nothing further.
+  - Tests that resolve real services through `OsgiUtil.getService(...)` (`InstanzServiceImplTest`, `SingleValueServiceImplTest`, `OsgiUtilTest`) must first call **`E4ServiceContext.prime()`** in `@BeforeEach`. `IEventBrokerBridge` and `IDeltaService` are not plain DS components — they come from `IContextFunction`s that only run when an `IEclipseContext` is asked for their key, and `ChangePropagationListener` is contributed as an e4 *addon* in `Application.e4xmi`. In the product the workbench triggers all three; headless nothing does, so without priming `InstanzServiceImpl`'s mandatory `@Reference IEventBrokerBridge` stays unsatisfied and the component never activates. Add `prime()` to any new test that touches real services.
+  - Those tests also need a **root instanz** (`_inse.getRoot()`), which `ModelView` creates at start-up in the product but nothing creates in a fresh test workspace. They write real files to the instance location (`target/work/data`), which is cleaned per run.
 - There are **no `.launch` files committed** — launch configs are local. If a launch config is missing, create one from the product / plug-in test wizard.
 - Java compliance levels are **inconsistent across bundles**, and the BREE in `MANIFEST.MF` frequently disagrees with the compliance in `.settings/org.eclipse.jdt.core.prefs` — `de.tonsias.basis.ui` declares `JavaSE-24` but compiles at 19, `de.tonsias.basis.logic` declares 24 but compiles at 22, while `de.tonsias.basis.osgi` and `de.tonsias.basis.model` are 19/19. A language feature usable in `de.tonsias.basis.logic` (22) will not compile in `de.tonsias.basis.osgi` (19). When adding a bundle, copy the settings from a sibling rather than accepting the wizard default. This is also why the Tycho build has to pin its resolution EE (see the comment in `pom.xml`); normalising the BREEs would let that pin go away.
 
@@ -110,6 +112,6 @@ Every feature follows this sequence end to end:
 
 Never commit directly to `main`.
 
-Step 5 is `./mvnw clean verify`. Note that this is **currently red on `main`** for pre-existing reasons (see [Working in this repo](#working-in-this-repo)): 18 of 44 tests fail — the 14 `OsgiUtil.getService` ones that need an e4 context, plus 4 in `logic.test` whose expectations have drifted from the production code. Compare against that baseline rather than assuming a red build is your fault, and never "fix" it by weakening assertions.
+Step 5 is `./mvnw clean verify`. The suite is **green on `main`** — 48 tests, all passing — so any failure is yours. Never "fix" one by weakening an assertion; if a test looks wrong, check it against the production code first (several once verified `post(..)` where the code had moved to `send(..)`).
 
 Step 6 places tests in the test bundle matching the layer under test: view logic → `de.tonsias.basis.logic.test`, services → `de.tonsias.basis.osgi.test`, delta view → `de.tonsias.delta.view.ui.test`. All three run inside OSGi; prefer `@InjectMocks`/direct construction over `OsgiUtil.getService(...)`, which only resolves under a running e4 context. A new bundle's internals need `x-friends` on its `Export-Package` before its test bundle can see them.
