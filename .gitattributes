@@ -1,0 +1,4 @@
+# The Maven wrapper shell script must keep LF endings or it will not run on
+# Unix shells (including Git Bash on Windows).
+mvnw text eol=lf
+mvnw.cmd text eol=crlf

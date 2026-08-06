@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>de.tonsias</groupId>
+	<artifactId>de.tonsias.parent</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<name>Tonsias</name>
+
+	<properties>
+		<tycho.version>5.0.3</tycho.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<modules>
+		<module>target-platform</module>
+
+		<module>de.tonsias.basis.model</module>
+		<module>de.tonsias.basis.data.access</module>
+		<module>de.tonsias.basis.osgi</module>
+		<module>de.tonsias.basis.logic</module>
+		<module>de.tonsias.basis.icon</module>
+		<module>de.tonsias.basis.ui.i18n</module>
+		<module>de.tonsias.basis.ui</module>
+
+		<module>de.tonsias.delta.view.logic</module>
+		<module>de.tonsias.delta.view.ui.i18n</module>
+		<module>de.tonsias.delta.view.ui</module>
+
+		<module>de.tonsias.basis.logic.test</module>
+		<module>de.tonsias.basis.osgi.test</module>
+		<module>de.tonsias.delta.view.ui.test</module>
+
+		<module>de.tonsias.basis.feature</module>
+		<module>de.tonsias.delta.view.feature</module>
+		<module>de.tonsias.basis.product</module>
+	</modules>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-maven-plugin</artifactId>
+				<version>${tycho.version}</version>
+				<extensions>true</extensions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>target-platform-configuration</artifactId>
+				<version>${tycho.version}</version>
+				<configuration>
+					<target>
+						<artifact>
+							<groupId>de.tonsias</groupId>
+							<artifactId>target-platform</artifactId>
+							<version>1.0.0-SNAPSHOT</version>
+						</artifact>
+					</target>
+					<!--
+						The bundles declare inconsistent BREEs (JavaSE-19 / 22 / 24). Without
+						an override, resolution picks up the lowest one it meets first and
+						Eclipse 4.36 then fails to resolve, because org.apache.lucene
+						(via org.eclipse.help.base) requires JavaSE-21 or newer. Pin the
+						resolution EE to the highest BREE in the reactor; per-bundle
+						compliance still comes from .settings/org.eclipse.jdt.core.prefs.
+					-->
+					<executionEnvironment>JavaSE-24</executionEnvironment>
+					<environments>
+						<environment>
+							<os>win32</os>
+							<ws>win32</ws>
+							<arch>x86_64</arch>
+						</environment>
+					</environments>
+				</configuration>
+			</plugin>
+
+			<!--
+				Honour each bundle's .settings/org.eclipse.jdt.core.prefs. Compliance
+				levels differ per bundle (19 / 22 / 24), and Tycho compiles with ECJ, so
+				no per-level JDK toolchain is required.
+			-->
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-compiler-plugin</artifactId>
+				<version>${tycho.version}</version>
+				<configuration>
+					<useProjectSettings>true</useProjectSettings>
+				</configuration>
+			</plugin>
+
+			<!--
+				Tests run inside a real Equinox. Declarative Services (felix.scr) and the
+				event admin must be present and auto-started, otherwise no @Component
+				service resolves and OsgiUtil.getService(..) returns nothing.
+			-->
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-surefire-plugin</artifactId>
+				<version>${tycho.version}</version>
+				<configuration>
+					<useUIHarness>false</useUIHarness>
+					<failIfNoTests>false</failIfNoTests>
+					<dependencies>
+						<dependency>
+							<type>eclipse-plugin</type>
+							<artifactId>org.apache.felix.scr</artifactId>
+							<version>0.0.0</version>
+						</dependency>
+						<dependency>
+							<type>eclipse-plugin</type>
+							<artifactId>org.eclipse.equinox.event</artifactId>
+							<version>0.0.0</version>
+						</dependency>
+					</dependencies>
+					<bundleStartLevel>
+						<bundle>
+							<id>org.apache.felix.scr</id>
+							<level>2</level>
+							<autoStart>true</autoStart>
+						</bundle>
+						<bundle>
+							<id>org.eclipse.equinox.event</id>
+							<level>2</level>
+							<autoStart>true</autoStart>
+						</bundle>
+					</bundleStartLevel>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
