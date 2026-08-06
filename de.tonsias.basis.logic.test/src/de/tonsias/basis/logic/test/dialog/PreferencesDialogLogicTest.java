@@ -7,12 +7,11 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
@@ -26,8 +25,10 @@ import org.osgi.service.prefs.BackingStoreException;
 import de.tonsias.basis.logic.dialog.PreferencesDialogLogic;
 import de.tonsias.basis.logic.dialog.PreferencesDialogLogic.PreferenceFeature;
 import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
+import de.tonsias.basis.osgi.intf.IBasicPreferenceService.Key;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.non.service.IPreferences;
+import de.tonsias.basis.osgi.intf.non.service.IPreferences.PreferenceKeyEnum;
 
 @ExtendWith(MockitoExtension.class)
 public class PreferencesDialogLogicTest {
@@ -44,26 +45,28 @@ public class PreferencesDialogLogicTest {
 	@InjectMocks
 	PreferencesDialogLogic _logic;
 
+	/**
+	 * Every key of the preference yields one feature. The stored node has no value
+	 * for them, so each feature falls back to the key's init value.
+	 */
 	@Test
 	void testGetPreferences_validRequest() throws BackingStoreException {
 		doReturn(_basicPrefService).when(_map).get(anyString());
 		doReturn(IBasicPreferenceService.Key.values()).when(_basicPrefService).getKeys();
+		doReturn(mock(IEclipsePreferences.class)).when(_basicPrefService).getNode();
 
 		Collection<PreferenceFeature> preferences = _logic.getPreferences("");
 
 		assertThat(preferences.size(), is(3));
+		assertThat(preferences.stream().map(PreferenceFeature::value).toList(),
+				is(Arrays.stream(IBasicPreferenceService.Key.values()).map(Key::getInitValue).toList()));
 	}
 
+	/** A preference that declares no keys contributes no features. */
 	@Test
-	void testGetPreferences_error_emptyList() throws BackingStoreException {
+	void testGetPreferences_noKeys_emptyList() throws BackingStoreException {
 		doReturn(_basicPrefService).when(_map).get(anyString());
-
-		IEclipsePreferences mockedPreferences = mock(IEclipsePreferences.class);
-		doThrow(BackingStoreException.class).when(mockedPreferences).keys();
-		lenient().doReturn("aa").when(mockedPreferences).get(eq("a"), anyString());
-		lenient().doReturn("bb").when(mockedPreferences).get(eq("b"), anyString());
-
-		doReturn(mockedPreferences).when(_basicPrefService).getNode();
+		doReturn(new PreferenceKeyEnum[0]).when(_basicPrefService).getKeys();
 
 		Collection<PreferenceFeature> preferences = _logic.getPreferences("");
 

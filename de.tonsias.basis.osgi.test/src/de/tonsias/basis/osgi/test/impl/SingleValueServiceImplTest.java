@@ -19,6 +19,7 @@ import de.tonsias.basis.osgi.intf.IDeltaService;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
+import de.tonsias.basis.osgi.test.E4ServiceContext;
 import de.tonsias.basis.osgi.util.OsgiUtil;
 
 public class SingleValueServiceImplTest {
@@ -32,7 +33,9 @@ public class SingleValueServiceImplTest {
 
 	@BeforeEach
 	void beforeEach() {
+		E4ServiceContext.prime();
 		_ins = OsgiUtil.getService(IInstanzService.class);
+		_ins.getRoot();
 		_instanz = _ins.createInstanz(_originKey, Type.SEND);
 
 		_svs = OsgiUtil.getService(ISingleValueService.class);

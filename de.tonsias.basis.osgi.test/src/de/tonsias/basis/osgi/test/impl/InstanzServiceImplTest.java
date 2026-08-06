@@ -31,6 +31,7 @@ import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
+import de.tonsias.basis.osgi.test.E4ServiceContext;
 import de.tonsias.basis.osgi.util.OsgiUtil;
 
 public class InstanzServiceImplTest {
@@ -40,7 +41,11 @@ public class InstanzServiceImplTest {
 
 	@BeforeEach
 	void beforeEach() {
+		E4ServiceContext.prime();
 		_inse = OsgiUtil.getService(IInstanzService.class);
+		// the tests resolve the root by _parentKey; in the product ModelView does
+		// this at start-up, in a fresh test workspace nothing has created it yet
+		_inse.getRoot();
 	}
 
 	@AfterEach
