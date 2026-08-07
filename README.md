@@ -160,3 +160,8 @@ package is exported to the test bundle alone.
 ## License
 
 [MIT](LICENSE) © 2025 Tobias-Bonsack
+
+That covers the `de.tonsias.*` bundles. The built product is an aggregate: the zip under
+`de.tonsias.basis.product/target` also contains the Eclipse Platform bundles, which are
+[EPL-2.0](https://www.eclipse.org/legal/epl-2.0/) and stay under their own terms — each
+one carries its `about.html` inside its jar. Guava and Gson are Apache-2.0.
