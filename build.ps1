@@ -11,14 +11,21 @@
     Compile and assemble only (-DskipTests).
 
 .PARAMETER Goals
-    Maven lifecycle phases to run. Defaults to "clean verify".
+    Maven lifecycle phases to run. Defaults to "clean verify". Named only -
+    see the note on PositionalBinding below.
 
 .EXAMPLE
     .\build.ps1
     .\build.ps1 -SkipTests
     .\build.ps1 -- -Dtest=KeyServiceImplTest
+    .\build.ps1 -Goals clean,test
 #>
-[CmdletBinding()]
+# PositionalBinding is off so that everything the caller adds ends up in
+# MavenArgs. On by default, PowerShell binds the arguments after "--"
+# positionally to the first parameter that takes them - which is Goals, and
+# Maven then aborts with "No goals have been specified" because the default
+# "clean verify" was overwritten by the -D flag.
+[CmdletBinding(PositionalBinding = $false)]
 param(
     [switch] $SkipTests,
     [string[]] $Goals = @('clean', 'verify'),
