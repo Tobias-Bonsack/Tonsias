@@ -1,6 +1,7 @@
 package de.tonsias.basis.osgi.impl;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -167,7 +168,9 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		var value = _cache.get(singleValueKeyToMark);
 		Optional<SingleValueType> optional = SingleValueType.getByClass(value.getClass());
 		optional.ifPresent(type -> {
-			Collection<String> connectedInstanzKeys = value.getConnectedInstanzKeys();
+			// a live view of the connections, so it has to be copied before they are cut -
+			// the event tells the owners to drop the value key and would carry nobody
+			Collection<String> connectedInstanzKeys = List.copyOf(value.getConnectedInstanzKeys());
 			value.removeConnection(connectedInstanzKeys);
 			var data = new SingleValueEventConstants.SingleValueDeleteEvent(type, singleValueKeyToMark, connectedInstanzKeys);
 			fireEvent(eventType, SingleValueEventConstants.DELETE, data);
@@ -179,9 +182,9 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		CompletionException ex = new CompletionException(null);
 		for (String key : singlevalueKeysToDelete) {
 			try {
-				_deleteService.deleteFile(key);
+				deleteFile(key);
 			} catch (IOException e) {
-				ex.addSuppressed(ex);
+				ex.addSuppressed(e);
 			}
 		}
 
@@ -190,6 +193,34 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		}
 
 		return true;
+	}
+
+	/**
+	 * The delta bookkeeping only knows keys, the delete service works on files -
+	 * and which folder a value lives in depends on its type. A value that is no
+	 * longer cached no longer tells its type, so every folder is tried until one of
+	 * them holds the file.
+	 */
+	private void deleteFile(String key) throws IOException {
+		ISingleValue<?> cached = _cache.get(key);
+		if (cached != null) {
+			_deleteService.deleteFile(cached.getPath() + key + ".json");
+			return;
+		}
+
+		IOException notFound = null;
+		for (SingleValueType type : SingleValueType.values()) {
+			try {
+				_deleteService.deleteFile(type.getPath() + key + ".json");
+				return;
+			} catch (NoSuchFileException e) {
+				notFound = e;
+			}
+		}
+
+		if (notFound != null) {
+			throw notFound;
+		}
 	}
 
 	private void fireEvent(Type eventType, String eventName, Object data) {

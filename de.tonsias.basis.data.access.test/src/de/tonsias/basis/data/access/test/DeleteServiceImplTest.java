@@ -31,9 +31,23 @@ public class DeleteServiceImplTest {
 	}
 
 	/**
-	 * The service takes an absolute file path, not an object key - the callers in
-	 * {@code InstanzServiceImpl} / {@code SingleValueServiceImpl} hand it a bare
-	 * key, which is why deletes never reach a file.
+	 * A relative path is resolved against the workspace, the same way
+	 * {@code SaveService} writes it - that is what the services hand over.
+	 */
+	@Test
+	void testDeleteFile_relativePathIsResolvedAgainstTheWorkspace() throws IOException {
+		Path file = InstanceLocation.resolve("delete_test/relative.json");
+		Files.createDirectories(file.getParent());
+		Files.writeString(file, "{}");
+
+		assertThat(_deleteService.deleteFile("delete_test/relative.json"), is(true));
+
+		assertThat(Files.exists(file), is(false));
+	}
+
+	/**
+	 * The service takes the file path of an object, not its key - a bare key
+	 * denotes no file and deletes nothing.
 	 */
 	@Test
 	void testDeleteFile_unknownPathThrows() {

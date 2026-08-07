@@ -1,12 +1,10 @@
 package de.tonsias.basis.data.access.osgi.impl;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 
@@ -44,12 +42,11 @@ public class SaveServiceImpl implements SaveService {
 		};
 		String json = gson.toJson(list, typeToken);
 
-		String dir = Platform.getInstanceLocation().getURL().getPath().substring(1);
 		String pathName = list.iterator().next().getPath();
 		String fileName = list.iterator().next().getOwnKey();
-		Path path = Paths.get(dir + File.separator + pathName + fileName + ".json");
+		Path path = InstanceLocationUtil.resolve(pathName + fileName + ".json");
 		try {
-			Files.write(path, json.getBytes(), StandardOpenOption.CREATE);
+			write(path, json);
 		} catch (IOException e) {
 			Platform.getLog(getClass()).error("Unable to Safe: " + path.toString(), e);
 		}
@@ -62,16 +59,24 @@ public class SaveServiceImpl implements SaveService {
 		var type = TypeToken.getParameterized(objectType).getType();
 		String json = gson.toJson(object, type);
 
-		String dir = Platform.getInstanceLocation().getURL().getPath().substring(1);
 		String pathName = object.getPath();
 		String fileName = object.getOwnKey();
-		Path path = Paths.get(dir + File.separator + pathName + fileName + ".json");
+		Path path = InstanceLocationUtil.resolve(pathName + fileName + ".json");
 		try {
-			File file = new File(path.toString());
-			file.getParentFile().mkdirs();
-			Files.write(path, json.getBytes(), StandardOpenOption.CREATE);
+			Files.createDirectories(path.getParent());
+			write(path, json);
 		} catch (IOException e) {
 			Platform.getLog(getClass()).error("Unable to Safe: " + path.toString(), e);
 		}
+	}
+
+	/**
+	 * Replaces the whole file - without {@link StandardOpenOption#TRUNCATE_EXISTING}
+	 * a shorter document would leave the tail of the previous one behind and the
+	 * file would no longer parse.
+	 */
+	private void write(Path path, String json) throws IOException {
+		Files.writeString(path, json, StandardOpenOption.CREATE, StandardOpenOption.WRITE,
+				StandardOpenOption.TRUNCATE_EXISTING);
 	}
 }

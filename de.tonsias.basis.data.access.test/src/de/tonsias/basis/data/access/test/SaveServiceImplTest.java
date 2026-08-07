@@ -85,6 +85,19 @@ public class SaveServiceImplTest {
 		assertThat(reloaded.getValue(), is("x"));
 	}
 
+	/** {@code LoadService} reads the files as UTF-8, so they have to be written as UTF-8. */
+	@Test
+	void testSafeAsGson_nonAsciiSurvivesTheRoundTrip() throws IOException {
+		SingleStringValue value = new SingleStringValue("save_umlaut");
+		value.tryToSetValue("Grüße, Straße");
+		_saveService.safeAsGson(value, value.getClass());
+
+		Path file = InstanceLocation.resolve("single_value/string/save_umlaut.json");
+		SingleStringValue reloaded = new Gson().fromJson(Files.readString(file), SingleStringValue.class);
+
+		assertThat(reloaded.getValue(), is("Grüße, Straße"));
+	}
+
 	@Test
 	void testSafeAsGsonCollection_writesAllElementsUnderTheFirstKey() throws IOException {
 		Path folder = InstanceLocation.resolve("instanz");

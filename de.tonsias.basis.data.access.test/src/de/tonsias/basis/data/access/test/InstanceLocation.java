@@ -1,9 +1,8 @@
 package de.tonsias.basis.data.access.test;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
-import org.eclipse.core.runtime.Platform;
+import de.tonsias.basis.data.access.osgi.impl.InstanceLocationUtil;
 
 /**
  * Resolves the workspace directory the same way {@code LoadServiceImpl} and
@@ -16,7 +15,6 @@ final class InstanceLocation {
 	}
 
 	static Path resolve(String relativePath) {
-		String dir = Platform.getInstanceLocation().getURL().getPath().substring(1);
-		return Paths.get(dir, relativePath);
+		return InstanceLocationUtil.resolve(relativePath);
 	}
 }
