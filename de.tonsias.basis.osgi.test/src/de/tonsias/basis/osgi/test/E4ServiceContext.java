@@ -36,6 +36,13 @@ public final class E4ServiceContext {
 
 	private static boolean _primed;
 
+	/**
+	 * e4 keeps only a weak reference to an injected object, so a listener nobody
+	 * holds on to can be collected in the middle of a run - and the propagation it
+	 * does would then silently stop.
+	 */
+	private static ChangePropagationListener _listener;
+
 	private E4ServiceContext() {
 	}
 
@@ -58,7 +65,7 @@ public final class E4ServiceContext {
 		// @EventTopic methods subscribe. Without it nothing keeps both ends of a
 		// parent/child or instanz/value relation in sync, so e.g. createInstanz(..)
 		// never adds the new key to its parent's child list.
-		ContextInjectionFactory.make(ChangePropagationListener.class, context);
+		_listener = ContextInjectionFactory.make(ChangePropagationListener.class, context);
 
 		_primed = true;
 	}
