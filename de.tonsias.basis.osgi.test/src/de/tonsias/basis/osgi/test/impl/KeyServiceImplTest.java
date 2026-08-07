@@ -3,8 +3,12 @@ package de.tonsias.basis.osgi.test.impl;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
 
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,11 +42,26 @@ public class KeyServiceImplTest {
 
 	@Test
 	void testInitKey_validNode() {
-		when(_pref.get(anyString(), anyString())).thenReturn("ZZ");
+		when(_pref.get(anyString(), anyString())).thenReturn("zz");
 
 		String key = _keyService.initKey();
 
-		assertThat(key, is("ZZ"));
+		assertThat(key, is("zz"));
+	}
+
+	/**
+	 * A workspace written before issue #35 can hold a key of the old base 62
+	 * alphabet, which countKeyUp() can not count up any more.
+	 */
+	@Test
+	void testInitKey_oldUpperCaseNodeIsMigrated() {
+		when(_pref.get(anyString(), anyString())).thenReturn("1A");
+
+		String key = _keyService.initKey();
+
+		assertThat(key, is("1a"));
+		verify(_pref).put(anyString(), eq("1a"));
+		assertThat(_keyService.generateKey(), is("2a"));
 	}
 
 	@Test
@@ -68,12 +87,13 @@ public class KeyServiceImplTest {
 	@ParameterizedTest
 	@CsvSource({ //
 			"a, b", //
+			"9, a", // the digits run into the letters without a gap
 			"z, 00", //
-			"aA, bA", //
+			"a1, b1", //
 			"z0, 01", //
 			"zz, 000", //
 			"2z0, 3z0", //
-			"zzT, 00U", //
+			"zzt, 00u", //
 			"zzzzz, 000000" //
 	})
 	void testGeneratekey_inArrayChange(String key, String nextKey) {
@@ -82,6 +102,24 @@ public class KeyServiceImplTest {
 		String newkey = _keyService.generateKey();
 
 		assertThat(newkey, is(nextKey));
+	}
+
+	/**
+	 * Keys become file names as they are, so an alphabet holding both cases would
+	 * make 'a' and 'A' the same file on Windows and macOS (issue #35).
+	 */
+	@Test
+	void testKeychars_holdNoUpperCase() {
+		assertThat(String.valueOf(KeyServiceImpl.KEYCHARS), is("0123456789abcdefghijklmnopqrstuvwxyz"));
+	}
+
+	/** {@link Arrays#binarySearch} only works on a sorted alphabet. */
+	@Test
+	void testKeychars_areSortedAscending() {
+		char[] sorted = KeyServiceImpl.KEYCHARS.clone();
+		Arrays.sort(sorted);
+
+		assertThat(String.valueOf(KeyServiceImpl.KEYCHARS), is(String.valueOf(sorted)));
 	}
 
 	private static class KeyServiceImplTestee extends KeyServiceImpl {

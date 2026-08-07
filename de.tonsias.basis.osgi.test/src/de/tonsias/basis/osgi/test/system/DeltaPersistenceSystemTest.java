@@ -83,9 +83,9 @@ public class DeltaPersistenceSystemTest {
 	@Test
 	void testCreateInstanz_savesTheNewInstanzAndItsParent() {
 		IInstanz child = _inse.createInstanz(ROOT, Type.SEND);
-		// there is deliberately no "the file does not exist yet" check here: keys are
-		// base 62 and become file names as they are, so on a case insensitive file
-		// system "a" and "A" are one and the same file (see issue #35)
+		// keys are lower case only, so a brand new key can not collide with an already
+		// written file on a case insensitive file system (issue #35)
+		assertThat(Files.exists(instanzFile(child.getOwnKey())), is(false));
 
 		_delta.saveDeltas();
 
