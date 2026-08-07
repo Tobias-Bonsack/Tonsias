@@ -18,6 +18,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -323,6 +324,39 @@ public class SingleValueServiceImplUnitTest {
 		assertThat(_service.deleteAll(Set.of()), is(true));
 
 		verifyNoInteractions(_deleteService);
+	}
+
+	/** Which folder a value lives in depends on its type. */
+	@Test
+	void testDeleteAll_cachedValueIsDeletedInItsOwnFolder() throws IOException {
+		when(_keyService.generateKey()).thenReturn("key");
+		_service.createNew(SingleIntegerValue.class, "owner", "paramName", 42, Type.SEND);
+
+		_service.deleteAll(Set.of("key"));
+
+		verify(_deleteService).deleteFile(SingleValueType.SINGLE_INTEGER.getPath() + "key.json");
+	}
+
+	/**
+	 * A value that is no longer cached no longer tells its type, so the folders
+	 * have to be tried one after the other.
+	 */
+	@Test
+	void testDeleteAll_uncachedValueIsLookedUpInEveryFolder() throws IOException {
+		when(_deleteService.deleteFile(STRING_PATH + "key.json")).thenThrow(new NoSuchFileException("nope"));
+
+		assertThat(_service.deleteAll(Set.of("key")), is(true));
+
+		verify(_deleteService).deleteFile(SingleValueType.SINGLE_INTEGER.getPath() + "key.json");
+	}
+
+	@Test
+	void testDeleteAll_valueInNoFolderAtAllFails() throws IOException {
+		when(_deleteService.deleteFile(anyString())).thenThrow(new NoSuchFileException("nope"));
+
+		CompletionException thrown = assertThrows(CompletionException.class, () -> _service.deleteAll(Set.of("key")));
+
+		assertThat(List.of(thrown.getSuppressed()), hasSize(1));
 	}
 
 	/** An {@link ISingleValue} that no {@code SingleValueType} knows about. */
