@@ -5,7 +5,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Map;
 
@@ -29,9 +28,8 @@ public class LoadServiceImpl implements LoadService {
 	private final Gson GSON = createGson();
 
 	private String getJson(String path) {
-		String dir = Platform.getInstanceLocation().getURL().getPath().substring(1);
 		String json = "";
-		Path pathToJson = Paths.get(dir + path + ".json");
+		Path pathToJson = InstanceLocationUtil.resolve(path + ".json");
 		try {
 			json = Files.readString(pathToJson);
 		} catch (IOException e) {
