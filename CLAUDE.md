@@ -41,9 +41,11 @@ JDK 24 is the bundles' highest BREE and the resolution EE the target platform is
 
 Only `win32/win32/x86_64` is built; add `<environment>`s to `target-platform-configuration` in the parent pom to cross-build others.
 
-`.github/workflows/build.yml` runs the same `./mvnw clean verify` on `windows-latest` for every push and PR to `main` and uploads product and p2 repository as workflow artifacts. It must stay on a Windows runner as long as the target platform declares only the win32 environment.
+`.github/workflows/build.yml` is the only workflow: it runs the same `./mvnw clean verify` on `windows-latest` for every push and PR to `main`, and it must stay on a Windows runner as long as the target platform declares only the win32 environment. Three things about it are deliberate:
 
-`.github/workflows/tests.yml` runs on pull requests only and exists for the report: it builds with `-Dmaven.test.failure.ignore=true` so the whole reactor is tested even after a bundle fails, then `.github/scripts/Summarize-TestResults.ps1` folds all `target/surefire-reports/TEST-*.xml` into a markdown table that is posted as a **single, edited-in-place PR comment** (found again by the `<!-- tonsias-test-report -->` marker). The job is failed afterwards if anything failed, so a green comment and a green check mean the same thing. Run the script locally after `.\build.ps1` to see the same report. Because the report is assembled from the surefire XML, a new test bundle appears in it automatically — but only if its reports land under `<bundle>/target/surefire-reports`.
+- It builds with **`-Dmaven.test.failure.ignore=true`**, so one failing bundle does not hide the results of the bundles behind it in the reactor. That only moves _when_ a failure is reported, not _whether_ — the last step fails the job from the parsed totals.
+- `.github/scripts/Summarize-TestResults.ps1` folds all `target/surefire-reports/TEST-*.xml` into a markdown table, posted on a PR as a **single, edited-in-place comment** (found again by the `<!-- tonsias-test-report -->` marker) and written to the job summary. It is assembled from the surefire XML, so a new test bundle shows up by itself — as long as its reports land under `<bundle>/target/surefire-reports`. Run it locally after `.\build.ps1` for the same report.
+- Product and p2 repository are uploaded as artifacts **only from a fully green run**. `maven.test.failure.ignore` makes Maven exit 0 on a failing test, so `if: success()` alone is no longer enough and the upload steps check the report's `failed` output as well.
 
 ## Working in this repo
 

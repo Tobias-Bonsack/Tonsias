@@ -7,6 +7,16 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Only the newest push to a PR is worth building; drop the runs it superseded.
+# On main every commit is built to completion.
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   build:
     # The target platform declares win32/win32/x86_64 only, so SWT and the
@@ -26,11 +36,63 @@ jobs:
           java-version: '24'
           cache: maven
 
+      # maven.test.failure.ignore keeps the reactor going past a failing bundle,
+      # so the report covers every test bundle instead of stopping at the first
+      # one. It only moves when the failure is reported, not whether: the job is
+      # failed at the end by "Fail on test failures".
+      #
+      # The quotes are load-bearing. The default shell here is pwsh, which
+      # parses a bare -Dmaven.test.failure.ignore=true as the parameter -Dmaven
+      # followed by the argument .test.failure.ignore=true and hands Maven two
+      # tokens, failing with "Unknown lifecycle phase". Quote any -D that
+      # contains a dot.
       - name: Build bundles, run tests and materialize the product
-        run: ./mvnw --batch-mode --no-transfer-progress clean verify
+        run: ./mvnw --batch-mode --no-transfer-progress clean verify '-Dmaven.test.failure.ignore=true'
 
+      # always(): a compile or resolution error fails the step above, and the
+      # report ("no test reports found") is exactly what the PR should show then.
+      - name: Summarize test results
+        id: summary
+        if: always()
+        shell: pwsh
+        run: ./.github/scripts/Summarize-TestResults.ps1 -OutFile "$env:RUNNER_TEMP/test-report.md"
+
+      - name: Comment the results on the pull request
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          REPORT_FILE: ${{ runner.temp }}/test-report.md
+        with:
+          script: |
+            const fs = require('fs');
+            // Identifies our own comment so every run edits it instead of
+            // piling a new one onto the PR.
+            const marker = '<!-- tonsias-test-report -->';
+            const report = fs.existsSync(process.env.REPORT_FILE)
+              ? fs.readFileSync(process.env.REPORT_FILE, 'utf8')
+              : ':warning: The build produced no report at all.';
+            const footer = `\n<sub>${context.sha.substring(0, 7)} - `
+              + `[run ${context.runNumber}](${context.serverUrl}/${context.repo.owner}/`
+              + `${context.repo.repo}/actions/runs/${context.runId})</sub>`;
+            const body = `${marker}\n${report}${footer}`;
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+      # Maven now exits 0 on a failing test, so success() alone would publish a
+      # product built from a red suite. Keep the old rule: artifacts only from a
+      # fully green run.
       - name: Upload product
-        if: success()
+        if: success() && steps.summary.outputs.failed != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: tonsias-product-win32-x86_64
@@ -38,7 +100,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload p2 repository
-        if: success()
+        if: success() && steps.summary.outputs.failed != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: tonsias-p2-repository
@@ -46,9 +108,16 @@ jobs:
           if-no-files-found: error
 
       - name: Upload test reports
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
           path: '**/target/surefire-reports/**'
           if-no-files-found: ignore
+
+      - name: Fail on test failures
+        if: always() && steps.summary.outputs.failed == 'true'
+        shell: pwsh
+        run: |
+          Write-Host "::error::${{ steps.summary.outputs.failures }} failures, ${{ steps.summary.outputs.errors }} errors out of ${{ steps.summary.outputs.tests }} tests."
+          exit 1
