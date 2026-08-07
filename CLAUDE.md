@@ -41,6 +41,8 @@ Only `win32/win32/x86_64` is built; add `<environment>`s to `target-platform-con
 
 `.github/workflows/build.yml` runs the same `./mvnw clean verify` on `windows-latest` for every push and PR to `main` and uploads product and p2 repository as workflow artifacts. It must stay on a Windows runner as long as the target platform declares only the win32 environment.
 
+`.github/workflows/tests.yml` runs on pull requests only and exists for the report: it builds with `-Dmaven.test.failure.ignore=true` so the whole reactor is tested even after a bundle fails, then `.github/scripts/Summarize-TestResults.ps1` folds all `target/surefire-reports/TEST-*.xml` into a markdown table that is posted as a **single, edited-in-place PR comment** (found again by the `<!-- tonsias-test-report -->` marker). The job is failed afterwards if anything failed, so a green comment and a green check mean the same thing. Run the script locally after `.\build.ps1` to see the same report. Because the report is assembled from the surefire XML, a new test bundle appears in it automatically — but only if its reports land under `<bundle>/target/surefire-reports`.
+
 ## Working in this repo
 
 - **Target platform**: `target-platform/target-platform.target` — Eclipse SDK 4.36 (2025-06) + Maven-sourced Guava 33.1.0, Gson 2.10.1, JUnit Jupiter 5.14.4, Mockito 5.23.0. It is the single source of truth for **both** the IDE and the Tycho build (consumed as an `eclipse-target-definition` module), so edit it rather than the poms when changing dependencies. Set it as the active target platform in the IDE before anything resolves.

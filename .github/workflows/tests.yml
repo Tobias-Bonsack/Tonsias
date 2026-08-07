@@ -1,0 +1,96 @@
+name: tests
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+# Only the newest push to a PR is worth testing; drop the runs it superseded.
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  test:
+    # The target platform declares win32/win32/x86_64 only, so SWT and the test
+    # runtime resolve on Windows alone. Keep in sync with build.yml and the
+    # <environments> in the parent pom.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          # Highest BREE in the reactor; target-platform-configuration pins the
+          # resolution EE to JavaSE-24.
+          java-version: '24'
+          cache: maven
+
+      # maven.test.failure.ignore keeps the reactor going past a failing bundle,
+      # so the comment reports every test bundle instead of stopping at the
+      # first one. The job is failed further down by "Fail on test failures".
+      # -DskipTests is deliberately not used: verify is what runs the OSGi tests.
+      - name: Run all tests
+        run: ./mvnw --batch-mode --no-transfer-progress clean verify -Dmaven.test.failure.ignore=true
+
+      # always(): a compile or resolution error fails the step above, and the
+      # report ("no test reports found") is exactly what the PR should show then.
+      - name: Summarize test results
+        id: summary
+        if: always()
+        shell: pwsh
+        run: ./.github/scripts/Summarize-TestResults.ps1 -OutFile "$env:RUNNER_TEMP/test-report.md"
+
+      - name: Comment the results on the pull request
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          REPORT_FILE: ${{ runner.temp }}/test-report.md
+        with:
+          script: |
+            const fs = require('fs');
+            // Identifies our own comment so every run edits it instead of
+            // piling a new one onto the PR.
+            const marker = '<!-- tonsias-test-report -->';
+            const report = fs.existsSync(process.env.REPORT_FILE)
+              ? fs.readFileSync(process.env.REPORT_FILE, 'utf8')
+              : ':warning: The test job produced no report at all.';
+            const footer = `\n<sub>${context.sha.substring(0, 7)} - `
+              + `[run ${context.runNumber}](${context.serverUrl}/${context.repo.owner}/`
+              + `${context.repo.repo}/actions/runs/${context.runId})</sub>`;
+            const body = `${marker}\n${report}${footer}`;
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: '**/target/surefire-reports/**'
+          if-no-files-found: ignore
+
+      - name: Fail on test failures
+        if: always() && steps.summary.outputs.failed == 'true'
+        shell: pwsh
+        run: |
+          Write-Host "::error::${{ steps.summary.outputs.failures }} failures, ${{ steps.summary.outputs.errors }} errors out of ${{ steps.summary.outputs.tests }} tests."
+          exit 1
