@@ -5,6 +5,10 @@ All notable changes to Tonsias are documented here. The format follows
 [semantic versioning](https://semver.org/spec/v2.0.0.html). While the major version is
 `0`, anything may still change — including the on-disk format of the model.
 
+## [Unreleased]
+
+Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
+
 ## [0.1.0] - 2026-08-07
 
 The first release. It is the point at which the model, the persistence, the event chain
@@ -93,4 +97,5 @@ is a summary of what the release contains rather than of what changed.
 - The bundles declare inconsistent Java compliance levels (19 / 22 / 24), which is why
   the build pins its resolution execution environment to `JavaSE-24`.
 
+[Unreleased]: https://github.com/Tobias-Bonsack/Tonsias/compare/v0.1.0...main
 [0.1.0]: https://github.com/Tobias-Bonsack/Tonsias/releases/tag/v0.1.0

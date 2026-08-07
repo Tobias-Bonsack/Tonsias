@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Test
 Bundle-SymbolicName: de.tonsias.basis.logic.test
-Bundle-Version: 0.1.0
+Bundle-Version: 0.2.0.qualifier
 Automatic-Module-Name: de.tonsias.basis.logic.test
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-24
@@ -13,7 +13,7 @@ Require-Bundle: org.hamcrest;bundle-version="2.2.0",
  junit-jupiter-params;bundle-version="5.11.1",
  org.mockito.junit-jupiter;bundle-version="5.14.0",
  org.mockito.mockito-core;bundle-version="5.14.0",
- de.tonsias.basis.logic;bundle-version="0.1.0",
+ de.tonsias.basis.logic;bundle-version="0.2.0",
  de.tonsias.basis.osgi,
  de.tonsias.basis.model,
  org.eclipse.e4.core.services;bundle-version="2.5.200"

@@ -2,7 +2,7 @@
 <feature
       id="de.tonsias.basis.feature"
       label="Tonsias"
-      version="0.1.0"
+      version="0.2.0.qualifier"
       provider-name="TONSIAS">
 
    <description url="https://github.com/Tobias-Bonsack/Tonsias">
