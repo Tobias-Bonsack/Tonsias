@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: i18n
 Bundle-SymbolicName: de.tonsias.basis.ui.i18n
-Bundle-Version: 1.0.0.qualifier
+Bundle-Version: 0.1.0
 Export-Package: de.tonsias.basis.ui.i18n;x-friends:="de.tonsias.basis.ui"
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0"
 Automatic-Module-Name: de.tonsias.basis.ui.i18n

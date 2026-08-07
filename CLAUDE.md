@@ -37,7 +37,7 @@ JDK 24 is the bundles' highest BREE and the resolution EE the target platform is
 | ------------------------------------------------- | ------------------------------------------------- |
 | `products/tonsias/win32/win32/x86_64/Tonsias.exe` | the launcher — run this to start the built app    |
 | `products/tonsias-win32.win32.x86_64.zip`         | the same directory zipped, the distributable      |
-| `de.tonsias.basis.product-1.0.0-SNAPSHOT.zip`     | the p2 repository, for installing/updating via p2 |
+| `de.tonsias.basis.product-<version>.zip`          | the p2 repository, for installing/updating via p2 |
 
 Only `win32/win32/x86_64` is built; add `<environment>`s to `target-platform-configuration` in the parent pom to cross-build others.
 
@@ -146,3 +146,14 @@ Never commit directly to `main`.
 Step 5 is `.\build.ps1` (or `./mvnw clean verify`). The suite is **green on `main`** — 282 tests across the five test bundles, all passing — so any failure is yours. Never "fix" one by weakening an assertion; if a test looks wrong, check it against the production code first (several once verified `post(..)` where the code had moved to `send(..)`).
 
 Step 6 places tests in the test bundle matching the layer under test. All run inside OSGi; prefer `OsgiUtil.getService(...)`, which only resolves under a running e4 context, over `@InjectMocks` direct construction. A new bundle's internals need `x-friends` on its `Export-Package` before its test bundle can see them.
+
+## Releasing
+
+The current release is **0.1.0** (the first one); `CHANGELOG.md` is the per-release record and `README.md` the user-facing overview. Versions live in 37 files — every `pom.xml`, `MANIFEST.MF`, `feature.xml` and the `.product` — so never edit them by hand. Bump them with Tycho, which also rewrites the `bundle-version` lower bounds in the `Require-Bundle` of every other reactor bundle:
+
+```powershell
+$env:JAVA_HOME = '<jdk24>'
+.\mvnw.cmd org.eclipse.tycho:tycho-versions-plugin:5.0.3:set-version "-DnewVersion=<x.y.z>" "-DupdateVersionRangeMatchingBounds=true"
+```
+
+It leaves the `version` attribute of `tonsias.product` alone when that attribute does not already match the old version — check it afterwards. Then run `.\build.ps1`, add a `CHANGELOG.md` section, and follow the branch/PR workflow above; the tag is `v<x.y.z>` on the merge commit, with the product zip and the p2 repository from `de.tonsias.basis.product/target` attached to the GitHub release.
