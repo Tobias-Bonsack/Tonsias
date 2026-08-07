@@ -37,6 +37,7 @@ import de.tonsias.basis.data.access.osgi.intf.DeleteService;
 import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.impl.value.SingleBooleanValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.ISingleValue;
@@ -149,6 +150,19 @@ public class SingleValueServiceImplUnitTest {
 
 		assertThat(created, is(instanceOf(SingleIntegerValue.class)));
 		assertThat(created.getValue(), is(42));
+	}
+
+	@Test
+	void testCreateNew_booleanValue() {
+		when(_keyService.generateKey()).thenReturn("key");
+
+		SingleBooleanValue created = _service.createNew(SingleBooleanValue.class, "owner", "paramName", true,
+				Type.SEND);
+
+		assertThat(created, is(instanceOf(SingleBooleanValue.class)));
+		assertThat(created.getValue(), is(true));
+		verify(_broker).send(SingleValueEventConstants.NEW, Map.of(IEventBroker.DATA, new SingleValueNewEvent(
+				SingleValueType.SINGLE_BOOLEAN, "key", "paramName", List.of("owner"))));
 	}
 
 	@Test
