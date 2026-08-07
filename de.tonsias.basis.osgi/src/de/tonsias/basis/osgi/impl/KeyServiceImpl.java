@@ -78,8 +78,6 @@ public class KeyServiceImpl implements IKeyService {
 			flush(node);
 		}
 
-		// workspaces written before issue #35 can hold a key of the old base 62
-		// alphabet, which countKeyUp() can not count up any more
 		String lowerCase = key.toLowerCase(Locale.ROOT);
 		if (!lowerCase.equals(key)) {
 			key = lowerCase;
