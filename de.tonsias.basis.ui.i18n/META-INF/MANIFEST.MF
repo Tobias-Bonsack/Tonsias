@@ -3,7 +3,8 @@ Bundle-ManifestVersion: 2
 Bundle-Name: i18n
 Bundle-SymbolicName: de.tonsias.basis.ui.i18n
 Bundle-Version: 0.2.0.qualifier
-Export-Package: de.tonsias.basis.ui.i18n;x-friends:="de.tonsias.basis.ui"
+Export-Package: de.tonsias.basis.ui.i18n;x-friends:="de.tonsias.basis.u
+ i,de.tonsias.basis.ui.test"
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0"
 Automatic-Module-Name: de.tonsias.basis.ui.i18n
 Bundle-RequiredExecutionEnvironment: JavaSE-24

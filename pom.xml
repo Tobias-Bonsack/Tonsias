@@ -34,6 +34,7 @@
 		<module>de.tonsias.basis.data.access.test</module>
 		<module>de.tonsias.basis.logic.test</module>
 		<module>de.tonsias.basis.osgi.test</module>
+		<module>de.tonsias.basis.ui.test</module>
 		<module>de.tonsias.delta.view.ui.test</module>
 
 		<module>de.tonsias.basis.feature</module>
