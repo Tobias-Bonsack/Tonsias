@@ -3,7 +3,8 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Access
 Bundle-SymbolicName: de.tonsias.basis.data.access
 Bundle-Version: 1.0.0.qualifier
-Export-Package: de.tonsias.basis.data.access.osgi.intf
+Export-Package: de.tonsias.basis.data.access.osgi.impl;x-friends:="de.tonsias.basis.data.access.test",
+ de.tonsias.basis.data.access.osgi.intf
 Require-Bundle: org.osgi.service.component.annotations;bundle-version="1.5.1";resolution:=optional,
  org.eclipse.core.runtime;bundle-version="3.31.0",
  com.google.guava;bundle-version="33.1.0",
