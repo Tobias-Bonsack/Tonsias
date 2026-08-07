@@ -8,6 +8,14 @@ Tonsias is an **Eclipse RCP / e4 desktop application** developed as an **Eclipse
 
 ## Commands
 
+```powershell
+.\build.ps1                                            # the whole pipeline: compile, test, materialize the product
+.\build.ps1 -SkipTests                                 # product only, no tests
+.\build.ps1 -- -Dtest=KeyServiceImplTest               # everything after -- goes to Maven verbatim
+```
+
+`build.ps1` is the entry point to prefer, because `JAVA_HOME` is usually not set on a dev machine: it finds a JDK 24 (`C:\dev\java`, `%ProgramFiles%\Java`, Adoptium, …), exports it and then runs the wrapper. It fails fast if it finds nothing new enough. Underneath it is plain Maven, so with a JDK 24 in `JAVA_HOME` the wrapper works directly too:
+
 ```bash
 ./mvnw clean verify                                    # compile every bundle, run all test bundles, build the product
 ./mvnw clean verify -Dmaven.test.failure.ignore=true   # keep going past failing tests to see every result
@@ -15,9 +23,23 @@ Tonsias is an **Eclipse RCP / e4 desktop application** developed as an **Eclipse
 ./mvnw clean verify -DskipTests                        # compile only
 ```
 
-Requires a JDK 24 in `JAVA_HOME` (the bundles' highest BREE). The wrapper downloads Maven itself; no local Maven install is needed.
+JDK 24 is the bundles' highest BREE and the resolution EE the target platform is pinned to; anything older fails to resolve Eclipse 4.36. The wrapper downloads Maven itself; no local Maven install is needed.
 
 **Do not use `-pl` to build a single module.** Tycho derives the reactor from the OSGi manifests, not from Maven dependencies, so `-pl <module> -am` does not pull in the bundles that module requires and fails with "Missing requirement". Build the whole reactor and narrow with `-Dtest=` instead.
+
+### Build output
+
+`de.tonsias.basis.product` has `eclipse-repository` packaging, which by itself only publishes a p2 repository. `tycho-p2-director-plugin` (configured in its pom) additionally *installs* the `tonsias` product out of that repository, which is what produces a runnable application:
+
+| Path under `de.tonsias.basis.product/target` | What it is |
+|---|---|
+| `products/tonsias/win32/win32/x86_64/Tonsias.exe` | the launcher — run this to start the built app |
+| `products/tonsias-win32.win32.x86_64.zip` | the same directory zipped, the distributable |
+| `de.tonsias.basis.product-1.0.0-SNAPSHOT.zip` | the p2 repository, for installing/updating via p2 |
+
+Only `win32/win32/x86_64` is built; add `<environment>`s to `target-platform-configuration` in the parent pom to cross-build others.
+
+`.github/workflows/build.yml` runs the same `./mvnw clean verify` on `windows-latest` for every push and PR to `main` and uploads product and p2 repository as workflow artifacts. It must stay on a Windows runner as long as the target platform declares only the win32 environment.
 
 ## Working in this repo
 
@@ -112,6 +134,6 @@ Every feature follows this sequence end to end:
 
 Never commit directly to `main`.
 
-Step 5 is `./mvnw clean verify`. The suite is **green on `main`** — 48 tests, all passing — so any failure is yours. Never "fix" one by weakening an assertion; if a test looks wrong, check it against the production code first (several once verified `post(..)` where the code had moved to `send(..)`).
+Step 5 is `.\build.ps1` (or `./mvnw clean verify`). The suite is **green on `main`** — 282 tests across the five test bundles, all passing — so any failure is yours. Never "fix" one by weakening an assertion; if a test looks wrong, check it against the production code first (several once verified `post(..)` where the code had moved to `send(..)`).
 
 Step 6 places tests in the test bundle matching the layer under test: view logic → `de.tonsias.basis.logic.test`, services → `de.tonsias.basis.osgi.test`, delta view → `de.tonsias.delta.view.ui.test`. All three run inside OSGi; prefer `@InjectMocks`/direct construction over `OsgiUtil.getService(...)`, which only resolves under a running e4 context. A new bundle's internals need `x-friends` on its `Export-Package` before its test bundle can see them.
