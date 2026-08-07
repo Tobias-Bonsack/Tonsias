@@ -23,6 +23,8 @@ Tonsias is an **Eclipse RCP / e4 desktop application** developed as an **Eclipse
 ./mvnw clean verify -DskipTests                        # compile only
 ```
 
+In PowerShell, **quote any `-D` that contains a dot**: `'-Dmaven.test.failure.ignore=true'`. Unquoted, the parser splits it into `-Dmaven` and `.test.failure.ignore=true`, and Maven fails with "Unknown lifecycle phase". `-Dtest=…` and `-DskipTests` have no dot and are safe either way.
+
 JDK 24 is the bundles' highest BREE and the resolution EE the target platform is pinned to; anything older fails to resolve Eclipse 4.36. The wrapper downloads Maven itself; no local Maven install is needed.
 
 **Do not use `-pl` to build a single module.** Tycho derives the reactor from the OSGi manifests, not from Maven dependencies, so `-pl <module> -am` does not pull in the bundles that module requires and fails with "Missing requirement". Build the whole reactor and narrow with `-Dtest=` instead.

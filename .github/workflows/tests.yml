@@ -38,8 +38,14 @@ jobs:
       # so the comment reports every test bundle instead of stopping at the
       # first one. The job is failed further down by "Fail on test failures".
       # -DskipTests is deliberately not used: verify is what runs the OSGi tests.
+      #
+      # The quotes are load-bearing. The default shell here is pwsh, which
+      # parses a bare -Dmaven.test.failure.ignore=true as the parameter -Dmaven
+      # followed by the argument .test.failure.ignore=true and hands Maven two
+      # tokens, failing with "Unknown lifecycle phase". Quote any -D that
+      # contains a dot.
       - name: Run all tests
-        run: ./mvnw --batch-mode --no-transfer-progress clean verify -Dmaven.test.failure.ignore=true
+        run: ./mvnw --batch-mode --no-transfer-progress clean verify '-Dmaven.test.failure.ignore=true'
 
       # always(): a compile or resolution error fails the step above, and the
       # report ("no test reports found") is exactly what the PR should show then.
