@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletionException;
@@ -36,6 +37,9 @@ import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ValueRenameE
 @Component
 public class InstanzServiceImpl implements IInstanzService {
 
+	/** every instanz is stored as {@code instanz/<key>.json} */
+	private static final String PATH = "instanz/";
+
 	@Reference
 	IKeyService _keyService;
 
@@ -56,7 +60,7 @@ public class InstanzServiceImpl implements IInstanzService {
 	@Override
 	public IInstanz getRoot() {
 		String rootID = String.valueOf(KeyServiceImpl.KEYCHARS[0]);
-		String path = "instanz/" + rootID;
+		String path = PATH + rootID;
 
 		if (_cache.containsKey(rootID)) {
 			return _cache.get(rootID);
@@ -86,7 +90,7 @@ public class InstanzServiceImpl implements IInstanzService {
 			return Optional.of(_cache.get(key));
 		}
 
-		String path = "instanz/" + key;
+		String path = PATH + key;
 		Instanz instanz = _loadService.loadFromGson(path, Instanz.class);
 
 		if (instanz != null) {
@@ -182,7 +186,8 @@ public class InstanzServiceImpl implements IInstanzService {
 		CompletionException ex = new CompletionException(null);
 		for (String key : instanzKeysToDelete) {
 			try {
-				_deleteService.deleteFile(key);
+				// the delete service works on files, the delta bookkeeping only knows keys
+				_deleteService.deleteFile(PATH + key + ".json");
 			} catch (IOException e) {
 				ex.addSuppressed(e);
 			}
@@ -243,11 +248,17 @@ public class InstanzServiceImpl implements IInstanzService {
 	public boolean changeParent(String childKey, String parentKey, IEventBrokerBridge.Type eventType) {
 		Optional<IInstanz> child = resolveKey(childKey);
 		Optional<IInstanz> parent = resolveKey(parentKey);
-		if (child.isEmpty() || parent.isEmpty() || child.get().getParentKey().equals(parentKey)) {
+		if (child.isEmpty() || parent.isEmpty()) {
 			return false;
 		}
 
-		var data = new ParentChange(childKey, parentKey, child.get().getParentKey());
+		// a freshly created instanz has no parent yet, that is a change as well
+		String oldParentKey = child.get().getParentKey();
+		if (Objects.equals(oldParentKey, parentKey)) {
+			return false;
+		}
+
+		var data = new ParentChange(childKey, parentKey, oldParentKey);
 		child.get().setParentKey(parentKey);
 		fireEvent(eventType, InstanzEventConstants.PARENT_CHANGE, data);
 		return true;

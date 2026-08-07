@@ -258,6 +258,18 @@ public class InstanzServiceImplUnitTest {
 		assertThat(orphan.getParentKey(), is("parent"));
 	}
 
+	/** The listeners have to see that there was no old parent to detach from. */
+	@Test
+	void testChangeParent_firstParentIsReportedWithoutAnOldOne() {
+		givenOnDisk("orphan", new Instanz("orphan"));
+		givenOnDisk("parent", _parent);
+
+		_service.changeParent("orphan", "parent", Type.SEND);
+
+		verify(_broker).send(InstanzEventConstants.PARENT_CHANGE,
+				Map.of(IEventBroker.DATA, new ParentChange("orphan", "parent", null)));
+	}
+
 	@Test
 	void testChangeParent_unresolvableKeysAreRejected() {
 		givenOnDisk("child", null);
