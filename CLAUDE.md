@@ -23,6 +23,8 @@ Tonsias is an **Eclipse RCP / e4 desktop application** developed as an **Eclipse
 ./mvnw clean verify -DskipTests                        # compile only
 ```
 
+In PowerShell, **quote any `-D` that contains a dot**: `'-Dmaven.test.failure.ignore=true'`. Unquoted, the parser splits it into `-Dmaven` and `.test.failure.ignore=true`, and Maven fails with "Unknown lifecycle phase". `-Dtest=…` and `-DskipTests` have no dot and are safe either way.
+
 JDK 24 is the bundles' highest BREE and the resolution EE the target platform is pinned to; anything older fails to resolve Eclipse 4.36. The wrapper downloads Maven itself; no local Maven install is needed.
 
 **Do not use `-pl` to build a single module.** Tycho derives the reactor from the OSGi manifests, not from Maven dependencies, so `-pl <module> -am` does not pull in the bundles that module requires and fails with "Missing requirement". Build the whole reactor and narrow with `-Dtest=` instead.
@@ -39,7 +41,11 @@ JDK 24 is the bundles' highest BREE and the resolution EE the target platform is
 
 Only `win32/win32/x86_64` is built; add `<environment>`s to `target-platform-configuration` in the parent pom to cross-build others.
 
-`.github/workflows/build.yml` runs the same `./mvnw clean verify` on `windows-latest` for every push and PR to `main` and uploads product and p2 repository as workflow artifacts. It must stay on a Windows runner as long as the target platform declares only the win32 environment.
+`.github/workflows/build.yml` is the only workflow: it runs the same `./mvnw clean verify` on `windows-latest` for every push and PR to `main`, and it must stay on a Windows runner as long as the target platform declares only the win32 environment. Three things about it are deliberate:
+
+- It builds with **`-Dmaven.test.failure.ignore=true`**, so one failing bundle does not hide the results of the bundles behind it in the reactor. That only moves _when_ a failure is reported, not _whether_ — the last step fails the job from the parsed totals.
+- `.github/scripts/Summarize-TestResults.ps1` folds all `target/surefire-reports/TEST-*.xml` into a markdown table, posted on a PR as a **single, edited-in-place comment** (found again by the `<!-- tonsias-test-report -->` marker) and written to the job summary. It is assembled from the surefire XML, so a new test bundle shows up by itself — as long as its reports land under `<bundle>/target/surefire-reports`. Run it locally after `.\build.ps1` for the same report.
+- Product and p2 repository are uploaded as artifacts **only from a fully green run**. `maven.test.failure.ignore` makes Maven exit 0 on a failing test, so `if: success()` alone is no longer enough and the upload steps check the report's `failed` output as well.
 
 ## Working in this repo
 
