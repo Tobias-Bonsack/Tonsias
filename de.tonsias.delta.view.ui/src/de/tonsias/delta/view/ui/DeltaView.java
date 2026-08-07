@@ -1,6 +1,5 @@
 package de.tonsias.delta.view.ui;
 
-import org.eclipse.e4.core.services.nls.Translation;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -13,17 +12,12 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Tree;
 
 import de.tonsias.basis.osgi.intf.IDeltaService;
-import de.tonsias.delta.view.ui.i18n.Messages;
 import de.tonsias.delta.view.ui.tree.EventTreeContentProvider;
 import de.tonsias.delta.view.ui.tree.EventTreeNodeWrapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 
 public class DeltaView {
-
-	@Inject
-	@Translation
-	Messages _messages;
 
 	@Inject
 	IDeltaService _deltaService;

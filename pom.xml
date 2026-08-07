@@ -28,7 +28,6 @@
 		<module>de.tonsias.basis.ui</module>
 
 		<module>de.tonsias.delta.view.logic</module>
-		<module>de.tonsias.delta.view.ui.i18n</module>
 		<module>de.tonsias.delta.view.ui</module>
 
 		<module>de.tonsias.basis.model.test</module>

@@ -17,7 +17,6 @@ Require-Bundle: org.eclipse.e4.ui.model.workbench;bundle-version="2.4.200.v20240
  jakarta.inject.jakarta.inject-api,
  jakarta.annotation-api,
  de.tonsias.basis.osgi,
- de.tonsias.delta.view.ui.i18n;bundle-version="0.2.0",
  org.osgi.service.event;bundle-version="1.4.1",
  de.tonsias.delta.view.logic;bundle-version="0.2.0",
  de.tonsias.basis.icon;bundle-version="0.2.0"
