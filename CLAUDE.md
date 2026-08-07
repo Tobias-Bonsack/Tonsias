@@ -61,7 +61,7 @@ Note that the branch `feat-2-variable_path` (issue #2) moves the interface packa
 ### Model
 `IInstanz` is the single tree node type: it has an own key, a parent key, a set of child keys, and per-`SingleValueType` `BiMap<valueKey, name>` maps of attributes. Attributes themselves are `ISingleValue` objects (`SingleStringValue`, `SingleIntegerValue`) living in their own files. **Everything is referenced by string key, never by object reference** — services resolve keys through a cache and fall back to loading from disk.
 
-`IKeyService` generates keys as a base-62 counter (`KeyServiceImpl.KEYCHARS`, incrementing least-significant char first), persisted in Eclipse instance preferences. Key `"0"` is by convention the root instanz.
+`IKeyService` generates keys as a base-36 counter (`KeyServiceImpl.KEYCHARS`, incrementing least-significant char first), persisted in Eclipse instance preferences. Key `"0"` is by convention the root instanz. The alphabet is **lower case only and must stay sorted ascending**.
 
 ### Persistence
 JSON via Gson, one file per object, written under `Platform.getInstanceLocation()`. The path is derived from the object itself: `ISavePathOwner.getPath()` + `getOwnKey()` + `.json` (e.g. `instanz/<key>.json`, `single_value/string/<key>.json`). Services cache loaded objects in a `Map<String, …>` and only touch disk on miss or save.
