@@ -107,7 +107,7 @@ The build produces, under `de.tonsias.basis.product/target`:
 | ------------------------------------------------- | -------------------------------- |
 | `products/tonsias/win32/win32/x86_64/Tonsias.exe` | the launcher — run this          |
 | `products/tonsias-win32.win32.x86_64.zip`         | the distributable                |
-| `de.tonsias.basis.product-0.1.0.zip`              | the p2 repository                |
+| `de.tonsias.basis.product-<version>.zip`          | the p2 repository                |
 
 Only `win32/win32/x86_64` is built; add `<environment>`s to
 `target-platform-configuration` in the parent `pom.xml` for other platforms.

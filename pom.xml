@@ -6,7 +6,7 @@
 
 	<groupId>de.tonsias</groupId>
 	<artifactId>de.tonsias.parent</artifactId>
-	<version>0.1.0</version>
+	<version>0.2.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Tonsias</name>
@@ -60,7 +60,7 @@
 						<artifact>
 							<groupId>de.tonsias</groupId>
 							<artifactId>target-platform</artifactId>
-							<version>0.1.0</version>
+							<version>0.2.0-SNAPSHOT</version>
 						</artifact>
 					</target>
 					<!--

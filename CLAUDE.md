@@ -149,7 +149,7 @@ Step 6 places tests in the test bundle matching the layer under test. All run in
 
 ## Releasing
 
-The current release is **0.1.0** (the first one); `CHANGELOG.md` is the per-release record and `README.md` the user-facing overview. Versions live in 37 files — every `pom.xml`, `MANIFEST.MF`, `feature.xml` and the `.product` — so never edit them by hand. Bump them with Tycho, which also rewrites the `bundle-version` lower bounds in the `Require-Bundle` of every other reactor bundle:
+The latest release is **0.1.0** (the first one) and the reactor is on **0.2.0-SNAPSHOT** behind it; `CHANGELOG.md` is the per-release record and `README.md` the user-facing overview. Versions live in 37 files — every `pom.xml`, `MANIFEST.MF`, `feature.xml` and the `.product` — so never edit them by hand. Bump them with Tycho, which also rewrites the `bundle-version` lower bounds in the `Require-Bundle` of every other reactor bundle:
 
 ```powershell
 $env:JAVA_HOME = '<jdk24>'
