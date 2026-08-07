@@ -21,6 +21,8 @@ public class MessagesUtil {
 			return messages.constant_type_string;
 		case SINGLE_INTEGER:
 			return messages.constant_type_integer;
+		case SINGLE_BOOLEAN:
+			return messages.constant_type_boolean;
 		default:
 			return type.name();
 		}

@@ -30,6 +30,7 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.osgi.service.event.Event;
 
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.impl.value.SingleBooleanValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
@@ -46,6 +47,7 @@ import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent
 import de.tonsias.basis.osgi.util.OsgiUtil;
 import de.tonsias.basis.osgi.intf.non.service.PreferenceEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
+import de.tonsias.basis.ui.dialog.BooleanValueDialog;
 import de.tonsias.basis.ui.dialog.IntegerValueDialog;
 import de.tonsias.basis.ui.dialog.StringValueDialog;
 import de.tonsias.basis.ui.handler.CreateInstanzOperation;
@@ -257,6 +259,31 @@ public class ModelView {
 				int open = dialog.open();
 				if (open == Window.OK) {
 					SingleIntegerValue singleValue = dialog.getSingleValue();
+					new TreeNodeWrapper(singleValue, parent);
+					_treeViewer.refresh(parent);
+				}
+
+			}
+		});
+
+		MenuItem createBooleanValueItem = new MenuItem(singleValueMenu, SWT.None);
+		createBooleanValueItem.setText(_messages.constant_type_boolean);
+
+		createBooleanValueItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				TreeItem[] selection = tree.getSelection();
+				if (selection.length != 1) {
+					return;
+				}
+
+				TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
+				IInstanz parentObject = (IInstanz) parent.getObject();
+
+				BooleanValueDialog dialog = new BooleanValueDialog(new Shell(), parentObject, _messages);
+				int open = dialog.open();
+				if (open == Window.OK) {
+					SingleBooleanValue singleValue = dialog.getSingleValue();
 					new TreeNodeWrapper(singleValue, parent);
 					_treeViewer.refresh(parent);
 				}

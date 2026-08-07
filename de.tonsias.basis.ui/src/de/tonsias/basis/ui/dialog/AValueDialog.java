@@ -30,7 +30,12 @@ import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.util.OsgiUtil;
 import de.tonsias.basis.ui.i18n.Messages;
 
-public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
+/**
+ * @param <T> the edited value
+ * @param <C> the SWT widget this value is entered with - the subclass names it,
+ *            so it works on its own widget without casting
+ */
+public abstract class AValueDialog<T extends ISingleValue<?>, C extends Control> extends Dialog {
 
 	IKeyService _keyService = OsgiUtil.getService(IKeyService.class);
 
@@ -44,7 +49,7 @@ public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 
 	Text _nameText;
 
-	Text _valueText;
+	C _valueControl;
 
 	SingleValueType _type;
 
@@ -147,12 +152,14 @@ public abstract class AValueDialog<T extends ISingleValue<?>> extends Dialog {
 		GridDataFactory.fillDefaults().applyTo(valueLabel);
 
 		String valueString = _value.map(v -> v.getValue().toString()).orElse("");
-		_valueText = getValueText(composite, valueString);
+		_valueControl = createValueControl(composite, valueString);
 	}
 
-	protected Text getValueText(Composite composite, String valueString) {
-		return TextFactory.newText(SWT.None).text(valueString).layoutData(GridDataFactory.fillDefaults().grab(true, false).create()).enabled(true).create(composite);
-	}
+	/**
+	 * Creates the widget the value is entered with. The subclass decides its type
+	 * and prefills it from {@code valueString}, which is empty for a new value.
+	 */
+	protected abstract C createValueControl(Composite composite, String valueString);
 
 	public T getSingleValue() {
 		return _value.get();
