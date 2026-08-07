@@ -11,7 +11,7 @@
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>de.tonsias.delta.view.ui.i18n</artifactId>
+	<artifactId>de.tonsias.basis.ui.test</artifactId>
 	<version>0.2.0-SNAPSHOT</version>
-	<packaging>eclipse-plugin</packaging>
+	<packaging>eclipse-test-plugin</packaging>
 </project>

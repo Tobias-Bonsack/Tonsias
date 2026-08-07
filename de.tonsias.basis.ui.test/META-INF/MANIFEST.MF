@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Test
+Bundle-SymbolicName: de.tonsias.basis.ui.test
+Bundle-Version: 0.2.0.qualifier
+Require-Bundle: de.tonsias.basis.ui;bundle-version="0.2.0",
+ de.tonsias.basis.ui.i18n;bundle-version="0.2.0",
+ de.tonsias.basis.model;bundle-version="0.2.0",
+ de.tonsias.basis.osgi;bundle-version="0.2.0",
+ org.hamcrest;bundle-version="2.2.0",
+ junit-jupiter-api;bundle-version="5.11.1",
+ junit-jupiter-engine;bundle-version="5.11.1",
+ junit-jupiter-params;bundle-version="5.11.1"
+Import-Package: org.osgi.framework
+Automatic-Module-Name: de.tonsias.basis.ui.test
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-24

@@ -68,7 +68,7 @@ basis.logic          headless view logic (Eclipse Jobs), no SWT
 basis.ui             e4 parts, handlers, dialogs, providers  ── Application.e4xmi lives here
 basis.ui.i18n        Messages class + OSGI-INF/l10n bundles
 basis.icon           IconUtil + res/*.png
-delta.view.*         the Delta view feature: logic / ui (fragment.e4xmi) / ui.i18n / ui.test
+delta.view.*         the Delta view feature: logic / ui (fragment.e4xmi) / ui.test
 ```
 
 `de.tonsias.basis.osgi` carries both contract and implementation, and the split is enforced by its `Export-Package`:
@@ -123,6 +123,10 @@ Two levels, don't mix them up:
 - **e4 model labels** (`%part.modelview` in the `.e4xmi`) resolve against `OSGI-INF/l10n/bundle.properties` / `bundle_de.properties` in the bundle that owns the model file.
 - **Java strings** use `@Inject @Translation Messages _messages` — `Messages` is a plain class of public `String` fields whose names must match keys in its bundle's `OSGI-INF/l10n` properties. Adding a string means adding a field _and_ the key in every locale file.
 
+`de.tonsias.basis.ui.i18n` is the only `Messages` bundle; the Delta view has no Java strings of its own and gets its labels purely from the model level. Both levels are guarded by tests, so a forgotten locale fails the build rather than showing up as a raw key at runtime: `TranslationCoverageTest` (in `de.tonsias.basis.ui.test`) matches the `Messages` fields against both locale files and the `%keys` of `Application.e4xmi` against `de.tonsias.basis.ui`'s, `FragmentTranslationCoverageTest` does the same for `fragment.e4xmi`. Keep the German files in `\uXXXX` escapes — they are read as ISO-8859-1 by `Properties.load`.
+
+Not everything that reads like text is UI text: `Job`/`JobGroup` names in `*.logic` and in the handlers are diagnostic labels. The window has no trim bar and therefore no progress reporting, so they are never displayed and deliberately stay untranslated. `IObject.toString()` (the tree labels of both views) and the preference *node* paths in the preferences dialog are identifiers, not labels — the preference *keys* next to the fields are translated through `MessagesUtil.getPreferenceLabel`, which also maps `SingleValueType` onto its label so the enum name never reaches the screen.
+
 ## Conventions
 
 - Fields are prefixed with `_` (`_instanzService`, `_key`); record components too (`_parentKey`). Static constants are `UPPER_SNAKE`.
@@ -143,7 +147,7 @@ Every feature follows this sequence end to end:
 
 Never commit directly to `main`.
 
-Step 5 is `.\build.ps1` (or `./mvnw clean verify`). The suite is **green on `main`** — 282 tests across the five test bundles, all passing — so any failure is yours. Never "fix" one by weakening an assertion; if a test looks wrong, check it against the production code first (several once verified `post(..)` where the code had moved to `send(..)`).
+Step 5 is `.\build.ps1` (or `./mvnw clean verify`). The suite is **green on `main`** — 303 tests across the six test bundles, all passing — so any failure is yours. Never "fix" one by weakening an assertion; if a test looks wrong, check it against the production code first (several once verified `post(..)` where the code had moved to `send(..)`).
 
 Step 6 places tests in the test bundle matching the layer under test. All run inside OSGi; prefer `OsgiUtil.getService(...)`, which only resolves under a running e4 context, over `@InjectMocks` direct construction. A new bundle's internals need `x-friends` on its `Export-Package` before its test bundle can see them.
 

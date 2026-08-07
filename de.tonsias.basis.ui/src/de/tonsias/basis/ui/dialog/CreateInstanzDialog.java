@@ -34,6 +34,8 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.util.OsgiUtil;
+import de.tonsias.basis.ui.i18n.Messages;
+import de.tonsias.basis.ui.util.MessagesUtil;
 
 public class CreateInstanzDialog extends Dialog {
 
@@ -42,15 +44,18 @@ public class CreateInstanzDialog extends Dialog {
 
 	private TableViewer _viewer;
 
-	public CreateInstanzDialog(Shell parentShell, IInstanz iParent) {
+	private final Messages _messages;
+
+	public CreateInstanzDialog(Shell parentShell, IInstanz iParent, Messages messages) {
 		super(parentShell);
+		_messages = messages;
 		_logic.setInstanzParent(iParent);
 	}
 
 	@Override
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
-		newShell.setText("Create new Instanz");
+		newShell.setText(_messages.dialog_createInstanz_title);
 	}
 
 	@Override
@@ -78,8 +83,8 @@ public class CreateInstanzDialog extends Dialog {
 	private void createTableButtons(Composite parent) {
 		var buttonParent = CompositeFactory.newComposite(SWT.None)
 				.layout(GridLayoutFactory.fillDefaults().numColumns(2).create()).create(parent);
-		ButtonFactory.newButton(SWT.PUSH).text("ADD").onSelect(this::addNewEntry).create(buttonParent);
-		ButtonFactory.newButton(SWT.PUSH).text("REMOVE").onSelect(this::removeSelectedEntry)
+		ButtonFactory.newButton(SWT.PUSH).text(_messages.constant_add).onSelect(this::addNewEntry).create(buttonParent);
+		ButtonFactory.newButton(SWT.PUSH).text(_messages.constant_remove).onSelect(this::removeSelectedEntry)
 				.layoutData(GridDataFactory.swtDefaults().create()).create(buttonParent);
 	}
 
@@ -100,7 +105,8 @@ public class CreateInstanzDialog extends Dialog {
 		_viewer.getTable().setHeaderVisible(true);
 		_viewer.getTable().setLinesVisible(true);
 
-		createColumn("Single Value Type", 200, tRec -> tRec.type.getClazz().getSimpleName(), //
+		createColumn(_messages.constant_singleValue, 200,
+				tRec -> MessagesUtil.getSingleValueTypeLabel(_messages, tRec.type), //
 				getEditingSupport(//
 						(element, value) -> {
 							element.type = SingleValueType.values()[(int) value];
@@ -109,14 +115,14 @@ public class CreateInstanzDialog extends Dialog {
 						element -> Arrays.asList(SingleValueType.values()).indexOf(element.type), //
 						element -> {
 							String[] array = Arrays.stream(SingleValueType.values())
-									.map(i -> i.getClazz().getSimpleName()).collect(Collectors.toList())
-									.toArray(String[]::new);
+									.map(i -> MessagesUtil.getSingleValueTypeLabel(_messages, i))
+									.collect(Collectors.toList()).toArray(String[]::new);
 							var editor = new ComboBoxCellEditor(_viewer.getTable(), array);
 
 							return editor;
 						}));
 
-		createColumn("Parameter Name", 200, tRec -> tRec.parameterName, //
+		createColumn(_messages.constant_parameterName, 200, tRec -> tRec.parameterName, //
 				getEditingSupport(//
 						(element, value) -> {
 							element.parameterName = (String) value;
@@ -125,7 +131,7 @@ public class CreateInstanzDialog extends Dialog {
 						element -> element.parameterName, //
 						element -> new TextCellEditor(_viewer.getTable())));
 
-		createColumn("Value", 200, tRec -> tRec.value.toString(), //
+		createColumn(_messages.constant_value, 200, tRec -> tRec.value.toString(), //
 				getEditingSupport(//
 						(element, value) -> {
 							element.value = value;

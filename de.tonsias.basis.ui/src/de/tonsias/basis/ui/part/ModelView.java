@@ -198,7 +198,7 @@ public class ModelView {
 					TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
 					IInstanz parentObject = (IInstanz) parent.getObject();
 					CreateInstanzOperation newInstanzOperation = new CreateInstanzOperation(parentObject);
-					newInstanzOperation.execute(_broker.getEclipseBroker(), _instanzService);
+					newInstanzOperation.execute(_broker.getEclipseBroker(), _instanzService, _messages);
 					IInstanz createdInstanz = newInstanzOperation.get_createdInstanz();
 					new TreeNodeWrapper(createdInstanz, parent);
 					_treeViewer.refresh(parent);
@@ -216,7 +216,7 @@ public class ModelView {
 		parentItem.setMenu(singleValueMenu);
 
 		MenuItem createStringSingleValueItem = new MenuItem(singleValueMenu, SWT.None);
-		createStringSingleValueItem.setText(_messages.mi_string);
+		createStringSingleValueItem.setText(_messages.constant_type_string);
 
 		createStringSingleValueItem.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -240,7 +240,7 @@ public class ModelView {
 		});
 
 		MenuItem createStringIntegerValueItem = new MenuItem(singleValueMenu, SWT.None);
-		createStringIntegerValueItem.setText(_messages.mi_integer);
+		createStringIntegerValueItem.setText(_messages.constant_type_integer);
 
 		createStringIntegerValueItem.addSelectionListener(new SelectionAdapter() {
 			@Override
