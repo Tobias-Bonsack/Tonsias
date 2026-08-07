@@ -5,7 +5,7 @@
       <children xsi:type="basic:PartStack" xmi:id="_8i4fEPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.partstack.0">
         <children xsi:type="basic:Part" xmi:id="_WOG8kPnAEe65ha37BC3mPQ" elementId="de.tonsias.basis.ui.part.test" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.part.ModelView" label="%part.modelview">
           <toolbar xmi:id="_lPzQQC5cEe-DY8FvUxmb2A" elementId="de.tonsias.basis.ui.toolbar.0">
-            <children xsi:type="menu:DirectToolItem" xmi:id="_mspBsC5cEe-DY8FvUxmb2A" elementId="de.tonsias.basis.ui.directtoolitem.newinstanz" label="New Instanz" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.CreateInstanzOperation"/>
+            <children xsi:type="menu:DirectToolItem" xmi:id="_mspBsC5cEe-DY8FvUxmb2A" elementId="de.tonsias.basis.ui.directtoolitem.newinstanz" label="%toolitem.newinstanz.label" tooltip="%toolitem.newinstanz.tooltip" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.CreateInstanzOperation"/>
           </toolbar>
         </children>
       </children>
@@ -14,7 +14,7 @@
         <children xsi:type="basic:PartStack" xmi:id="_1mDJADJZEe-dKNMEZRImXw" elementId="de.tonsias.basis.ui.partstack.2">
           <children xsi:type="basic:Part" xmi:id="_2DLJ4DJZEe-dKNMEZRImXw" elementId="de.tonsias.basis.ui.part.instanzansicht" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.part.InstanzView" label="%part.instanzview.label">
             <toolbar xmi:id="_3TV_kMDAEfCtcs60Dab6QA" elementId="de.tonsias.basis.ui.toolbar.1">
-              <children xsi:type="menu:DirectToolItem" xmi:id="_4lN3IMDAEfCtcs60Dab6QA" elementId="de.tonsias.basis.ui.directtoolitem.0" iconURI="platform:/plugin/de.tonsias.basis.icon/res/file_save_16.png" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.InstanzViewSafeActionHandler"/>
+              <children xsi:type="menu:DirectToolItem" xmi:id="_4lN3IMDAEfCtcs60Dab6QA" elementId="de.tonsias.basis.ui.directtoolitem.0" tooltip="%toolitem.save.tooltip" iconURI="platform:/plugin/de.tonsias.basis.icon/res/file_save_16.png" contributionURI="bundleclass://de.tonsias.basis.ui/de.tonsias.basis.ui.handler.InstanzViewSafeActionHandler"/>
             </toolbar>
           </children>
         </children>

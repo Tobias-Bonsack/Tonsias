@@ -34,6 +34,8 @@ import org.eclipse.swt.widgets.Text;
 
 import de.tonsias.basis.logic.dialog.PreferencesDialogLogic;
 import de.tonsias.basis.logic.dialog.PreferencesDialogLogic.PreferenceFeature;
+import de.tonsias.basis.ui.i18n.Messages;
+import de.tonsias.basis.ui.util.MessagesUtil;
 
 public class PreferencesDialog extends Dialog {
 
@@ -45,8 +47,11 @@ public class PreferencesDialog extends Dialog {
 
 	private Map<String, Text> _texts = new HashMap<>();
 
-	public PreferencesDialog(Shell parentShell) {
+	private final Messages _messages;
+
+	public PreferencesDialog(Shell parentShell, Messages messages) {
 		super(parentShell);
+		_messages = messages;
 	}
 	
 	@Override
@@ -77,7 +82,7 @@ public class PreferencesDialog extends Dialog {
 
 	@Override
 	protected void createButtonsForButtonBar(Composite parent) {
-		Button saveButton = createButton(parent, SAVE_ID, "Speichern", false);
+		Button saveButton = createButton(parent, SAVE_ID, _messages.constant_save, false);
 		saveButton.setEnabled(false);
 
 		createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL, true);
@@ -106,7 +111,7 @@ public class PreferencesDialog extends Dialog {
 		Consumer<String> refreshMethod = s -> this.refreshRightSide(s);
 		Supplier<Boolean> checkForSave = this::checkForSave;
 
-		Group parent = GroupFactory.newGroup(SWT.None).text("Basic").create(composite);
+		Group parent = GroupFactory.newGroup(SWT.None).text(_messages.dialog_preferences_group).create(composite);
 		GridDataFactory.fillDefaults().grab(false, true).applyTo(parent);
 		GridLayoutFactory.fillDefaults().applyTo(parent);
 
@@ -127,8 +132,8 @@ public class PreferencesDialog extends Dialog {
 	}
 
 	private Boolean checkForSave() {
-		if (getButton(SAVE_ID).isEnabled() && MessageDialog.openQuestion(getParentShell(), "Wirklich?",
-				"Sollen die Änderungen gespeichert werden?")) {
+		if (getButton(SAVE_ID).isEnabled() && MessageDialog.openQuestion(getParentShell(),
+				_messages.dialog_preferences_saveTitle, _messages.dialog_preferences_saveText)) {
 			saveCurrentPref(SAVE_ID);
 			return true;
 		}
@@ -142,7 +147,8 @@ public class PreferencesDialog extends Dialog {
 		Collection<PreferenceFeature> preferences = _logic.getPreferences(name);
 
 		for (var pair : preferences) {
-			LabelFactory.newLabel(SWT.None).data(GridDataFactory.fillDefaults().create()).text(pair.name())
+			String label = MessagesUtil.getPreferenceLabel(_messages, pair.name());
+			LabelFactory.newLabel(SWT.None).data(GridDataFactory.fillDefaults().create()).text(label)
 					.create(_preferenceParent);
 			Text text = TextFactory.newText(SWT.None)//
 					.text(pair.value())//
@@ -155,7 +161,9 @@ public class PreferencesDialog extends Dialog {
 			if(!pair.editable()) {
 				text.addListener(SWT.MouseDown, event -> {
 					Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text.getText()), null);
-					NotificationPopup.forDisplay(Display.getCurrent()).delay(2_000).title("Copy Parameter", true).text(String.format("%s: \n%s",pair.name(), pair.value())).build().open();
+					NotificationPopup.forDisplay(Display.getCurrent()).delay(2_000)
+							.title(_messages.dialog_preferences_copied, true)
+							.text(String.format("%s: \n%s", label, pair.value())).build().open();
 				});
 			}
 			

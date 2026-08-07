@@ -40,6 +40,7 @@ import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 import de.tonsias.basis.ui.i18n.Messages;
+import de.tonsias.basis.ui.util.MessagesUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 
@@ -166,7 +167,7 @@ public class InstanzView {
 		SingleValueType[] values = SingleValueType.values();
 		for (SingleValueType type : values) {
 			Group typeGroup = new Group(parent, SWT.None);
-			typeGroup.setText(type.name()); 
+			typeGroup.setText(MessagesUtil.getSingleValueTypeLabel(_messages, type));
 			GridDataFactory.fillDefaults().grab(true, false).applyTo(typeGroup);
 			GridLayoutFactory.fillDefaults().numColumns(3).applyTo(typeGroup);
 
