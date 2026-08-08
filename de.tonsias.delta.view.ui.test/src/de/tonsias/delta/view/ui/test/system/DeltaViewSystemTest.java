@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.sameInstance;
 
 import org.eclipse.e4.core.contexts.ContextInjectionFactory;
 import org.eclipse.e4.core.contexts.EclipseContextFactory;
@@ -44,18 +45,13 @@ import de.tonsias.delta.view.ui.tree.EventTreeNodeWrapper;
  * as the model changes underneath it.
  * </p>
  * <p>
- * <b>One thing this exposed and now pins down:</b>
- * {@code DeltaServiceContextFunction} builds a <em>new</em>
- * {@code DeltaServiceImpl} on every compute, and an e4 context caches a
- * function's result per asking context. A part context is its own asking
- * context, so the view does not render the instance
- * {@code OsgiUtil.getService(IDeltaService.class)} hands out - it renders one of
- * its own. The two stay in step only because both subscribe to the same topics
- * and both clear on {@code SAVE_ALL}. The tests below therefore open the view
- * first and change the model afterwards, which is also the order the product
- * runs in. See
- * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/52">#52</a>; once
- * that is fixed the view can be opened on an already filled log again.
+ * What is injected is the one registered {@link IDeltaService}, whichever
+ * context asks - so the view renders the same log the save handler writes out,
+ * whether it was opened before or after the changes. That the context function
+ * shares its instance rather than building one per part is
+ * {@code ContextFunctionSystemTest}; here it is taken as given and the view is
+ * opened both ways round. See
+ * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/52">#52</a>.
  * </p>
  */
 public class DeltaViewSystemTest {
@@ -168,6 +164,21 @@ public class DeltaViewSystemTest {
 		openView();
 
 		assertThat(treeOf().getItemCount(), is(0));
+	}
+
+	/**
+	 * The injected service is the registered one, not a copy the part context
+	 * computed for itself - a view opened after the fact is therefore already
+	 * showing what happened before it.
+	 */
+	@Test
+	void testPostConstruct_opensOnAnAlreadyFilledLogShowingItsRows() {
+		oneChange();
+
+		openView();
+
+		assertThat(shownLog(), is(sameInstance(ProductRuntime.deltaService())));
+		assertThat(treeOf().getItemCount(), is(2));
 	}
 
 	/**
