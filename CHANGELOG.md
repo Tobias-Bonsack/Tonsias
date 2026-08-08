@@ -34,6 +34,17 @@ Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
 - Mockito, from every bundle manifest and from the target platform. Nothing uses a
   mocking framework any more.
 
+### Fixed — nothing yet, but found
+
+The rewrite surfaced two defects, filed rather than silently patched: the e4 context
+functions build a new service instance on every `compute(..)`, so the Delta view can
+render a different delta log than the save path uses ([#52]), and `saveDeltas()` does
+not reset its log when a delete fails, after which every following save repeats the
+same failure ([#53]).
+
+[#52]: https://github.com/Tobias-Bonsack/Tonsias/issues/52
+[#53]: https://github.com/Tobias-Bonsack/Tonsias/issues/53
+
 ## [0.1.0] - 2026-08-07
 
 The first release. It is the point at which the model, the persistence, the event chain

@@ -53,7 +53,9 @@ import de.tonsias.delta.view.ui.tree.EventTreeNodeWrapper;
  * its own. The two stay in step only because both subscribe to the same topics
  * and both clear on {@code SAVE_ALL}. The tests below therefore open the view
  * first and change the model afterwards, which is also the order the product
- * runs in.
+ * runs in. See
+ * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/52">#52</a>; once
+ * that is fixed the view can be opened on an already filled log again.
  * </p>
  */
 public class DeltaViewSystemTest {

@@ -114,7 +114,9 @@ public final class ProductRuntime {
 			// A delete of something that was never written makes saveDeltas() give up
 			// before it resets its log - a test that fabricates a delete event lands
 			// here. Left alone, the same failure would repeat on every save that
-			// follows, so the log is put back into its start state by hand.
+			// follows, so the log is put back into its start state by hand. The
+			// application itself has no such rescue, see
+			// https://github.com/Tobias-Bonsack/Tonsias/issues/53
 			Collection<Event> deltas = deltaService().getDeltas();
 			deltas.clear();
 			deltas.add(IDeltaService.START_EVENT);
