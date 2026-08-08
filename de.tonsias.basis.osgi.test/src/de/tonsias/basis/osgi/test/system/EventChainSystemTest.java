@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleBooleanValue;
+import de.tonsias.basis.model.impl.value.SingleFloatValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
@@ -546,6 +547,30 @@ public class EventChainSystemTest {
 		assertThat(owner.getSingleValues(SingleValueType.SINGLE_BOOLEAN).get(value.getOwnKey()), is("flag"));
 		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).keySet(), is(empty()));
 		assertThat(owner.getSingleValues(SingleValueType.SINGLE_INTEGER).keySet(), is(empty()));
+	}
+
+	/**
+	 * The same for the fourth type. Its value comes from the dialog as text, so
+	 * this is also where the chain is checked with a string that has to be parsed
+	 * on the way in.
+	 */
+	@Test
+	void testCreateSingleValue_float_usesItsOwnTypeThroughoutTheChain() {
+		IInstanz owner = _inse.createInstanz(ROOT, Type.SEND);
+		_recorder.clear();
+
+		SingleFloatValue value = _svs.createNew(SingleFloatValue.class, owner.getOwnKey(), "ratio", "3.14", Type.SEND);
+
+		assertThat(value.getValue(), is(3.14f));
+		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
+				is(SingleValueType.SINGLE_FLOAT));
+		assertThat(_recorder.onlyDataOf(InstanzEventConstants.VALUE_LIST_CHANGE, LinkedValueChangeEvent.class)
+				._singleValuetype(), is(SingleValueType.SINGLE_FLOAT));
+
+		assertThat(owner.getSingleValues(SingleValueType.SINGLE_FLOAT).get(value.getOwnKey()), is("ratio"));
+		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).keySet(), is(empty()));
+		assertThat(owner.getSingleValues(SingleValueType.SINGLE_INTEGER).keySet(), is(empty()));
+		assertThat(owner.getSingleValues(SingleValueType.SINGLE_BOOLEAN).keySet(), is(empty()));
 	}
 
 	/**

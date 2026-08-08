@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleBooleanValue;
+import de.tonsias.basis.model.impl.value.SingleFloatValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
@@ -124,6 +125,40 @@ public class SingleValueServiceSystemTest {
 		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_BOOLEAN).get(created.getOwnKey()), is("flag"));
 		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
 				is(SingleValueType.SINGLE_BOOLEAN));
+	}
+
+	@Test
+	void testCreateNew_floatValueLandsInTheFloatMap() {
+		_recorder.clear();
+
+		// the dialog and InstanzView hand the value on as text
+		SingleFloatValue created = _svs.createNew(SingleFloatValue.class, _owner.getOwnKey(), "ratio", "3.14",
+				Type.SEND);
+
+		assertThat(created.getValue(), is(3.14f));
+		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_FLOAT).get(created.getOwnKey()), is("ratio"));
+		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_INTEGER).containsKey(created.getOwnKey()), is(false));
+		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
+				is(SingleValueType.SINGLE_FLOAT));
+	}
+
+	/**
+	 * The whole way out and back in: the value goes to its own folder and comes off
+	 * disk as the same number, through the type variable {@code ASingleValue}
+	 * declares its value with.
+	 */
+	@Test
+	void testSaveAll_aFloatValueSurvivesTheRoundTripThroughItsOwnFolder() {
+		SingleFloatValue created = _svs.createNew(SingleFloatValue.class, _owner.getOwnKey(), "ratio", "-0.5",
+				Type.SEND);
+
+		assertThat(_svs.saveAll(Set.of(created.getOwnKey())), is(true));
+
+		assertThat(ProductRuntime.valueFileExists(SingleValueType.SINGLE_FLOAT, created.getOwnKey()), is(true));
+		SingleFloatValue reloaded = ProductRuntime.reloadValue(SingleValueType.SINGLE_FLOAT, created.getOwnKey(),
+				SingleFloatValue.class);
+		assertThat(reloaded.getValue(), is(-0.5f));
+		assertThat(reloaded.getConnectedInstanzKeys(), contains(_owner.getOwnKey()));
 	}
 
 	@Test

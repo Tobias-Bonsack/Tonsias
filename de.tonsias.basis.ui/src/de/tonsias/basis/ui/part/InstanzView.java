@@ -189,7 +189,10 @@ public class InstanzView {
 	private void createSinlgeValueTexts(Group typeGroup, ISingleValue<?> singleValue) {
 		Control control = null;
 		switch (SingleValueType.getByClass(singleValue.getClass()).get()) {
+		// both numbers are entered in one line and travel on as text, which
+		// tryToSetValue parses - the only difference is what it accepts there
 		case SINGLE_INTEGER:
+		case SINGLE_FLOAT:
 			control = TextFactory.newText(SWT.None)//
 					.text(singleValue.getValue().toString())//
 					.onModify(event -> onSingleValueModify(singleValue, event))

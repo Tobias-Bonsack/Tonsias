@@ -20,6 +20,7 @@ class MessagesUtilTest {
 		messages.constant_type_string = "String";
 		messages.constant_type_integer = "Integer";
 		messages.constant_type_boolean = "Boolean";
+		messages.constant_type_float = "Float";
 		messages.pref_currentKey = "Current key";
 		messages.pref_modelViewText = "Model view text";
 		messages.pref_enableValues = "Enable values";
@@ -34,6 +35,7 @@ class MessagesUtilTest {
 		assertEquals("String", MessagesUtil.getSingleValueTypeLabel(messages, SingleValueType.SINGLE_STRING));
 		assertEquals("Integer", MessagesUtil.getSingleValueTypeLabel(messages, SingleValueType.SINGLE_INTEGER));
 		assertEquals("Boolean", MessagesUtil.getSingleValueTypeLabel(messages, SingleValueType.SINGLE_BOOLEAN));
+		assertEquals("Float", MessagesUtil.getSingleValueTypeLabel(messages, SingleValueType.SINGLE_FLOAT));
 	}
 
 	/**

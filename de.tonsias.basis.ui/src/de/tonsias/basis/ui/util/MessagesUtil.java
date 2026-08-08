@@ -23,6 +23,8 @@ public class MessagesUtil {
 			return messages.constant_type_integer;
 		case SINGLE_BOOLEAN:
 			return messages.constant_type_boolean;
+		case SINGLE_FLOAT:
+			return messages.constant_type_float;
 		default:
 			return type.name();
 		}
