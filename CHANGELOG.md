@@ -52,26 +52,56 @@ Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
   class without any constructor. It grew a parameter with every new value type, and
   whoever had used it would have bypassed the lazy map creation in `getSingleValues` and
   could have left a map at `null` ([#61]).
+- The second constructor of `AInstanz`, the one taking a key and a parent key. `Instanz`
+  is its only subclass and passes on the key alone, so nothing could reach it — and a
+  parent set there would have been set past `IInstanzService`, without the other side
+  being pulled along and without a delta. `createInstanz(parentKey, Type)` is the way
+  ([#65]).
 
 ### Fixed
 
+- The e4 context functions hand out one shared service instance instead of building a
+  new one on every `compute(..)`. An e4 context caches per *asking* context, so the
+  Delta view used to render a different delta log than the one the save path empties
+  ([#52]).
+- `saveDeltas()` empties its log whatever happens: the reset moved into a `finally`, a
+  failing step is collected as a suppressed exception rather than ending the save, and a
+  delete that finds no file counts as done. One bad delete used to wedge every save that
+  followed ([#53]).
+- `DeltaServiceImpl` no longer depends on the order in which its fields happen to be
+  injected. `DeltaServiceContextFunction` asks the context for `IEventBrokerBridge`
+  before it builds, so the services that need the bridge are activated by the time their
+  turn comes, whatever order `Class#getDeclaredFields()` returns ([#56]).
+- `CLAUDE.md` no longer claims that two `OSGI-INF` component descriptions are missing —
+  they are there, and were all along ([#57]).
 - The OK button of a value dialog is now set from the dialog's own validation the
   moment the dialog is built, not only from the first keystroke on. A dialog opened
   for a new integer or float value used to offer OK over its empty field — pressing it
   created a value whose input `tryToSetValue` then rejected, silently leaving it at `0`
   or `0.0`. The rule lives in `AValueDialog.isValueAcceptable()` now, so every dialog
   answers for its own type in one place ([#62]).
-
-The rewrite surfaced two defects, filed rather than silently patched: the e4 context
-functions build a new service instance on every `compute(..)`, so the Delta view can
-render a different delta log than the save path uses ([#52]), and `saveDeltas()` does
-not reset its log when a delete fails, after which every following save repeats the
-same failure ([#53]).
+- The name check and the value check of a value dialog no longer overwrite each other's
+  verdict at the OK button. Both are asked in `AValueDialog.refreshOkButton()`, the one
+  place that sets it: a value the model would discard stayed discarded when the name is
+  touched, and a name another value already carries stays refused when the value is.
+  The name a stored value carries counts as its own, so editing it is not blocked
+  against itself ([#67]).
+- The number dialogs ask their type what it takes instead of matching a pattern of their
+  own. `SingleIntegerValue.accepts(..)` and `SingleFloatValue.accepts(..)` are the one
+  rule each, and `tryToSetValue` applies it itself: `99999999999` is no longer offered
+  and then silently stored as `0`, `+5` is no longer refused although the model reads
+  it, and a decimal number too big for a `float` is rejected instead of being stored as
+  the `Infinity` the type promises never to hold ([#68]).
 
 [#52]: https://github.com/Tobias-Bonsack/Tonsias/issues/52
 [#53]: https://github.com/Tobias-Bonsack/Tonsias/issues/53
-[#62]: https://github.com/Tobias-Bonsack/Tonsias/issues/62
+[#56]: https://github.com/Tobias-Bonsack/Tonsias/issues/56
+[#57]: https://github.com/Tobias-Bonsack/Tonsias/issues/57
 [#61]: https://github.com/Tobias-Bonsack/Tonsias/issues/61
+[#62]: https://github.com/Tobias-Bonsack/Tonsias/issues/62
+[#65]: https://github.com/Tobias-Bonsack/Tonsias/issues/65
+[#67]: https://github.com/Tobias-Bonsack/Tonsias/issues/67
+[#68]: https://github.com/Tobias-Bonsack/Tonsias/issues/68
 
 ## [0.1.0] - 2026-08-07
 
