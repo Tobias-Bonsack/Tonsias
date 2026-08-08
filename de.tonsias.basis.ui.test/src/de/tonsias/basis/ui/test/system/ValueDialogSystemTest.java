@@ -26,6 +26,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tonsias.basis.model.impl.value.SingleFloatValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
+import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.test.ProductRuntime;
@@ -49,6 +50,12 @@ import de.tonsias.basis.ui.i18n.Messages;
  * new value offered OK over an empty field and created a value silently left at
  * the start value of its type. See
  * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/62">#62</a>.
+ * </p>
+ * <p>
+ * The name is part of the same promise: the button is on offer when the name is
+ * free <em>and</em> the value acceptable. Each check used to set the button from
+ * its own result alone, so whichever field was touched last had the last word -
+ * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/67">#67</a>.
  * </p>
  */
 public class ValueDialogSystemTest {
@@ -166,7 +173,7 @@ public class ValueDialogSystemTest {
 	 */
 	@ParameterizedTest
 	@ValueSource(strings = { "", " ", "3.14", "-3.14", "42", "0.0", "3,14", "NaN", "Infinity", "1e5", "3f", "0x1p3",
-			".", "-", "1.2.3" })
+			".", "-", "1.2.3", "10000000000000000000000000000000000000000" })
 	void testValueControl_floatOkFollowsWhatTheModelWouldTake(String typed) {
 		FloatValueDialog dialog = built(new FloatValueDialog(_shell, _instanz, _messages));
 
@@ -176,20 +183,107 @@ public class ValueDialogSystemTest {
 	}
 
 	/**
-	 * The inputs leave out a leading plus and numbers outside the {@code int}
-	 * range, where the dialog's pattern and {@code Integer.valueOf} disagree to
-	 * this day - that is
-	 * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/68">#68</a>, not
-	 * what this test is about.
+	 * A leading plus and numbers outside the {@code int} range are in the list: the
+	 * dialog used to answer them from a pattern of its own, which took
+	 * "99999999999" that {@code Integer.valueOf} then threw on, and refused "+5"
+	 * that it would have read.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/68">#68</a>
 	 */
 	@ParameterizedTest
-	@ValueSource(strings = { "", " ", "42", "-42", "0", "3.14", "abc", "1,000", "-", "4 2" })
+	@ValueSource(strings = { "", " ", "42", "-42", "0", "3.14", "abc", "1,000", "-", "4 2", "+5", "99999999999",
+			"2147483647", "2147483648" })
 	void testValueControl_integerOkFollowsWhatTheModelWouldTake(String typed) {
 		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, _instanz, _messages));
 
 		valueText(dialog).setText(typed);
 
 		assertThat("OK for '" + typed + "'", okButton(dialog).isEnabled(), is(integerTakes(typed)));
+	}
+
+	// ---------- name and value are judged together ----------
+
+	/**
+	 * A name another value of the same type already carries is not free - the
+	 * {@code BiMap} on the instanz holds names unique, so a second value under it
+	 * would push the first one out. Typing a perfectly good value afterwards must
+	 * not hand OK back; the two checks used to overwrite each other's verdict.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/67">#67</a>
+	 */
+	@Test
+	void testNameControl_usedNameDisablesOk_andTheValueFieldDoesNotHandItBack() {
+		ProductRuntime.singleValueService().createNew(SingleIntegerValue.class, _instanz.getOwnKey(), "taken name", "1",
+				Type.SEND);
+		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, _instanz, _messages));
+
+		nameText(dialog).setText("taken name");
+		assertThat("a used name", okButton(dialog).isEnabled(), is(false));
+
+		valueText(dialog).setText("42");
+		assertThat("a number does not make the name free", okButton(dialog).isEnabled(), is(false));
+	}
+
+	/**
+	 * The other way round: a value the model would discard stays discarded while
+	 * the name is typed.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/67">#67</a>
+	 */
+	@Test
+	void testValueControl_rejectedValueDisablesOk_andTheNameFieldDoesNotHandItBack() {
+		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, _instanz, _messages));
+
+		valueText(dialog).setText("abc");
+		assertThat("not a number", okButton(dialog).isEnabled(), is(false));
+
+		nameText(dialog).setText("a free name");
+		assertThat("a free name does not make 'abc' a number", okButton(dialog).isEnabled(), is(false));
+	}
+
+	/** Both sides content is the one case OK is on offer for. */
+	@Test
+	void testNameAndValueControl_bothAcceptable_okIsEnabled() {
+		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, _instanz, _messages));
+
+		nameText(dialog).setText("a free name");
+		valueText(dialog).setText("42");
+
+		assertThat(okButton(dialog).isEnabled(), is(true));
+	}
+
+	/**
+	 * The name in the field of an existing value is that value's own, so it may not
+	 * count as taken against itself - the dialog would open on a name it refuses.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/67">#67</a>
+	 */
+	@Test
+	void testNameControl_existingValueKeepsItsOwnName() {
+		SingleStringValue value = ProductRuntime.singleValueService().createNew(SingleStringValue.class,
+				_instanz.getOwnKey(), "own name", "text", Type.SEND);
+
+		StringValueDialog dialog = built(new StringValueDialog(_shell, value, _instanz, _messages));
+
+		assertThat(nameText(dialog).getText(), is("own name"));
+		assertThat("untouched", okButton(dialog).isEnabled(), is(true));
+
+		nameText(dialog).setText("own name");
+		assertThat("typed again", okButton(dialog).isEnabled(), is(true));
+	}
+
+	/** The name of another value is taken for an existing value too. */
+	@Test
+	void testNameControl_existingValueTakingAnotherName() {
+		ProductRuntime.singleValueService().createNew(SingleStringValue.class, _instanz.getOwnKey(), "neighbour",
+				"text", Type.SEND);
+		SingleStringValue value = ProductRuntime.singleValueService().createNew(SingleStringValue.class,
+				_instanz.getOwnKey(), "own name", "text", Type.SEND);
+
+		StringValueDialog dialog = built(new StringValueDialog(_shell, value, _instanz, _messages));
+		nameText(dialog).setText("neighbour");
+
+		assertThat(okButton(dialog).isEnabled(), is(false));
 	}
 
 	// ---------- what the model would do ----------
@@ -243,11 +337,20 @@ public class ValueDialogSystemTest {
 	 * the test onto the wrong widget.
 	 */
 	private Text valueText(Dialog dialog) {
+		return texts(dialog).get(2);
+	}
+
+	/** the name field, the second of the three - see {@link #valueText(Dialog)} */
+	private Text nameText(Dialog dialog) {
+		return texts(dialog).get(1);
+	}
+
+	private List<Text> texts(Dialog dialog) {
 		List<Text> texts = controls(dialog.getShell()).stream()//
 				.filter(Text.class::isInstance).map(Text.class::cast)//
 				.toList();
 		assertThat("key, name and value", texts, hasSize(3));
-		return texts.get(2);
+		return texts;
 	}
 
 	/** every control below {@code root}, in the order the dialog created them */
