@@ -63,7 +63,11 @@ public class FloatValueDialog extends AValueDialog<SingleFloatValue, Text> {
 
 	/**
 	 * The rule {@link SingleFloatValue#tryToSetValue} applies, so the button is
-	 * disabled for exactly the input that would be discarded.
+	 * disabled for exactly the input that would be discarded - from the first
+	 * change on, that is: the button starts out enabled over an empty field, like
+	 * the one in {@link IntegerValueDialog}.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/62">#62</a>
 	 */
 	private boolean isFloat(String str) {
 		return str != null && str.strip().matches(SingleFloatValue.DECIMAL_PATTERN);
