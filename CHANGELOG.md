@@ -92,6 +92,14 @@ Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
   and then silently stored as `0`, `+5` is no longer refused although the model reads
   it, and a decimal number too big for a `float` is rejected instead of being stored as
   the `Infinity` the type promises never to hold ([#68]).
+- The reason a value dialog refuses a name is now on a label under the field, where it
+  can be read. It used to be handed to `Text.setMessage(..)`, the placeholder SWT only
+  draws over an empty field — so in the one case it was set for, a name someone had just
+  typed, it was never on screen and the red field stood there without a word ([#71]).
+- A value dialog opened on a stored value writes the value back, not only the name. The
+  field was prefilled, editable and read for the OK button, and its content was then
+  dropped on OK. `okPressed()` moved up into `AValueDialog`, which is where the four
+  dialogs only differed in how their widget is read ([#72]).
 
 [#52]: https://github.com/Tobias-Bonsack/Tonsias/issues/52
 [#53]: https://github.com/Tobias-Bonsack/Tonsias/issues/53
@@ -102,6 +110,8 @@ Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
 [#65]: https://github.com/Tobias-Bonsack/Tonsias/issues/65
 [#67]: https://github.com/Tobias-Bonsack/Tonsias/issues/67
 [#68]: https://github.com/Tobias-Bonsack/Tonsias/issues/68
+[#71]: https://github.com/Tobias-Bonsack/Tonsias/issues/71
+[#72]: https://github.com/Tobias-Bonsack/Tonsias/issues/72
 
 ## [0.1.0] - 2026-08-07
 
