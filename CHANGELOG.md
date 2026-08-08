@@ -9,6 +9,42 @@ All notable changes to Tonsias are documented here. The format follows
 
 Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
 
+### Changed — tests
+
+- Every test is now a system test. The mock-based tests have been rewritten to drive the
+  services the running application registers, on the real event bus, against the real
+  workspace files, and — for the Delta view — on a real SWT `Display`. A call is judged
+  by the state it leaves behind and the events that left the bus, not by what a
+  collaborator was seen being told.
+- All test classes moved into a `…test.system` package of their bundle, and the ones
+  that only differed by their subject were merged: `InstanzServiceSystemTest`,
+  `SingleValueServiceSystemTest`, `ChangePropagationSystemTest`, `DeltaLogSystemTest`,
+  `EventBrokerBridgeSystemTest`, `KeyServiceSystemTest`,
+  `BasicPreferenceServiceSystemTest`, `InstanzViewLogicSystemTest`,
+  `CreateInstanzDialogLogicSystemTest`, `PreferencesDialogLogicSystemTest`,
+  `DeltaTreeSystemTest`, `DeltaViewSystemTest`.
+- `de.tonsias.basis.osgi.test` now exports a shared harness (`x-friends` to the logic and
+  delta-view test bundles): `ProductRuntime` brings the runtime up and reads objects back
+  off disk, and `EventRecorder` collects what passes on the bus.
+- The persistence tests take `LoadService`, `SaveService` and `DeleteService` from the
+  service registry instead of constructing them.
+
+### Removed
+
+- Mockito, from every bundle manifest and from the target platform. Nothing uses a
+  mocking framework any more.
+
+### Fixed — nothing yet, but found
+
+The rewrite surfaced two defects, filed rather than silently patched: the e4 context
+functions build a new service instance on every `compute(..)`, so the Delta view can
+render a different delta log than the save path uses ([#52]), and `saveDeltas()` does
+not reset its log when a delete fails, after which every following save repeats the
+same failure ([#53]).
+
+[#52]: https://github.com/Tobias-Bonsack/Tonsias/issues/52
+[#53]: https://github.com/Tobias-Bonsack/Tonsias/issues/53
+
 ## [0.1.0] - 2026-08-07
 
 The first release. It is the point at which the model, the persistence, the event chain

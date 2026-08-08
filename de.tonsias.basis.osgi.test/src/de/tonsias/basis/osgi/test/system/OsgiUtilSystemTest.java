@@ -1,4 +1,4 @@
-package de.tonsias.basis.osgi.test.util;
+package de.tonsias.basis.osgi.test.system;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -15,7 +15,7 @@ import de.tonsias.basis.osgi.util.OsgiUtil;
 /**
  * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/22">#22</a>
  */
-public class OsgiUtilTest {
+public class OsgiUtilSystemTest {
 
 	@BeforeEach
 	void beforeEach() {
@@ -45,7 +45,7 @@ public class OsgiUtilTest {
 	/** A well-formed context with nothing registered for the type is not an error. */
 	@Test
 	void testGetService_noServiceRegistered_returnsNull() {
-		var context = org.osgi.framework.FrameworkUtil.getBundle(OsgiUtilTest.class).getBundleContext();
+		var context = org.osgi.framework.FrameworkUtil.getBundle(OsgiUtilSystemTest.class).getBundleContext();
 		assertThat(OsgiUtil.getService(java.util.RandomAccess.class, context), is(nullValue()));
 	}
 }

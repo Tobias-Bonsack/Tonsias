@@ -1,169 +1,114 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code (claude.ai/code) in this repository.
 
-## What this is
-
-Tonsias is an **Eclipse RCP / e4 desktop application** developed as an **Eclipse PDE workspace**. Day-to-day development happens in the Eclipse IDE; a **Tycho build** mirrors it on the command line for CI and for verifying changes without the IDE.
+Tonsias is an **Eclipse RCP / e4 desktop application** in an **Eclipse PDE workspace**. A **Tycho build** mirrors the IDE on the command line for CI.
 
 ## Commands
 
 ```powershell
-.\build.ps1                                            # the whole pipeline: compile, test, materialize the product
-.\build.ps1 -SkipTests                                 # product only, no tests
-.\build.ps1 -- -Dtest=KeyServiceImplTest               # everything after -- goes to Maven verbatim
+.\build.ps1                                    # compile, test, materialize the product
+.\build.ps1 -SkipTests                         # product only
+.\build.ps1 -- -Dtest=KeyServiceSystemTest     # everything after -- goes to Maven verbatim
 ```
 
-`build.ps1` is the entry point to prefer, because `JAVA_HOME` is usually not set on a dev machine: it finds a JDK 24 (`C:\dev\java`, `%ProgramFiles%\Java`, Adoptium, …), exports it and then runs the wrapper. It fails fast if it finds nothing new enough. Underneath it is plain Maven, so with a JDK 24 in `JAVA_HOME` the wrapper works directly too:
+Prefer `build.ps1`: it locates a JDK 24, exports `JAVA_HOME` (usually unset here) and runs the wrapper. With a JDK 24 already in `JAVA_HOME`, `./mvnw clean verify` works directly. JDK 24 is the highest BREE and the pinned resolution EE — anything older fails to resolve Eclipse 4.36.
 
-```bash
-./mvnw clean verify                                    # compile every bundle, run all test bundles, build the product
-./mvnw clean verify -Dmaven.test.failure.ignore=true   # keep going past failing tests to see every result
-./mvnw clean verify -Dtest=KeyServiceImplTest          # a single test class
-./mvnw clean verify -DskipTests                        # compile only
-```
+- In PowerShell, **quote any `-D` containing a dot**: `'-Dmaven.test.failure.ignore=true'`. Unquoted, the parser splits it and Maven reports "Unknown lifecycle phase".
+- **Never use `-pl`.** Tycho derives the reactor from the OSGi manifests, so `-pl <module> -am` misses required bundles and fails with "Missing requirement". Build everything and narrow with `-Dtest=`.
+- Use **`verify`, not `package`**: `jlink` runs at `pre-integration-test` and `archive-products` was moved to `verify`, so `package` leaves the product unarchived.
 
-In PowerShell, **quote any `-D` that contains a dot**: `'-Dmaven.test.failure.ignore=true'`. Unquoted, the parser splits it into `-Dmaven` and `.test.failure.ignore=true`, and Maven fails with "Unknown lifecycle phase". `-Dtest=…` and `-DskipTests` have no dot and are safe either way.
+The runnable app is `de.tonsias.basis.product/target/products/tonsias/win32/win32/x86_64/Tonsias.exe`, next to the `jre` that `jlink` builds into it (the product declares no `-vm`, so without that directory the launcher dies silently). The module list is the `tonsias.jre.modules` property — Equinox derives the system bundle's packages from the image, so dropping a module removes packages (without `jdk.xml.dom` there is no `org.w3c.dom.css` and `org.eclipse.e4.ui.css.swt` fails to resolve). Only `win32.win32.x86_64` is built.
 
-JDK 24 is the bundles' highest BREE and the resolution EE the target platform is pinned to; anything older fails to resolve Eclipse 4.36. The wrapper downloads Maven itself; no local Maven install is needed.
-
-**Do not use `-pl` to build a single module.** Tycho derives the reactor from the OSGi manifests, not from Maven dependencies, so `-pl <module> -am` does not pull in the bundles that module requires and fails with "Missing requirement". Build the whole reactor and narrow with `-Dtest=` instead.
-
-### Build output
-
-`de.tonsias.basis.product` has `eclipse-repository` packaging, which by itself only publishes a p2 repository. `tycho-p2-director-plugin` (configured in its pom) additionally _installs_ the `tonsias` product out of that repository, which is what produces a runnable application:
-
-| Path under `de.tonsias.basis.product/target`      | What it is                                        |
-| ------------------------------------------------- | ------------------------------------------------- |
-| `products/tonsias/win32/win32/x86_64/Tonsias.exe` | the launcher — run this to start the built app    |
-| `products/tonsias/win32/win32/x86_64/jre`         | the bundled Java runtime, built by `jlink`        |
-| `products/tonsias-win32.win32.x86_64.zip`         | the same directory zipped, the distributable      |
-| `de.tonsias.basis.product-<version>.zip`          | the p2 repository, for installing/updating via p2 |
-
-The product declares no `<vm>`, so nothing writes a `-vm` into `Tonsias.ini` and the native launcher has to find a JVM itself: `-vm` argument, `-vm` in the ini, a `jre` directory next to the launcher, then the `PATH`. On a machine without `java` on the `PATH` — the normal case here — it used to fail at step four *silently*: exit code 1, no output, no workspace. A `maven-antrun-plugin` execution in `de.tonsias.basis.product/pom.xml` therefore runs `jlink` into that `jre` directory, which makes the installation self-contained and stops the search at step three. Two things follow from it:
-
-- The module list is a property, `tonsias.jre.modules`: `java.se` plus every non-tool `jdk.*` module. Equinox derives the packages of the system bundle from the modules actually in the image, so leaving one out is the same as removing a package — without `jdk.xml.dom` there is no `org.w3c.dom.css` and `org.eclipse.e4.ui.css.swt` does not resolve.
-- `jlink` has to run after `materialize-products` and before `archive-products`, so it sits at `pre-integration-test` and `archive-products` moved off its default phase to `verify`. `mvn package` alone now leaves the product unarchived; `verify` (what `build.ps1` and CI run) is unaffected.
-
-Only `win32/win32/x86_64` is built; add `<environment>`s to `target-platform-configuration` in the parent pom to cross-build others — each one needs its own `jlink` run from a JDK for that platform.
-
-`.github/workflows/build.yml` is the only workflow: it runs the same `./mvnw clean verify` on `windows-latest` for every push and PR to `main`, and it must stay on a Windows runner as long as the target platform declares only the win32 environment. Three things about it are deliberate:
-
-- It builds with **`-Dmaven.test.failure.ignore=true`**, so one failing bundle does not hide the results of the bundles behind it in the reactor. That only moves _when_ a failure is reported, not _whether_ — the last step fails the job from the parsed totals.
-- `.github/scripts/Summarize-TestResults.ps1` folds all `target/surefire-reports/TEST-*.xml` into a markdown table, posted on a PR as a **single, edited-in-place comment** (found again by the `<!-- tonsias-test-report -->` marker) and written to the job summary. It is assembled from the surefire XML, so a new test bundle shows up by itself — as long as its reports land under `<bundle>/target/surefire-reports`. Run it locally after `.\build.ps1` for the same report.
-- Product and p2 repository are uploaded as artifacts **only from a fully green run**. `maven.test.failure.ignore` makes Maven exit 0 on a failing test, so `if: success()` alone is no longer enough and the upload steps check the report's `failed` output as well.
+CI (`.github/workflows/build.yml`) runs the same `verify` on `windows-latest` with `-Dmaven.test.failure.ignore=true`, then fails the job from the totals that `.github/scripts/Summarize-TestResults.ps1` parses out of the surefire XML.
 
 ## Working in this repo
 
-- **Target platform**: `target-platform/target-platform.target` — Eclipse SDK 4.36 (2025-06) + Maven-sourced Guava 33.1.0, Gson 2.10.1, JUnit Jupiter 5.14.4, Mockito 5.23.0. It is the single source of truth for **both** the IDE and the Tycho build (consumed as an `eclipse-target-definition` module), so edit it rather than the poms when changing dependencies. Set it as the active target platform in the IDE before anything resolves.
-- **Run the app**: launch `de.tonsias.basis.product/tonsias.product` (E4Application, `-clearPersistedState`). Note `autoStart` config for `org.apache.felix.scr` and `org.eclipse.equinox.event` — DS and the event admin must be running or none of the services resolve. The Tycho test runtime configures the same two bundles for the same reason.
-- **Tests** are JUnit 5, and every test bundle needs an OSGi runtime — run them as an **Eclipse JUnit Plug-in Test** in the IDE, or via `./mvnw verify`. What differs is how they obtain their subject:
-  - Most tests construct it directly or with `@InjectMocks` and need nothing further.
-  - Tests that resolve real services through `OsgiUtil.getService(...)` (`InstanzServiceImplTest`, `SingleValueServiceImplTest`, `OsgiUtilTest`) must first call **`E4ServiceContext.prime()`** in `@BeforeEach`. `IEventBrokerBridge` and `IDeltaService` are not plain DS components — they come from `IContextFunction`s that only run when an `IEclipseContext` is asked for their key, and `ChangePropagationListener` is contributed as an e4 _addon_ in `Application.e4xmi`. In the product the workbench triggers all three; headless nothing does, so without priming `InstanzServiceImpl`'s mandatory `@Reference IEventBrokerBridge` stays unsatisfied and the component never activates. Add `prime()` to any new test that touches real services.
-  - Those tests also need a **root instanz** (`_inse.getRoot()`), which `ModelView` creates at start-up in the product but nothing creates in a fresh test workspace. They write real files to the instance location (`target/work/data`), which is cleaned per run.
-- There are **no `.launch` files committed** — launch configs are local. If a launch config is missing, create one from the product / plug-in test wizard.
-- Java compliance levels are **inconsistent across bundles**, and the BREE in `MANIFEST.MF` frequently disagrees with the compliance in `.settings/org.eclipse.jdt.core.prefs` — `de.tonsias.basis.ui` declares `JavaSE-24` but compiles at 19, `de.tonsias.basis.logic` declares 24 but compiles at 22, while `de.tonsias.basis.osgi` and `de.tonsias.basis.model` are 19/19. A language feature usable in `de.tonsias.basis.logic` (22) will not compile in `de.tonsias.basis.osgi` (19). When adding a bundle, copy the settings from a sibling rather than accepting the wizard default. This is also why the Tycho build has to pin its resolution EE (see the comment in `pom.xml`); normalising the BREEs would let that pin go away.
+- **Target platform** `target-platform/target-platform.target` (Eclipse SDK 4.36, Guava, Gson, JUnit Jupiter) is the single source of truth for the IDE **and** the Tycho build — edit it rather than the poms. Set it active in the IDE before anything resolves. There is deliberately **no mocking framework**.
+- **Run the app**: launch `de.tonsias.basis.product/tonsias.product`. `org.apache.felix.scr` and `org.eclipse.equinox.event` must be in the `autoStart` config or no service resolves; the Tycho test runtime configures the same two.
+- **No `.launch` files are committed** — create them from the wizards.
+- **Java compliance differs per bundle** and the BREE in `MANIFEST.MF` often disagrees with `.settings/org.eclipse.jdt.core.prefs` (`basis.ui` declares 24 / compiles at 19, `basis.logic` 24 / 22, `basis.osgi` and `basis.model` 19 / 19). A feature usable in one bundle may not compile in another. When adding a bundle, copy the settings from a sibling.
+
+## Tests
+
+Every test is a **system test**, in a `…test.system` package, run inside OSGi (Eclipse JUnit Plug-in Test, or `./mvnw verify`). One rule: **nothing is substituted.** The subject is the registered `@Component` from the service registry, the broker is the real e4 broker, files land in the real instance location (`target/work/data`, cleaned per run), and the SWT tests run on a real `Display`. Judge a call by the state it leaves and the events that left the bus — never by what a collaborator was told.
+
+`de.tonsias.basis.osgi.test` exports its harness (`x-friends` to the logic and delta-view test bundles):
+
+- **`ProductRuntime`** — start here in `@BeforeEach`. `start()` primes the runtime and returns the root instanz; accessors for every service; `flushDeltas()`; helpers that read objects back off disk.
+- **`E4ServiceContext.prime()`** — what `start()` calls. `IEventBrokerBridge` and `IDeltaService` come from `IContextFunction`s that only run when a context is asked for their key, and `ChangePropagationListener` is an e4 addon in `Application.e4xmi`. The workbench triggers all three; headless nothing does, so without priming `InstanzServiceImpl`'s mandatory `@Reference IEventBrokerBridge` stays unsatisfied and the component never activates.
+- **`EventRecorder`** — collects what passes on the bus, so a test can assert on a whole propagation chain. `awaitCount` / `awaitTopic` cover `Type.POST` and work running in a `Job`.
+
+The runtime is **shared by every test in a bundle** — one Equinox, one root instanz, one key sequence, one delta log. Build your own subtree below the root instead of assuming an empty model, and call `ProductRuntime.flushDeltas()` in `@AfterEach`. Where a shared singleton makes a scenario unreachable (`KeyServiceImpl`'s counter), build a second **real** instance on its own preference node rather than a stand-in.
 
 ## Bundle layout and dependency direction
 
 ```
 basis.model          POJOs, no OSGi deps (Guava BiMap only)
-basis.data.access    Gson persistence: LoadService / SaveService / DeleteService (DS @Component)
-basis.osgi           services — see the package split below
+basis.data.access    Gson persistence: LoadService / SaveService / DeleteService
+basis.osgi           services — contract and implementation, split by Export-Package
 basis.logic          headless view logic (Eclipse Jobs), no SWT
-basis.ui             e4 parts, handlers, dialogs, providers  ── Application.e4xmi lives here
+basis.ui             e4 parts, handlers, dialogs  ── Application.e4xmi lives here
 basis.ui.i18n        Messages class + OSGI-INF/l10n bundles
 basis.icon           IconUtil + res/*.png
 delta.view.*         the Delta view feature: logic / ui (fragment.e4xmi) / ui.test
 ```
 
-`de.tonsias.basis.osgi` carries both contract and implementation, and the split is enforced by its `Export-Package`:
-
-| Package                                  | Contents                                                                                        | Visibility                                |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| `de.tonsias.basis.osgi.intf`             | service interfaces (`IInstanzService`, `IKeyService`, `IDeltaService`, `IEventBrokerBridge`, …) | public                                    |
-| `de.tonsias.basis.osgi.intf.non.service` | event-topic constants and event payload records                                                 | public                                    |
-| `de.tonsias.basis.osgi.util`             | `OsgiUtil`                                                                                      | public                                    |
-| `de.tonsias.basis.osgi.impl`             | `*ServiceImpl`, context functions, `ChangePropagationListener`                                  | `x-friends:="de.tonsias.basis.osgi.test"` |
-
-The important rule: **UI and logic code depends on `…osgi.intf` only** — never on `…osgi.impl`, which is visible solely to the test bundle.
+`de.tonsias.basis.osgi.impl` (the `*ServiceImpl`s, context functions, `ChangePropagationListener`) is `x-friends` to the test bundle only. **UI and logic depend on `…osgi.intf` alone — never on `…osgi.impl`.**
 
 ## Core architecture
 
-### Model
+**Model.** `IInstanz` is the single tree node type: own key, parent key, child keys, and per-`SingleValueType` `BiMap<valueKey, name>` of attributes. Attributes are `ISingleValue` objects in their own files. **Everything is referenced by string key, never by object reference** — services resolve through a cache and fall back to disk. Key `"0"` is the root by convention. Keys are a base-36 counter (`KeyServiceImpl.KEYCHARS`), **lower case only** (file names on case-insensitive filesystems) and **sorted ascending** (binary search).
 
-`IInstanz` is the single tree node type: it has an own key, a parent key, a set of child keys, and per-`SingleValueType` `BiMap<valueKey, name>` maps of attributes. Attributes themselves are `ISingleValue` objects living in their own files. **Everything is referenced by string key, never by object reference** — services resolve keys through a cache and fall back to loading from disk.
+**Persistence.** One JSON file per object under `Platform.getInstanceLocation()`, at `ISavePathOwner.getPath()` + `getOwnKey()` + `.json`.
 
-`IKeyService` generates keys as a base-36 counter (`KeyServiceImpl.KEYCHARS`, incrementing least-significant char first), persisted in Eclipse instance preferences. Key `"0"` is by convention the root instanz. The alphabet is **lower case only and must stay sorted ascending**.
+**Event flow — the heart of the app.** Everything model-changing goes through the bus, wrapped by `IEventBrokerBridge` (`Type.SEND` synchronous, `Type.POST` async). **Every mutating service method takes a `Type` and fires an event.**
 
-### Persistence
+- Topics and payload records live together in `…intf.non.service.*EventConstants`. **Adding a topic means adding its payload record next to it and registering it in `KNOWN_DELTA`.**
+- `ChangePropagationListener` keeps both ends of every relation in sync and re-enters the services with `Type.SEND`, so **a careless new listener can loop**. The services guard by returning `false` without firing when already in the requested state — keep that.
+- `IDeltaService` accumulates every delta since the last save. `saveDeltas()` folds the log into four key sets, calls the services, and resets. `OPEN_OPERATION`/`CLOSE_OPERATION` bracket an operation; `SAVE_ALL` triggers the save; the Delta view renders the log using those brackets.
 
-JSON via Gson, one file per object, written under `Platform.getInstanceLocation()`. The path is derived from the object itself: `ISavePathOwner.getPath()` + `getOwnKey()` + `.json` (e.g. `instanz/<key>.json`, `single_value/string/<key>.json`). Services cache loaded objects in a `Map<String, …>` and only touch disk on miss or save.
+**Dependency injection — three mechanisms coexist.**
 
-### Event flow — this is the heart of the app
+1. **DS `@Component` + `@Reference`** for the plain services. Components are declared by **hand-maintained XML in `OSGI-INF/` referenced from `Service-Component:`** — adding one means both edits. (`de.tonsias.basis.osgi/META-INF/MANIFEST.MF` still lists two `…osgi.util.*.xml` files that do not exist.)
+2. **`ContextFunction`** for services needing the e4 context (`EventBrokerContextFunction`, `DeltaServiceContextFunction`). Note they build a **new** instance per `compute(..)` — see issue #52.
+3. **`OsgiUtil.lazyLoading(Class, Consumer)`** for code constructed before OSGi is ready (`ChangePropagationListener`).
 
-Everything model-changing goes through the event bus, wrapped by `IEventBrokerBridge` (a thin facade over e4's `IEventBroker`, with `Type.SEND` = synchronous, `Type.POST` = async). **Every mutating service method takes an `IEventBrokerBridge.Type` parameter** and fires an event describing what changed.
+**UI.** e4 model-first; parts are POJOs with `@PostConstruct postConstruct(Composite parent)` and `@Inject` fields. Non-trivial behaviour belongs in a `*.logic` bundle so it is testable without SWT — keep that split. Views react through `@UIEventTopic`/`@EventTopic` rather than polling.
 
-- Topics and payloads are declared together in `de.tonsias.basis.osgi.intf.non.service.*EventConstants`. Payloads are `record`s passed as `IEventBroker.DATA`. **When adding a topic, add its payload record next to it and register it in `KNOWN_DELTA`** or `DeltaServiceImpl` will throw `IllegalArgumentException` on save.
-- `ChangePropagationListener` keeps both sides of every relation consistent: adding a child fires a child-list change, which the listener turns into a parent change on the other object, and vice versa. Its listeners re-enter the services with `Type.SEND`, so **a careless new listener can loop**; the services guard by checking "already in this state, return false without firing".
-- `IDeltaService` (`DeltaServiceImpl`) subscribes to `instanz/delta/*` and `single_value/delta/*` and accumulates every event in `_notSavedEvents` since the last save. `saveDeltas()` folds that log into four key sets (instanz save/delete, single-value save/delete), calls the services, then clears the log back to a single `START_EVENT`. `EventConstants.OPEN_OPERATION`/`CLOSE_OPERATION` bracket an operation; `SAVE_ALL` triggers the save. The Delta view (`de.tonsias.delta.view.ui`) renders `getDeltas()` as a tree using those brackets.
+**i18n — two levels, don't mix them.**
 
-### Dependency injection — three mechanisms coexist
+- **e4 model labels** (`%part.modelview`) resolve against `OSGI-INF/l10n/bundle.properties` / `bundle_de.properties` in the bundle owning the model file.
+- **Java strings** use `@Inject @Translation Messages` — adding one means a field **and** the key in every locale file. `de.tonsias.basis.ui.i18n` is the only `Messages` bundle.
 
-1. **DS `@Component` + `@Reference`** for the plain services (`InstanzServiceImpl`, `KeyServiceImpl`, `SingleValueServiceImpl`, `BasicPreferenceServiceImpl`, the `data.access` services). Components are declared by **hand-maintained XML in `OSGI-INF/` referenced from `Service-Component:` in `MANIFEST.MF`** — adding a component means adding both. (`de.tonsias.basis.osgi/META-INF/MANIFEST.MF` currently lists two `OSGI-INF/de.tonsias.basis.osgi.util.*.xml` files that do not exist — stale entries from the interface refactor.)
-2. **`ContextFunction`** for services that need the e4 `IEclipseContext`: `EventBrokerContextFunction` and `DeltaServiceContextFunction` build the impl with `ContextInjectionFactory.make(...)` and then register it in the OSGi registry, so the same instance is reachable both by `@Inject` in parts and by `OsgiUtil.getService(...)` in tests.
-3. **`OsgiUtil.lazyLoading(Class, Consumer)`** for code that is constructed before OSGi is ready (see `ChangePropagationListener`) — a `ServiceTracker` calls back once the service appears.
-
-### UI
-
-e4 model-first: `de.tonsias.basis.ui/Application.e4xmi` defines the window, parts (`ModelView`, `InstanzView`), toolbars, and menus; `de.tonsias.delta.view.ui/fragment.e4xmi` contributes the Delta view as a model fragment. Parts are POJOs with `@PostConstruct postConstruct(Composite parent)` and field `@Inject` of services.
-
-Non-trivial view behaviour is pushed into a separate `*.logic` bundle so it can be unit-tested without SWT — e.g. `InstanzView` (SWT) delegates to `InstanzViewLogic`, which debounces edits by scheduling Eclipse `Job`s in a serial `JobGroup` keyed by value key. Keep that split when adding view behaviour.
-
-Views react to model changes via `@Inject @Optional` + `@UIEventTopic`/`@EventTopic` methods rather than polling.
-
-### i18n
-
-Two levels, don't mix them up:
-
-- **e4 model labels** (`%part.modelview` in the `.e4xmi`) resolve against `OSGI-INF/l10n/bundle.properties` / `bundle_de.properties` in the bundle that owns the model file.
-- **Java strings** use `@Inject @Translation Messages _messages` — `Messages` is a plain class of public `String` fields whose names must match keys in its bundle's `OSGI-INF/l10n` properties. Adding a string means adding a field _and_ the key in every locale file.
-
-`de.tonsias.basis.ui.i18n` is the only `Messages` bundle; the Delta view has no Java strings of its own and gets its labels purely from the model level. Both levels are guarded by tests, so a forgotten locale fails the build rather than showing up as a raw key at runtime: `TranslationCoverageTest` (in `de.tonsias.basis.ui.test`) matches the `Messages` fields against both locale files and the `%keys` of `Application.e4xmi` against `de.tonsias.basis.ui`'s, `FragmentTranslationCoverageTest` does the same for `fragment.e4xmi`. Keep the German files in `\uXXXX` escapes — they are read as ISO-8859-1 by `Properties.load`.
-
-Not everything that reads like text is UI text: `Job`/`JobGroup` names in `*.logic` and in the handlers are diagnostic labels. The window has no trim bar and therefore no progress reporting, so they are never displayed and deliberately stay untranslated. `IObject.toString()` (the tree labels of both views) and the preference *node* paths in the preferences dialog are identifiers, not labels — the preference *keys* next to the fields are translated through `MessagesUtil.getPreferenceLabel`, which also maps `SingleValueType` onto its label so the enum name never reaches the screen.
+Keep the German files in `\uXXXX` escapes (`Properties.load` reads ISO-8859-1). `TranslationCoverageTest` and `FragmentTranslationCoverageTest` fail the build on a missing key. Not everything textual is UI text: `Job`/`JobGroup` names are diagnostic and never displayed (no trim bar), and `IObject.toString()` and preference *node* paths are identifiers — only preference *keys* go through `MessagesUtil.getPreferenceLabel`.
 
 ## Conventions
 
-- Fields are prefixed with `_` (`_instanzService`, `_key`); record components too (`_parentKey`). Static constants are `UPPER_SNAKE`.
-- Interfaces: `I*` for OSGi services (`IInstanzService`) — except the `data.access` ones, which are unprefixed (`LoadService`). Abstract bases are `A*` (`AInstanz`, `ASingleValue`, `AValueDialog`).
-- Adding a bundle requires three edits beyond the project itself: `Require-Bundle` in the consuming manifests, a `<plugin>` entry in the owning `feature.xml`, and (for exported packages consumed only by tests) `x-friends` on the `Export-Package`.
+- Fields prefixed `_` (`_instanzService`), record components too (`_parentKey`). Constants `UPPER_SNAKE`.
+- `I*` for OSGi service interfaces — except `data.access`, which is unprefixed (`LoadService`). Abstract bases are `A*`.
+- Adding a bundle needs three edits beyond the project: `Require-Bundle` in the consumers, a `<plugin>` entry in the owning `feature.xml`, and `x-friends` for packages consumed only by tests.
 
-## Full workflow
+## Workflow
 
-Every feature follows this sequence end to end:
+Every change follows this sequence, and **never commit directly to `main`**:
 
-1. Switch to `main`.
-2. Pull `main`.
-3. Create a new dedicated branch off `main` (`feat-<name>`).
-4. Make commits on that branch (`feat <name>: …` / `fix <name>: …`).
-5. Run all tests and fix the failures — unless the failure is not caused by your changes.
-6. Write new tests for the new implementations.
-7. Push the branch and open a PR into `main`.
+1. Switch to `main` and pull.
+2. Branch off it (`feat-<name>`).
+3. Commit there (`feat <name>: …` / `fix <name>: …`).
+4. Run `.\build.ps1` and fix the failures. The suite is **green on `main`**, so a failure is yours. Never weaken an assertion to make one pass — check the test against the production code first.
+5. Write tests for the new code: `…test.system` package of the bundle matching the layer, starting from `ProductRuntime`. A new bundle's internals need `x-friends` before its test bundle can see them.
+6. Push and open a PR into `main`.
 
-Never commit directly to `main`.
-
-Step 5 is `.\build.ps1` (or `./mvnw clean verify`). The suite is **green on `main`** — every test in every bundle passes — so any failure is yours. Never "fix" one by weakening an assertion; if a test looks wrong, check it against the production code first (several once verified `post(..)` where the code had moved to `send(..)`).
-
-Step 6 places tests in the test bundle matching the layer under test. All run inside OSGi; prefer `OsgiUtil.getService(...)`, which only resolves under a running e4 context, over `@InjectMocks` direct construction. A new bundle's internals need `x-friends` on its `Export-Package` before its test bundle can see them.
+**Open a GitHub issue for anything you find along the way** — a bug, a latent fragility, a wrong comment, dead configuration — whenever it is outside the scope of what you were asked to do. Do not silently fix it, and do not only mention it in the PR description. Use `gh issue create` (German title, `bug` label where it applies), say what happens, why it matters, how it surfaced, and a possible approach. Then reference it from the code or test that runs into it, so the next reader lands on the explanation. Fixing it in place is only right when the task cannot be completed otherwise — and then it belongs in the PR description.
 
 ## Releasing
 
-The latest release is **0.1.0** (the first one) and the reactor is on **0.2.0-SNAPSHOT** behind it; `CHANGELOG.md` is the per-release record and `README.md` the user-facing overview. Versions live in 37 files — every `pom.xml`, `MANIFEST.MF`, `feature.xml` and the `.product` — so never edit them by hand. Bump them with Tycho, which also rewrites the `bundle-version` lower bounds in the `Require-Bundle` of every other reactor bundle:
+Latest release **0.1.0**; the reactor is on **0.2.0-SNAPSHOT**. `CHANGELOG.md` is the per-release record, `README.md` the user-facing overview. Versions live in 37 files — **never edit them by hand**:
 
 ```powershell
 $env:JAVA_HOME = '<jdk24>'
 .\mvnw.cmd org.eclipse.tycho:tycho-versions-plugin:5.0.3:set-version "-DnewVersion=<x.y.z>" "-DupdateVersionRangeMatchingBounds=true"
 ```
 
-It leaves the `version` attribute of `tonsias.product` alone when that attribute does not already match the old version — check it afterwards. Then run `.\build.ps1`, add a `CHANGELOG.md` section, and follow the branch/PR workflow above; the tag is `v<x.y.z>` on the merge commit, with the product zip and the p2 repository from `de.tonsias.basis.product/target` attached to the GitHub release.
+It skips the `version` attribute of `tonsias.product` when that attribute does not already match the old version — check it afterwards. Then build, add a `CHANGELOG.md` section, and follow the workflow above. The tag is `v<x.y.z>` on the merge commit, with the product zip and p2 repository attached to the GitHub release.
