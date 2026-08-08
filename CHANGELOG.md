@@ -9,6 +9,15 @@ All notable changes to Tonsias are documented here. The format follows
 
 Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
 
+### Added
+
+- `SingleFloatValue`, a fourth attribute type for decimal numbers, alongside string,
+  integer and boolean. It is created from the model view or while creating an instanz,
+  edited in the instanz view, and stored under `single_value/float/`. Only decimal
+  notation is accepted — `NaN`, `Infinity`, `1e5` and the German `3,14` are rejected
+  instead of turning into a number nobody typed, and the dialog greys out its OK button
+  on exactly that rule.
+
 ### Changed — tests
 
 - Every test is now a system test. The mock-based tests have been rewritten to drive the
