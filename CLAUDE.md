@@ -36,10 +36,16 @@ JDK 24 is the bundles' highest BREE and the resolution EE the target platform is
 | Path under `de.tonsias.basis.product/target`      | What it is                                        |
 | ------------------------------------------------- | ------------------------------------------------- |
 | `products/tonsias/win32/win32/x86_64/Tonsias.exe` | the launcher — run this to start the built app    |
+| `products/tonsias/win32/win32/x86_64/jre`         | the bundled Java runtime, built by `jlink`        |
 | `products/tonsias-win32.win32.x86_64.zip`         | the same directory zipped, the distributable      |
 | `de.tonsias.basis.product-<version>.zip`          | the p2 repository, for installing/updating via p2 |
 
-Only `win32/win32/x86_64` is built; add `<environment>`s to `target-platform-configuration` in the parent pom to cross-build others.
+The product declares no `<vm>`, so nothing writes a `-vm` into `Tonsias.ini` and the native launcher has to find a JVM itself: `-vm` argument, `-vm` in the ini, a `jre` directory next to the launcher, then the `PATH`. On a machine without `java` on the `PATH` — the normal case here — it used to fail at step four *silently*: exit code 1, no output, no workspace. A `maven-antrun-plugin` execution in `de.tonsias.basis.product/pom.xml` therefore runs `jlink` into that `jre` directory, which makes the installation self-contained and stops the search at step three. Two things follow from it:
+
+- The module list is a property, `tonsias.jre.modules`: `java.se` plus every non-tool `jdk.*` module. Equinox derives the packages of the system bundle from the modules actually in the image, so leaving one out is the same as removing a package — without `jdk.xml.dom` there is no `org.w3c.dom.css` and `org.eclipse.e4.ui.css.swt` does not resolve.
+- `jlink` has to run after `materialize-products` and before `archive-products`, so it sits at `pre-integration-test` and `archive-products` moved off its default phase to `verify`. `mvn package` alone now leaves the product unarchived; `verify` (what `build.ps1` and CI run) is unaffected.
+
+Only `win32/win32/x86_64` is built; add `<environment>`s to `target-platform-configuration` in the parent pom to cross-build others — each one needs its own `jlink` run from a JDK for that platform.
 
 `.github/workflows/build.yml` is the only workflow: it runs the same `./mvnw clean verify` on `windows-latest` for every push and PR to `main`, and it must stay on a Windows runner as long as the target platform declares only the win32 environment. Three things about it are deliberate:
 
