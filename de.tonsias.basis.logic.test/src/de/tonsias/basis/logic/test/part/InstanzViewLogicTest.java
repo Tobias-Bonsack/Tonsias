@@ -2,6 +2,7 @@ package de.tonsias.basis.logic.test.part;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayWithSize;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -10,7 +11,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -25,9 +28,12 @@ import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.Instanz;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
+import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueEvent;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueNewEvent;
 
 @SuppressWarnings("unused")
 @ExtendWith(MockitoExtension.class)
@@ -100,5 +106,58 @@ public class InstanzViewLogicTest {
 
 		verify(broker).send(InstanzEventConstants.SELECTED,
 				Map.of(IEventBroker.DATA, new InstanzEvent("key", null)));
+	}
+
+	/**
+	 * While nothing is selected there is no key to compare the delta against, so the
+	 * single value is not even resolved.
+	 */
+	@Test
+	void testAffectsShownInstanz_noInstanzShown() {
+		var svService = mock(ISingleValueService.class);
+		var logic = new InstanzViewLogic(null, svService);
+
+		assertThat(logic.affectsShownInstanz(null, DELTA), is(false));
+		verifyNoInteractions(svService);
+	}
+
+	/** A delta of a value the shown instanz owns has to refresh the view. */
+	@Test
+	void testAffectsShownInstanz_connectedValue() {
+		var value = mock(SingleStringValue.class);
+		when(value.getConnectedInstanzKeys()).thenReturn(List.of("shown"));
+
+		assertThat(logicResolving(value).affectsShownInstanz(shownInstanz(), DELTA), is(true));
+	}
+
+	/** A delta of a value belonging to another instanz must not refresh the view. */
+	@Test
+	void testAffectsShownInstanz_foreignValue() {
+		var value = mock(SingleStringValue.class);
+		when(value.getConnectedInstanzKeys()).thenReturn(List.of("other"));
+
+		assertThat(logicResolving(value).affectsShownInstanz(shownInstanz(), DELTA), is(false));
+	}
+
+	/** A deleted value no longer resolves — nothing to refresh for. */
+	@Test
+	void testAffectsShownInstanz_unresolvableValue() {
+		assertThat(logicResolving(null).affectsShownInstanz(mock(Instanz.class), DELTA), is(false));
+	}
+
+	private static final SingleValueEvent DELTA = new SingleValueNewEvent(SingleValueType.SINGLE_STRING, "value",
+			"name", List.of("shown"));
+
+	private Instanz shownInstanz() {
+		var instanz = mock(Instanz.class);
+		when(instanz.getOwnKey()).thenReturn("shown");
+		return instanz;
+	}
+
+	private InstanzViewLogic logicResolving(SingleStringValue value) {
+		var svService = mock(ISingleValueService.class);
+		when(svService.<SingleStringValue>resolveKey(eq(SingleValueType.SINGLE_STRING.getPath()), eq("value"), any()))
+				.thenReturn(Optional.ofNullable(value));
+		return new InstanzViewLogic(null, svService);
 	}
 }

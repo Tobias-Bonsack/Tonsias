@@ -369,11 +369,9 @@ public class InstanzView {
 	@Inject
 	@org.eclipse.e4.core.di.annotations.Optional
 	private void singlevalueDeltaEventListener(@UIEventTopic(SingleValueEventConstants.ALL_DELTA_TOPIC) SingleValueEventConstants.SingleValueEvent event) {
-		_singleService.resolveKey(event.getType().getPath(), event.getKey(), event.getType().getClazz()).ifPresent(sv -> {
-			if(sv.getConnectedInstanzKeys().contains(_shownInstanz.getOwnKey())) {
-				updateView();
-			}
-		});
+		if (_logic.affectsShownInstanz(_shownInstanz, event)) {
+			updateView();
+		}
 	}
 	
 	
