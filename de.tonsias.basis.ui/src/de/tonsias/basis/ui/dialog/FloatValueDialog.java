@@ -59,13 +59,13 @@ public class FloatValueDialog extends AValueDialog<SingleFloatValue, Text> {
 	}
 
 	/**
-	 * The rule {@link SingleFloatValue#tryToSetValue} applies, stripped the same
-	 * way, so the button is disabled for exactly the input that would be discarded -
-	 * the empty field a new value opens on included.
+	 * The rule of the type itself, asked rather than restated, so the button cannot
+	 * offer what {@link SingleFloatValue#tryToSetValue} would then discard - the
+	 * empty field a new value opens on included.
 	 */
 	@Override
 	protected boolean isValueAcceptable() {
-		return _valueControl.getText().strip().matches(SingleFloatValue.DECIMAL_PATTERN);
+		return SingleFloatValue.accepts(_valueControl.getText());
 	}
 
 	@Override

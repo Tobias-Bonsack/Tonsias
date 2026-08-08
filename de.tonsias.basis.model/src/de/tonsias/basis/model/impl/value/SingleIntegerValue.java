@@ -15,17 +15,33 @@ public class SingleIntegerValue extends ASingleValue<Integer> {
 		super(key, value, connectedInstanzes);
 	}
 
+	/**
+	 * Whether this type would read the text as a number, which is exactly what
+	 * {@link Integer#valueOf} takes: digits with an optional sign, and nothing
+	 * outside the {@code int} range. The dialog asks the same question for its OK
+	 * button, so there is no second rule that could drift - a matter of "99999999999"
+	 * being offered and then silently landing as 0.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/68">#68</a>
+	 */
+	public static boolean accepts(String value) {
+		if (value == null) {
+			return false;
+		}
+		try {
+			Integer.valueOf(value);
+			return true;
+		} catch (NumberFormatException e) {
+			return false;
+		}
+	}
+
 	@Override
 	public boolean tryToSetValue(Object value) {
 		if (value instanceof Integer i) {
 			return setValue(i);
-		} else if (value instanceof String s) {
-			try {
-				Integer i = Integer.valueOf(s);
-				return setValue(i);
-			} catch (NumberFormatException e) {
-				return false;
-			}
+		} else if (value instanceof String s && accepts(s)) {
+			return setValue(Integer.valueOf(s));
 		}
 		return false;
 	}

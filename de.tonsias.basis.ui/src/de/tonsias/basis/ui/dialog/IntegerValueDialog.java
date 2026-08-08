@@ -59,18 +59,13 @@ public class IntegerValueDialog extends AValueDialog<SingleIntegerValue, Text> {
 	}
 
 	/**
-	 * Digits with an optional minus, which is what
-	 * {@link SingleIntegerValue#tryToSetValue} takes - the empty field a new value
-	 * opens on is therefore rejected too, rather than being created as a silent 0.
-	 * <p>
-	 * The pattern and {@code Integer.valueOf} do not agree on every input; a leading
-	 * plus and numbers outside the {@code int} range are
-	 * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/68">#68</a>.
-	 * </p>
+	 * The rule of the type itself, asked rather than restated, so the button cannot
+	 * offer what {@link SingleIntegerValue#tryToSetValue} would then discard - the
+	 * empty field a new value opens on included.
 	 */
 	@Override
 	protected boolean isValueAcceptable() {
-		return _valueControl.getText().matches("-?\\d+");
+		return SingleIntegerValue.accepts(_valueControl.getText());
 	}
 
 	@Override
