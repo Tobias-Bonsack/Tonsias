@@ -1,4 +1,4 @@
-package de.tonsias.basis.data.access.test;
+package de.tonsias.basis.data.access.test.system;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -15,15 +15,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import de.tonsias.basis.data.access.osgi.impl.SaveServiceImpl;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
 import de.tonsias.basis.model.impl.Instanz;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.ISavePathOwner;
 
-public class SaveServiceImplTest {
+public class SaveServiceSystemTest {
 
-	private final SaveService _saveService = new SaveServiceImpl();
+	private final SaveService _saveService = RegisteredServices.get(SaveService.class);
 
 	@Test
 	void testSafeAsGson_writesToPathPlusKey() throws IOException {

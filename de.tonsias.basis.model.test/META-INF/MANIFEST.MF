@@ -8,8 +8,6 @@ Require-Bundle: de.tonsias.basis.model;bundle-version="0.2.0",
  junit-jupiter-api;bundle-version="5.11.1",
  junit-jupiter-engine;bundle-version="5.11.1",
  junit-jupiter-params;bundle-version="5.11.1",
- org.mockito.junit-jupiter;bundle-version="5.14.0",
- org.mockito.mockito-core;bundle-version="5.14.0",
  com.google.guava;bundle-version="33.1.0"
 Automatic-Module-Name: de.tonsias.basis.model.test
 Bundle-ActivationPolicy: lazy

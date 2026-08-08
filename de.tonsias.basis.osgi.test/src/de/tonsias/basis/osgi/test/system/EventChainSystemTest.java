@@ -39,6 +39,7 @@ import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleVa
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueNewEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.ValueChangeEvent;
 import de.tonsias.basis.osgi.test.E4ServiceContext;
+import de.tonsias.basis.osgi.test.EventRecorder;
 import de.tonsias.basis.osgi.util.ChangePropagationListener;
 import de.tonsias.basis.osgi.util.OsgiUtil;
 

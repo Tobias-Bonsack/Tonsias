@@ -1,4 +1,4 @@
-package de.tonsias.basis.data.access.test;
+package de.tonsias.basis.data.access.test.system;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tonsias.basis.data.access.osgi.impl.InstanceLocationUtil;
 
-public class InstanceLocationUtilTest {
+public class InstanceLocationSystemTest {
 
 	/**
 	 * The instance location is a URL whose path carries a leading slash on Windows

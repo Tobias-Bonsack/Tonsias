@@ -129,12 +129,16 @@ its own `jlink` run, from a JDK for that platform.
 Tonsias is an Eclipse PDE workspace. Import all projects, then set
 `target-platform/target-platform.target` as the active target platform — it is the
 single source of truth for the IDE **and** for the Tycho build (Eclipse SDK 4.36 plus
-Guava, Gson, JUnit Jupiter and Mockito from Maven Central). Nothing resolves before it
-is active.
+Guava, Gson and JUnit Jupiter from Maven Central). Nothing resolves before it is
+active.
 
 Launch `de.tonsias.basis.product/tonsias.product` to run the application, and run the
 test bundles as _Eclipse JUnit Plug-in Tests_. Launch configurations are deliberately
 not committed; create them from the wizards.
+
+The suite is made up of system tests only: each one drives the services the running
+application registers, on the real event bus and the real workspace files, with no
+mocking framework anywhere in the build.
 
 ## Repository layout
 

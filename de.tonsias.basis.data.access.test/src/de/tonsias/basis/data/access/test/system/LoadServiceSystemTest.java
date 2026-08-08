@@ -1,4 +1,4 @@
-package de.tonsias.basis.data.access.test;
+package de.tonsias.basis.data.access.test.system;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anEmptyMap;
@@ -18,8 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-import de.tonsias.basis.data.access.osgi.impl.LoadServiceImpl;
-import de.tonsias.basis.data.access.osgi.impl.SaveServiceImpl;
 import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
 import de.tonsias.basis.model.enums.SingleValueType;
@@ -27,11 +25,11 @@ import de.tonsias.basis.model.impl.Instanz;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 
-public class LoadServiceImplTest {
+public class LoadServiceSystemTest {
 
-	private final LoadService _loadService = new LoadServiceImpl();
+	private final LoadService _loadService = RegisteredServices.get(LoadService.class);
 
-	private final SaveService _saveService = new SaveServiceImpl();
+	private final SaveService _saveService = RegisteredServices.get(SaveService.class);
 
 	@Test
 	void testLoadFromGson_missingFileIsNull() {
