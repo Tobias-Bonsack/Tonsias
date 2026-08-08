@@ -7,6 +7,7 @@ import org.osgi.service.component.annotations.Component;
 
 import de.tonsias.basis.osgi.impl.DeltaServiceImpl;
 import de.tonsias.basis.osgi.intf.IDeltaService;
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 
 /**
  * There is exactly one delta log in the application, see
@@ -23,10 +24,17 @@ public class DeltaServiceContextFunction extends SharedInstanceContextFunction<I
 
 	@Override
 	protected IDeltaService create(IEclipseContext context) {
-		// the impl also injects IInstanzService and ISingleValueService, and those only
-		// activate once the bridge is registered - which happens while its own field is
-		// injected. That the bridge comes first is the field order and nothing else,
-		// see https://github.com/Tobias-Bonsack/Tonsias/issues/56
+		// The impl also injects IInstanzService and ISingleValueService. Those two are
+		// DS components with a mandatory reference to IEventBrokerBridge, so they only
+		// activate once the bridge stands in the service registry - and it gets there
+		// by a context being asked for it, which is what this line does. Asking here
+		// keeps the order written down: leaving it to the injection of the impl's own
+		// bridge field would make start-up depend on the order in which
+		// Class#getDeclaredFields() hands the three fields out, and that order is
+		// explicitly not guaranteed. See
+		// https://github.com/Tobias-Bonsack/Tonsias/issues/56
+		context.get(IEventBrokerBridge.class.getName());
+
 		DeltaServiceImpl deltaService = ContextInjectionFactory.make(DeltaServiceImpl.class, context);
 		deltaService.postConstruct();
 		return deltaService;
