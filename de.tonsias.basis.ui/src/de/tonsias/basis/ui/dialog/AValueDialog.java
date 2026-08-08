@@ -19,8 +19,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-import com.google.common.collect.BiMap;
-
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
@@ -119,24 +117,38 @@ public abstract class AValueDialog<T extends ISingleValue<?>, C extends Control>
 	 * Whether the value control currently holds something the type's
 	 * {@code tryToSetValue} would take. The base answer is yes - a text field of any
 	 * content is a string, and a check box cannot hold an invalid state; the numeric
-	 * dialogs answer with their pattern.
+	 * dialogs put the question to their type.
 	 */
 	protected boolean isValueAcceptable() {
 		return true;
 	}
 
 	/**
-	 * Puts the OK button into the state {@link #isValueAcceptable()} calls for.
-	 * Runs once the button bar exists and again from whatever listener the subclass
-	 * puts on its value control, so an untouched field is judged by the same rule as
-	 * a typed one. Before this, a dialog opened for a new value offered OK over the
-	 * empty field its own validation rejects, and pressing it created a value silently
-	 * left at the start value of its type.
+	 * Whether the name field holds a name that is free on this instanz. Names are
+	 * the inverse side of the {@code BiMap} in {@link IInstanz}, so a second value
+	 * of the same type under the same name would push the first one out of it. The
+	 * name a stored value already carries stays acceptable - it belongs to the value
+	 * being edited, and the dialog opens with it in the field.
+	 */
+	protected boolean isNameAcceptable() {
+		String owner = _instanz.getSingleValues(_type).inverse().get(_nameText.getText());
+		return owner == null || owner.equals(_value.map(v -> v.getOwnKey()).orElse(null));
+	}
+
+	/**
+	 * Puts the OK button into the state the dialog as a whole calls for: both
+	 * {@link #isNameAcceptable()} and {@link #isValueAcceptable()} have to be
+	 * content with what stands in the fields. Runs once the button bar exists and
+	 * again from the name listener and from whatever listener the subclass puts on
+	 * its value control, so an untouched field is judged by the same rule as a typed
+	 * one, and neither of the two checks can hand the button back for input the
+	 * other has just rejected.
 	 *
 	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/62">#62</a>
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/67">#67</a>
 	 */
 	protected void refreshOkButton() {
-		getButton(IDialogConstants.OK_ID).setEnabled(isValueAcceptable());
+		getButton(IDialogConstants.OK_ID).setEnabled(isNameAcceptable() && isValueAcceptable());
 	}
 
 	private void createInstanzPart(Composite composite) {
@@ -156,20 +168,17 @@ public abstract class AValueDialog<T extends ISingleValue<?>, C extends Control>
 		String name = _instanz.getSingleValues(_type).getOrDefault(keyString, "");
 		_nameText = TextFactory.newText(SWT.SEARCH).text(name).enabled(true).create(composite);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(_nameText);
-		// this listener still sets the OK button from the name alone, and
-		// refreshOkButton from the value alone, so the later of the two overrides the
-		// other's verdict. See https://github.com/Tobias-Bonsack/Tonsias/issues/67
+		// the listener marks the field and leaves the button to refreshOkButton, which
+		// is the one place that knows about both checks
 		_nameText.addModifyListener(modifyEvent -> {
-			BiMap<String, String> biMap = _instanz.getSingleValues(_type);
-			if (biMap.inverse().containsKey(_nameText.getText())) {
-				_nameText.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_RED));
-				_nameText.setMessage(_messages.dialog_value_usedName);
-				getButton(IDialogConstants.OK_ID).setEnabled(false);
-			} else {
+			if (isNameAcceptable()) {
 				_nameText.setBackground(null);
 				_nameText.setMessage("");
-				getButton(IDialogConstants.OK_ID).setEnabled(true);
+			} else {
+				_nameText.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_RED));
+				_nameText.setMessage(_messages.dialog_value_usedName);
 			}
+			refreshOkButton();
 		});
 	}
 
