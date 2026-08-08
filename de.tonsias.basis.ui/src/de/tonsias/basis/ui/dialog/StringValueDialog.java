@@ -17,7 +17,7 @@ import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.ui.i18n.Messages;
 
-public class StringValueDialog extends AValueDialog<SingleStringValue> {
+public class StringValueDialog extends AValueDialog<SingleStringValue, Text> {
 
 	public StringValueDialog(Shell parentShell, SingleStringValue stringValue, IInstanz instanz, Messages messages) {
 		super(parentShell, stringValue, instanz, messages);
@@ -34,7 +34,7 @@ public class StringValueDialog extends AValueDialog<SingleStringValue> {
 					_sVService.createNew(SingleStringValue.class, //
 							_instanz.getOwnKey(), //
 							_nameText.getText(), //
-							_valueText.getText(), //
+							_valueControl.getText(), //
 							IEventBrokerBridge.Type.POST//
 					));
 		} else {
@@ -51,7 +51,7 @@ public class StringValueDialog extends AValueDialog<SingleStringValue> {
 	}
 	
 	@Override
-	protected Text getValueText(Composite composite, String valueString) {
+	protected Text createValueControl(Composite composite, String valueString) {
 		Text text = TextFactory.newText(SWT.MULTI | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL).layoutData(GridDataFactory.fillDefaults().grab(true, true).create()).text(valueString).enabled(true).create(composite);
 		text.addKeyListener(new KeyAdapter() {
 			@Override

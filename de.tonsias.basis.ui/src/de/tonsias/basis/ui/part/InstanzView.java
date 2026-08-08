@@ -11,6 +11,7 @@ import org.eclipse.e4.ui.model.application.ui.basic.MPart;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.jface.widgets.ButtonFactory;
 import org.eclipse.jface.widgets.LabelFactory;
 import org.eclipse.jface.widgets.TextFactory;
 import org.eclipse.swt.SWT;
@@ -19,6 +20,8 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
@@ -200,6 +203,20 @@ public class InstanzView {
 					.layoutData(GridDataFactory.fillDefaults().grab(true, false).hint(SWT.DEFAULT, 100).create())//
 					.create(typeGroup);
 			break;
+		case SINGLE_BOOLEAN:
+			Button check = ButtonFactory.newButton(SWT.CHECK)//
+					.text("")//
+					.layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
+					.create(typeGroup);
+			check.setSelection(Boolean.TRUE.equals(singleValue.getValue()));
+			check.addSelectionListener(SelectionListener
+					.widgetSelectedAdapter(event -> onSingleValueSelect(singleValue, check)));
+			control = check;
+			break;
+		default:
+			// without a widget the listener below would fail on null - a new type has to
+			// bring its own case rather than break the whole view
+			throw new IllegalArgumentException("Unexpected value: " + singleValue.getClass());
 		}
 		createSaveKeyListener(control);
 
@@ -252,6 +269,21 @@ public class InstanzView {
 		Text text = (Text) event.widget;
 		text.setBackground(text.getDisplay().getSystemColor(SWT.COLOR_GREEN));
 		_logic.createModifySvJob(singleValue.getOwnKey(), text.getText());
+		_part.setDirty(true);
+	}
+
+	/**
+	 * The check box counterpart of {@link #onSingleValueModify} - a selection
+	 * carries its state on the widget instead of in the event, and the value goes
+	 * to the job as a {@link Boolean} rather than as text.
+	 */
+	private void onSingleValueSelect(ISingleValue<?> singleValue, Button check) {
+		if (_logic.isInDelete(singleValue)) {
+			return;
+		}
+
+		check.setBackground(check.getDisplay().getSystemColor(SWT.COLOR_GREEN));
+		_logic.createModifySvJob(singleValue.getOwnKey(), check.getSelection());
 		_part.setDirty(true);
 	}
 

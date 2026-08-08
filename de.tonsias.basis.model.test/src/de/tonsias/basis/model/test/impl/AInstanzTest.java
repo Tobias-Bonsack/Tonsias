@@ -1,6 +1,7 @@
 package de.tonsias.basis.model.test.impl;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anEmptyMap;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
@@ -99,6 +100,16 @@ public class AInstanzTest {
 	@EnumSource(SingleValueType.class)
 	void testGetSingleValues_sameMapPerType(SingleValueType type) {
 		assertThat(_instanz.getSingleValues(type), is(sameInstance(_instanz.getSingleValues(type))));
+	}
+
+	/**
+	 * The maps are created on demand rather than by a field initializer, because
+	 * Gson skips those. Every type has to answer with a usable map from the start.
+	 */
+	@ParameterizedTest
+	@EnumSource(SingleValueType.class)
+	void testGetSingleValues_isEmptyNotNullOnANewInstanz(SingleValueType type) {
+		assertThat(_instanz.getSingleValues(type), is(anEmptyMap()));
 	}
 
 	@Test

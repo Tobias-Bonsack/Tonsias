@@ -1,6 +1,7 @@
 package de.tonsias.basis.data.access.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anEmptyMap;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasEntry;
@@ -14,6 +15,8 @@ import java.nio.file.Path;
 import java.util.Collection;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import de.tonsias.basis.data.access.osgi.impl.LoadServiceImpl;
 import de.tonsias.basis.data.access.osgi.impl.SaveServiceImpl;
@@ -59,14 +62,34 @@ public class LoadServiceImplTest {
 		Instanz saved = new Instanz("load_bimap");
 		saved.addValuekeys(SingleValueType.SINGLE_STRING, java.util.Map.entry("sKey", "sName"));
 		saved.addValuekeys(SingleValueType.SINGLE_INTEGER, java.util.Map.entry("iKey", "iName"));
+		saved.addValuekeys(SingleValueType.SINGLE_BOOLEAN, java.util.Map.entry("bKey", "bName"));
 
 		_saveService.safeAsGson(saved, saved.getClass());
 		IInstanz loaded = _loadService.loadFromGson("instanz/load_bimap", Instanz.class);
 
 		assertThat(loaded.getSingleValues(SingleValueType.SINGLE_STRING), hasEntry("sKey", "sName"));
 		assertThat(loaded.getSingleValues(SingleValueType.SINGLE_INTEGER), hasEntry("iKey", "iName"));
+		assertThat(loaded.getSingleValues(SingleValueType.SINGLE_BOOLEAN), hasEntry("bKey", "bName"));
 		// the inverse view is what TreeLabelProvider looks a name up in
 		assertThat(loaded.getSingleValues(SingleValueType.SINGLE_STRING).inverse().get("sName"), is("sKey"));
+	}
+
+	/**
+	 * A file written before a {@code SingleValueType} existed carries no map for it,
+	 * and Gson constructs the instanz without running any field initializer. Every
+	 * type still has to answer with a usable map - {@code TreeNodeWrapper} and
+	 * {@code InstanzView} walk all of them and would fail on a null.
+	 */
+	@ParameterizedTest
+	@EnumSource(SingleValueType.class)
+	void testLoadFromGson_mapsMissingFromTheJsonAreEmptyNotNull(SingleValueType type) throws IOException {
+		Path file = InstanceLocation.resolve("instanz/load_legacy.json");
+		Files.createDirectories(file.getParent());
+		Files.writeString(file, "{\"_ownKey\":\"load_legacy\",\"_parentKey\":\"0\",\"_childKeys\":[]}");
+
+		IInstanz loaded = _loadService.loadFromGson("instanz/load_legacy", Instanz.class);
+
+		assertThat(loaded.getSingleValues(type), is(anEmptyMap()));
 	}
 
 	@Test

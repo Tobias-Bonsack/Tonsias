@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.impl.value.SingleBooleanValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
@@ -525,6 +526,25 @@ public class EventChainSystemTest {
 
 		assertThat(owner.getSingleValues(SingleValueType.SINGLE_INTEGER).get(value.getOwnKey()), is("number"));
 		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).keySet(), is(empty()));
+	}
+
+	/** The same for the third type, whose value travels as a {@code Boolean}. */
+	@Test
+	void testCreateSingleValue_boolean_usesItsOwnTypeThroughoutTheChain() {
+		IInstanz owner = _inse.createInstanz(ROOT, Type.SEND);
+		_recorder.clear();
+
+		SingleBooleanValue value = _svs.createNew(SingleBooleanValue.class, owner.getOwnKey(), "flag", true, Type.SEND);
+
+		assertThat(value.getValue(), is(true));
+		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
+				is(SingleValueType.SINGLE_BOOLEAN));
+		assertThat(_recorder.onlyDataOf(InstanzEventConstants.VALUE_LIST_CHANGE, LinkedValueChangeEvent.class)
+				._singleValuetype(), is(SingleValueType.SINGLE_BOOLEAN));
+
+		assertThat(owner.getSingleValues(SingleValueType.SINGLE_BOOLEAN).get(value.getOwnKey()), is("flag"));
+		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).keySet(), is(empty()));
+		assertThat(owner.getSingleValues(SingleValueType.SINGLE_INTEGER).keySet(), is(empty()));
 	}
 
 	/**

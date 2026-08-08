@@ -3,9 +3,13 @@ package de.tonsias.basis.ui.dialog;
 import java.util.Optional;
 
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.jface.widgets.TextFactory;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
@@ -13,7 +17,7 @@ import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.ui.i18n.Messages;
 
-public class IntegerValueDialog extends AValueDialog<SingleIntegerValue> {
+public class IntegerValueDialog extends AValueDialog<SingleIntegerValue, Text> {
 
 	public IntegerValueDialog(Shell parentShell, SingleIntegerValue stringValue, IInstanz instanz, Messages messages) {
 		super(parentShell, stringValue, instanz, messages);
@@ -24,13 +28,19 @@ public class IntegerValueDialog extends AValueDialog<SingleIntegerValue> {
 	}
 
 	@Override
+	protected Text createValueControl(Composite composite, String valueString) {
+		return TextFactory.newText(SWT.None).text(valueString)
+				.layoutData(GridDataFactory.fillDefaults().grab(true, false).create()).enabled(true).create(composite);
+	}
+
+	@Override
 	protected Control createDialogArea(Composite parent) {
 		Control control = super.createDialogArea(parent);
 
-		_valueText.addModifyListener(event -> {
-			if (_valueText.getText().isBlank() || !isInteger(_valueText.getText())) {
+		_valueControl.addModifyListener(event -> {
+			if (_valueControl.getText().isBlank() || !isInteger(_valueControl.getText())) {
 				getButton(IDialogConstants.OK_ID).setEnabled(false);
-			} else if (isInteger(_valueText.getText())) {
+			} else if (isInteger(_valueControl.getText())) {
 				getButton(IDialogConstants.OK_ID).setEnabled(true);
 			}
 		});
@@ -45,7 +55,7 @@ public class IntegerValueDialog extends AValueDialog<SingleIntegerValue> {
 					_sVService.createNew(SingleIntegerValue.class, //
 							_instanz.getOwnKey(), //
 							_nameText.getText(), //
-							_valueText.getText(), //
+							_valueControl.getText(), //
 							IEventBrokerBridge.Type.POST//
 					));
 		} else {

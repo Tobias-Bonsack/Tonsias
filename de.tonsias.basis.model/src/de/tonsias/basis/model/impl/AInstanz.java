@@ -30,9 +30,14 @@ public abstract class AInstanz implements IInstanz {
 
 	private Set<String> _childKeys = Collections.synchronizedSet(new HashSet<String>());
 
-	private BiMap<String, String> _singleStringKeyValueMap = HashBiMap.create();
+	// no field initializers: Gson constructs an AInstanz without a constructor and
+	// would leave a map absent from the json at null. getSingleValues is therefore
+	// the single place that creates one, for every type alike.
+	private BiMap<String, String> _singleStringKeyValueMap;
 
-	private BiMap<String, String> _singleIntegerKeyValueMap = HashBiMap.create();
+	private BiMap<String, String> _singleIntegerKeyValueMap;
+
+	private BiMap<String, String> _singleBooleanKeyValueMap;
 
 	public AInstanz(String key) {
 		this._ownKey = key;
@@ -44,12 +49,14 @@ public abstract class AInstanz implements IInstanz {
 	}
 
 	public AInstanz(String _parentKey, String _ownKey, Set<String> _childKeys,
-			BiMap<String, String> _singleStringKeyValueMap, BiMap<String, String> _singleIntegerKeyValueMap) {
+			BiMap<String, String> _singleStringKeyValueMap, BiMap<String, String> _singleIntegerKeyValueMap,
+			BiMap<String, String> _singleBooleanKeyValueMap) {
 		this._parentKey = _parentKey;
 		this._ownKey = _ownKey;
 		this._childKeys = _childKeys;
 		this._singleStringKeyValueMap = _singleStringKeyValueMap;
 		this._singleIntegerKeyValueMap = _singleIntegerKeyValueMap;
+		this._singleBooleanKeyValueMap = _singleBooleanKeyValueMap;
 	}
 
 	@Override
@@ -104,9 +111,20 @@ public abstract class AInstanz implements IInstanz {
 	public BiMap<String, String> getSingleValues(SingleValueType type) {
 		switch (type) {
 		case SINGLE_STRING:
+			if (_singleStringKeyValueMap == null) {
+				_singleStringKeyValueMap = HashBiMap.create();
+			}
 			return _singleStringKeyValueMap;
 		case SINGLE_INTEGER:
+			if (_singleIntegerKeyValueMap == null) {
+				_singleIntegerKeyValueMap = HashBiMap.create();
+			}
 			return _singleIntegerKeyValueMap;
+		case SINGLE_BOOLEAN:
+			if (_singleBooleanKeyValueMap == null) {
+				_singleBooleanKeyValueMap = HashBiMap.create();
+			}
+			return _singleBooleanKeyValueMap;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + type);
 		}

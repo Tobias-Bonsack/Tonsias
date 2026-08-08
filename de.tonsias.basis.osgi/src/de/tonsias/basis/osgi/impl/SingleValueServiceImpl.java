@@ -23,6 +23,7 @@ import de.tonsias.basis.data.access.osgi.intf.DeleteService;
 import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.impl.value.SingleBooleanValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.ISingleValue;
@@ -117,6 +118,8 @@ public class SingleValueServiceImpl implements ISingleValueService {
 			return (E) new SingleStringValue(key);
 		case SINGLE_INTEGER:
 			return (E) new SingleIntegerValue(key);
+		case SINGLE_BOOLEAN:
+			return (E) new SingleBooleanValue(key);
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + type);
 		}

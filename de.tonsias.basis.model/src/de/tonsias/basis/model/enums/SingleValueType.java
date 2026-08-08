@@ -3,14 +3,18 @@ package de.tonsias.basis.model.enums;
 import java.util.Arrays;
 import java.util.Optional;
 
+import de.tonsias.basis.model.impl.value.SingleBooleanValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 
 public enum SingleValueType {
 
+	// new constants belong at the end - CreateInstanzDialog maps its combo box onto
+	// the ordinals, so reordering would move existing selections
 	SINGLE_STRING(SingleStringValue.class, "single_value/string/"),
-	SINGLE_INTEGER(SingleIntegerValue.class, "single_value/integer/");
+	SINGLE_INTEGER(SingleIntegerValue.class, "single_value/integer/"),
+	SINGLE_BOOLEAN(SingleBooleanValue.class, "single_value/boolean/");
 
 	private final Class<? extends ISingleValue<?>> _clazz;
 
