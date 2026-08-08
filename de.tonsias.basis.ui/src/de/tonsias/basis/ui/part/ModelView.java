@@ -31,6 +31,7 @@ import org.osgi.service.event.Event;
 
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleBooleanValue;
+import de.tonsias.basis.model.impl.value.SingleFloatValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
@@ -48,6 +49,7 @@ import de.tonsias.basis.osgi.util.OsgiUtil;
 import de.tonsias.basis.osgi.intf.non.service.PreferenceEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 import de.tonsias.basis.ui.dialog.BooleanValueDialog;
+import de.tonsias.basis.ui.dialog.FloatValueDialog;
 import de.tonsias.basis.ui.dialog.IntegerValueDialog;
 import de.tonsias.basis.ui.dialog.StringValueDialog;
 import de.tonsias.basis.ui.handler.CreateInstanzOperation;
@@ -284,6 +286,31 @@ public class ModelView {
 				int open = dialog.open();
 				if (open == Window.OK) {
 					SingleBooleanValue singleValue = dialog.getSingleValue();
+					new TreeNodeWrapper(singleValue, parent);
+					_treeViewer.refresh(parent);
+				}
+
+			}
+		});
+
+		MenuItem createFloatValueItem = new MenuItem(singleValueMenu, SWT.None);
+		createFloatValueItem.setText(_messages.constant_type_float);
+
+		createFloatValueItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				TreeItem[] selection = tree.getSelection();
+				if (selection.length != 1) {
+					return;
+				}
+
+				TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
+				IInstanz parentObject = (IInstanz) parent.getObject();
+
+				FloatValueDialog dialog = new FloatValueDialog(new Shell(), parentObject, _messages);
+				int open = dialog.open();
+				if (open == Window.OK) {
+					SingleFloatValue singleValue = dialog.getSingleValue();
 					new TreeNodeWrapper(singleValue, parent);
 					_treeViewer.refresh(parent);
 				}
