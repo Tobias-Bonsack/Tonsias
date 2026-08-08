@@ -20,6 +20,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 
+import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IDeltaService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
@@ -143,6 +144,31 @@ public class ContextFunctionSystemTest {
 		ProductRuntime.deltaService().saveDeltas();
 
 		assertThat(fromPart.getDeltas(), contains(IDeltaService.START_EVENT));
+	}
+
+	/**
+	 * A context that asks for nothing but the delta service still gets one that is
+	 * fully built.
+	 * <p>
+	 * The impl injects {@code IInstanzService} and {@code ISingleValueService}
+	 * alongside the bridge, and those two only activate once the bridge stands in
+	 * the registry - so the function asks for the bridge before it builds, instead
+	 * of leaving that to the order in which the injector walks the impl's fields.
+	 * Missing one of the two would not leave a field null, it would fail the
+	 * injection outright, so what the save reaches here is the whole of it.
+	 * </p>
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/56">#56</a>
+	 */
+	@Test
+	void testDeltaService_isBuiltWithTheBridgeAndBothServices() {
+		IDeltaService fromPart = injectedInto(partContext("only the delta service"), IDeltaService.class);
+		IInstanz created = _inse.createInstanz(ROOT, Type.SEND);
+
+		fromPart.saveDeltas();
+
+		assertThat(OsgiUtil.getService(IEventBrokerBridge.class), is(notNullValue()));
+		assertThat(ProductRuntime.instanzFileExists(created.getOwnKey()), is(true));
 	}
 
 	/**

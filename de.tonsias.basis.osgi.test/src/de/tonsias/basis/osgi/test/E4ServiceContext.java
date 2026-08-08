@@ -26,8 +26,9 @@ import de.tonsias.basis.osgi.util.ChangePropagationListener;
  * activating.
  * </p>
  * <p>
- * Requesting the two keys once from the OSGi service context is enough: both
- * context functions register their result as an OSGi service, after which
+ * Requesting {@link IDeltaService} once from the OSGi service context is
+ * enough: its context function asks for the bridge before building, so both
+ * functions run and register their result as an OSGi service, after which
  * Declarative Services can satisfy the dependent components and
  * {@code OsgiUtil.getService(..)} resolves as it does in the product.
  * </p>
@@ -57,8 +58,10 @@ public final class E4ServiceContext {
 		BundleContext bundleContext = FrameworkUtil.getBundle(E4ServiceContext.class).getBundleContext();
 		IEclipseContext context = EclipseContextFactory.getServiceContext(bundleContext);
 
-		// order matters: the delta service depends on the bridge
-		context.get(IEventBrokerBridge.class.getName());
+		// asking for the delta service is enough: DeltaServiceContextFunction asks for
+		// the bridge before it builds, so the bridge is registered on the way. Nothing
+		// here repeats that order - if it were dropped over there, the whole suite
+		// would stop coming up right here.
 		context.get(IDeltaService.class.getName());
 
 		// Application.e4xmi contributes this as an addon, which is what makes its
