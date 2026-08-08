@@ -5,17 +5,16 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.concurrent.CompletionException;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
-import org.osgi.service.event.Event;
 
 import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.model.enums.SingleValueType;
@@ -54,6 +53,9 @@ public final class ProductRuntime {
 	public static final String ROOT = "0";
 
 	public static final String INSTANZ_PATH = "instanz/";
+
+	/** keeps a {@link #block(Path) blocked} directory non-empty */
+	private static final String IN_THE_WAY = "in-the-way.txt";
 
 	private ProductRuntime() {
 	}
@@ -106,20 +108,49 @@ public final class ProductRuntime {
 	 * Writes out whatever is pending and empties the delta log. A test that leaves
 	 * the log filled would otherwise have its events folded into the next test's
 	 * save.
+	 * <p>
+	 * {@code saveDeltas()} empties its log whatever the save ran into, so a test
+	 * that fabricated a delete for something that was never written does not drag
+	 * the rest of the bundle down with it. What it threw is of no interest here -
+	 * the test that cares about it asserts on it itself.
+	 * </p>
 	 */
 	public static void flushDeltas() {
 		try {
 			deltaService().saveDeltas();
 		} catch (CompletionException e) {
-			// A delete of something that was never written makes saveDeltas() give up
-			// before it resets its log - a test that fabricates a delete event lands
-			// here. Left alone, the same failure would repeat on every save that
-			// follows, so the log is put back into its start state by hand. The
-			// application itself has no such rescue, see
-			// https://github.com/Tobias-Bonsack/Tonsias/issues/53
-			Collection<Event> deltas = deltaService().getDeltas();
-			deltas.clear();
-			deltas.add(IDeltaService.START_EVENT);
+			// the log is empty again either way
+		}
+	}
+
+	// ---------- making a delete fail ----------
+
+	/**
+	 * Puts something in the way of {@code path}: a directory with a file in it,
+	 * where the services expect a JSON file. Deleting that fails with
+	 * {@code DirectoryNotEmptyException} however often it is tried - a delete that
+	 * merely finds nothing has reached its goal and is no failure at all, so it is
+	 * no use for testing what a save does when a step of it goes wrong.
+	 * <p>
+	 * Whoever blocks a path {@link #unblock(Path) unblocks} it again, the workspace
+	 * is shared by every test in the bundle.
+	 * </p>
+	 */
+	public static void block(Path path) {
+		try {
+			Files.createDirectories(path);
+			Files.writeString(path.resolve(IN_THE_WAY), "");
+		} catch (IOException e) {
+			throw new AssertionError("could not block " + path, e);
+		}
+	}
+
+	public static void unblock(Path path) {
+		try {
+			Files.deleteIfExists(path.resolve(IN_THE_WAY));
+			Files.deleteIfExists(path);
+		} catch (IOException e) {
+			throw new AssertionError("could not unblock " + path, e);
 		}
 	}
 

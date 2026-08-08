@@ -202,27 +202,34 @@ public class SingleValueServiceImpl implements ISingleValueService {
 	 * The delta bookkeeping only knows keys, the delete service works on files -
 	 * and which folder a value lives in depends on its type. A value that is no
 	 * longer cached no longer tells its type, so every folder is tried until one of
-	 * them holds the file.
+	 * them holds the file. Finding it in none of them is no failure either: a value
+	 * created and deleted before any save never got written, and no file is what
+	 * the delete was after, see
+	 * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/53">#53</a>.
 	 */
 	private void deleteFile(String key) throws IOException {
 		ISingleValue<?> cached = _cache.get(key);
 		if (cached != null) {
-			_deleteService.deleteFile(cached.getPath() + key + ".json");
+			deleteIfPresent(cached.getPath() + key + ".json");
 			return;
 		}
 
-		IOException notFound = null;
 		for (SingleValueType type : SingleValueType.values()) {
-			try {
-				_deleteService.deleteFile(type.getPath() + key + ".json");
+			if (deleteIfPresent(type.getPath() + key + ".json")) {
 				return;
-			} catch (NoSuchFileException e) {
-				notFound = e;
 			}
 		}
+	}
 
-		if (notFound != null) {
-			throw notFound;
+	/**
+	 * @return whether there was a file at that path - which is the only way the
+	 *         folder search can tell it has found the right folder
+	 */
+	private boolean deleteIfPresent(String path) throws IOException {
+		try {
+			return _deleteService.deleteFile(path);
+		} catch (NoSuchFileException e) {
+			return false;
 		}
 	}
 

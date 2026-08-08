@@ -11,6 +11,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -383,20 +384,38 @@ public class SingleValueServiceSystemTest {
 		assertThat(ProductRuntime.valueFileExists(SingleValueType.SINGLE_INTEGER, key), is(false));
 	}
 
+	/**
+	 * Coming up empty in every folder is no failure: no file is the state the
+	 * delete is after, and a value created and dropped again before any save never
+	 * had one.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/53">#53</a>
+	 */
 	@Test
-	void testDeleteAll_aValueInNoFolderAtAllFails() {
-		CompletionException thrown = assertThrows(CompletionException.class,
-				() -> _svs.deleteAll(Set.of("no-such-key")));
-
-		assertThat(List.of(thrown.getSuppressed()), hasSize(1));
+	void testDeleteAll_aValueInNoFolderAtAllIsNoFailure() {
+		assertThat(_svs.deleteAll(Set.of("no-such-key")), is(true));
 	}
 
+	/**
+	 * What does fail still has to surface, and one failure must not hide the others
+	 * - {@code saveDeltas} hands over a whole set at once.
+	 */
 	@Test
 	void testDeleteAll_collectsEveryFailureInOneException() {
-		CompletionException thrown = assertThrows(CompletionException.class,
-				() -> _svs.deleteAll(Set.of("no-such-key-1", "no-such-key-2")));
+		Path firstBlocked = ProductRuntime.valueFile(SingleValueType.SINGLE_STRING, "blocked-1");
+		Path secondBlocked = ProductRuntime.valueFile(SingleValueType.SINGLE_STRING, "blocked-2");
+		ProductRuntime.block(firstBlocked);
+		ProductRuntime.block(secondBlocked);
 
-		assertThat(List.of(thrown.getSuppressed()), hasSize(2));
+		try {
+			CompletionException thrown = assertThrows(CompletionException.class,
+					() -> _svs.deleteAll(Set.of("blocked-1", "blocked-2")));
+
+			assertThat(List.of(thrown.getSuppressed()), hasSize(2));
+		} finally {
+			ProductRuntime.unblock(firstBlocked);
+			ProductRuntime.unblock(secondBlocked);
+		}
 	}
 
 	@Test

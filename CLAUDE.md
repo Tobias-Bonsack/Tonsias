@@ -66,7 +66,7 @@ delta.view.*         the Delta view feature: logic / ui (fragment.e4xmi) / ui.te
 
 - Topics and payload records live together in `…intf.non.service.*EventConstants`. **Adding a topic means adding its payload record next to it and registering it in `KNOWN_DELTA`.**
 - `ChangePropagationListener` keeps both ends of every relation in sync and re-enters the services with `Type.SEND`, so **a careless new listener can loop**. The services guard by returning `false` without firing when already in the requested state — keep that.
-- `IDeltaService` accumulates every delta since the last save. `saveDeltas()` folds the log into four key sets, calls the services, and resets. `OPEN_OPERATION`/`CLOSE_OPERATION` bracket an operation; `SAVE_ALL` triggers the save; the Delta view renders the log using those brackets.
+- `IDeltaService` accumulates every delta since the last save. `saveDeltas()` folds the log into four key sets, calls the services, and resets — **it resets in a `finally`**, and a failing step is collected as a suppressed exception rather than ending the save, so one bad delete cannot wedge every save that follows. A delete that finds no file counts as done. `OPEN_OPERATION`/`CLOSE_OPERATION` bracket an operation; `SAVE_ALL` triggers the save; the Delta view renders the log using those brackets.
 
 **Dependency injection — three mechanisms coexist.**
 

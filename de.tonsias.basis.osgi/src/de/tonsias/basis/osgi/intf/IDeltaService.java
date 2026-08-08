@@ -14,6 +14,13 @@ public interface IDeltaService extends EventHandler {
 
 	/**
 	 * Save all changes on the model.
+	 * <p>
+	 * Every part of the save is attempted, and the log is emptied either way - it
+	 * describes the difference against the disk, and a set that was offered once is
+	 * not offered again. What failed is carried out as suppressed exceptions of a
+	 * {@link java.util.concurrent.CompletionException}, so a caller can report it,
+	 * but the next save starts from what happened after this one.
+	 * </p>
 	 */
 	void saveDeltas();
 

@@ -1,6 +1,7 @@
 package de.tonsias.basis.osgi.impl;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -188,6 +189,10 @@ public class InstanzServiceImpl implements IInstanzService {
 			try {
 				// the delete service works on files, the delta bookkeeping only knows keys
 				_deleteService.deleteFile(PATH + key + ".json");
+			} catch (NoSuchFileException e) {
+				// no file is the end state a delete is after - an instanz created and
+				// dropped again before any save never had one, see
+				// https://github.com/Tobias-Bonsack/Tonsias/issues/53
 			} catch (IOException e) {
 				ex.addSuppressed(e);
 			}
