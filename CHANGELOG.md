@@ -47,6 +47,11 @@ Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
 
 - Mockito, from every bundle manifest and from the target platform. Nothing uses a
   mocking framework any more.
+- The all-fields constructor of `AInstanz`. Nothing ever called it: instanzen are built
+  with `new Instanz(key)` and filled through `addValuekeys(..)`, and Gson constructs the
+  class without any constructor. It grew a parameter with every new value type, and
+  whoever had used it would have bypassed the lazy map creation in `getSingleValues` and
+  could have left a map at `null` ([#61]).
 
 ### Fixed — nothing yet, but found
 
@@ -58,6 +63,7 @@ same failure ([#53]).
 
 [#52]: https://github.com/Tobias-Bonsack/Tonsias/issues/52
 [#53]: https://github.com/Tobias-Bonsack/Tonsias/issues/53
+[#61]: https://github.com/Tobias-Bonsack/Tonsias/issues/61
 
 ## [0.1.0] - 2026-08-07
 
