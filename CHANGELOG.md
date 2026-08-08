@@ -11,6 +11,11 @@ Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
 
 ### Added
 
+- `SingleBooleanValue`, a third attribute type for yes-or-no attributes, alongside
+  string and integer. It is created from the model view or while creating an instanz,
+  shown and toggled as a check box in the instanz view, and stored under
+  `single_value/boolean/`. Only the two literals `true` and `false` are accepted, so a
+  typo is rejected rather than silently clearing the value.
 - `SingleFloatValue`, a fourth attribute type for decimal numbers, alongside string,
   integer and boolean. It is created from the model view or while creating an instanz,
   edited in the instanz view, and stored under `single_value/float/`. Only decimal
