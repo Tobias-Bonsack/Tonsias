@@ -62,8 +62,8 @@ and revocable until it is saved.
 
 - A headless **Tycho** build mirrors the IDE: `.\build.ps1` compiles every bundle, runs
   every test bundle inside a real Equinox, and materialises the runnable product.
-- **282 tests** across five test bundles cover the model, the JSON persistence, the
-  services, the view logic and the complete event chain. All of them run inside OSGi.
+- The test bundles cover the model, the JSON persistence, the services, the view logic
+  and the complete event chain. All of them run inside OSGi.
 - GitHub Actions builds every push and pull request on Windows and posts the per-bundle
   test results as a single, edited-in-place pull request comment.
 
@@ -73,9 +73,13 @@ and revocable until it is saved.
    [0.1.0 release](https://github.com/Tobias-Bonsack/Tonsias/releases/tag/v0.1.0).
 2. Unzip it anywhere and start `Tonsias.exe`.
 
-The launcher does not bundle a JVM: **Java 24 or newer must be on the `PATH`**, because
-`JavaSE-24` is the highest execution environment the bundles declare. The model is
-written to the application's instance location — the path is shown in
+From 0.2.0 on the zip is self-contained: it carries its own Java runtime in `jre/`
+next to the launcher, so **nothing has to be installed** and the launcher finds a VM
+without a `-vm` argument. The 0.1.0 zip does not — it needs Java 24 or newer on the
+`PATH`, or an explicit `Tonsias.exe -vm <jdk>\bin\javaw.exe`, and starts silently into
+nothing without either.
+
+The model is written to the application's instance location — the path is shown in
 `Window > Preferences` and can be pointed elsewhere with `-data <directory>`.
 
 `de.tonsias.basis.product-0.1.0.zip` in the same release is the p2 repository, for
@@ -106,11 +110,19 @@ The build produces, under `de.tonsias.basis.product/target`:
 | Path                                              | What it is                       |
 | ------------------------------------------------- | -------------------------------- |
 | `products/tonsias/win32/win32/x86_64/Tonsias.exe` | the launcher — run this          |
+| `products/tonsias/win32/win32/x86_64/jre`         | the bundled Java runtime         |
 | `products/tonsias-win32.win32.x86_64.zip`         | the distributable                |
 | `de.tonsias.basis.product-<version>.zip`          | the p2 repository                |
 
+`jre` is built by `jlink` from the JDK that runs the build and makes the installation
+independent of the machine it lands on — the launcher searches for a VM there when no
+`-vm` is given. It is what makes the zip 76 MB rather than 8. Because the runtime has to
+be in place before the zip is written, `archive-products` runs at `verify` rather than at
+`package`; `mvn package` alone therefore leaves the product unarchived.
+
 Only `win32/win32/x86_64` is built; add `<environment>`s to
-`target-platform-configuration` in the parent `pom.xml` for other platforms.
+`target-platform-configuration` in the parent `pom.xml` for other platforms — each needs
+its own `jlink` run, from a JDK for that platform.
 
 ## Developing in the Eclipse IDE
 

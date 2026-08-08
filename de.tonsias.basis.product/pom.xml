@@ -15,6 +15,26 @@
 	<version>0.2.0-SNAPSHOT</version>
 	<packaging>eclipse-repository</packaging>
 
+	<properties>
+		<!--
+			The materialized product for the single environment the target
+			platform declares. Add a jlink run per environment here when more
+			<environment>s are added to the parent pom.
+		-->
+		<tonsias.product.dir>${project.build.directory}/products/tonsias/win32/win32/x86_64</tonsias.product.dir>
+		<!--
+			java.se plus every non-tool jdk.* module - the set a JRE image
+			traditionally contained. Equinox derives the packages the system
+			bundle exports from the modules actually in the image, so a module
+			left out here is a package the bundles cannot import: without
+			jdk.xml.dom, for instance, org.w3c.dom.css is missing and
+			org.eclipse.e4.ui.css.swt does not resolve. Only the development
+			tools (jdk.compiler, jdk.jlink, jdk.jshell, ...) are left out, which
+			no bundle imports.
+		-->
+		<tonsias.jre.modules>java.se,jdk.accessibility,jdk.charsets,jdk.crypto.cryptoki,jdk.crypto.ec,jdk.dynalink,jdk.httpserver,jdk.jsobject,jdk.localedata,jdk.management,jdk.management.agent,jdk.naming.dns,jdk.naming.rmi,jdk.net,jdk.sctp,jdk.security.auth,jdk.security.jgss,jdk.unsupported,jdk.xml.dom,jdk.zipfs</tonsias.jre.modules>
+	</properties>
+
 	<build>
 		<plugins>
 			<!--
@@ -35,8 +55,15 @@
 							<goal>materialize-products</goal>
 						</goals>
 					</execution>
+					<!--
+						Off its default phase (package) so that the jlink run
+						below, which is bound in between, ends up inside the
+						zip. The whole product therefore only exists from
+						"verify" on - "mvn package" leaves it unarchived.
+					-->
 					<execution>
 						<id>archive-products</id>
+						<phase>verify</phase>
 						<goals>
 							<goal>archive-products</goal>
 						</goals>
@@ -49,6 +76,62 @@
 						<macosx>tar.gz</macosx>
 					</formats>
 				</configuration>
+			</plugin>
+
+			<!--
+				The product declares no <vm>, so no -vm reaches the Tonsias.ini
+				and the native launcher has to find a JVM itself. Its search
+				order is: -vm argument, -vm in the ini, a "jre" directory next
+				to the launcher, then the PATH. On a machine without java on
+				the PATH the launcher used to give up silently - exit code 1,
+				no output, no workspace.
+
+				jlink builds that "jre" directory straight into the materialized
+				product, which makes the installation self-contained and the
+				launcher find its VM at step three. It runs after
+				materialize-products (package) and before archive-products
+				(verify), so the runtime is part of the distributable.
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>bundle-jre</id>
+						<phase>pre-integration-test</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<condition property="tonsias.jlink" value="${java.home}/bin/jlink.exe"
+									else="${java.home}/bin/jlink">
+									<os family="windows" />
+								</condition>
+								<!-- jlink refuses to write into an existing directory. -->
+								<delete dir="${tonsias.product.dir}/jre" />
+								<exec executable="${tonsias.jlink}" failonerror="true">
+									<arg value="--add-modules" />
+									<arg value="${tonsias.jre.modules}" />
+									<!--
+										Debug info stays in on purpose:
+										stripping it costs the JDK frames of
+										every stack trace their line numbers,
+										and the .log of the running application
+										is where bug reports come from.
+									-->
+									<arg value="--no-header-files" />
+									<arg value="--no-man-pages" />
+									<arg value="--compress" />
+									<arg value="zip-6" />
+									<arg value="--output" />
+									<arg value="${tonsias.product.dir}/jre" />
+								</exec>
+							</target>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
