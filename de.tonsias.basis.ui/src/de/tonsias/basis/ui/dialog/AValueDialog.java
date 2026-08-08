@@ -42,10 +42,9 @@ public abstract class AValueDialog<T extends ISingleValue<?>, C extends Control>
 
 	IInstanzService _iService = OsgiUtil.getService(IInstanzService.class);
 
-	// empty while a new value is being created, and then set by okPressed. Present
-	// means an existing value is being edited - which today only the tests do, and
-	// where okPressed writes the name back but not the value. See
-	// https://github.com/Tobias-Bonsack/Tonsias/issues/72
+	// empty while a new value is being created, and set by okPressed once it is.
+	// Present means an existing value is being edited - a path ModelView does not
+	// open today, it only ever creates, so the tests are the only ones on it
 	Optional<T> _value;
 
 	IInstanz _instanz;
