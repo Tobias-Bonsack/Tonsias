@@ -32,7 +32,11 @@ public abstract class AInstanz implements IInstanz {
 
 	// no field initializers: Gson constructs an AInstanz without a constructor and
 	// would leave a map absent from the json at null. getSingleValues is therefore
-	// the single place that creates one, for every type alike.
+	// the single place that creates one, for every type alike - and there is
+	// deliberately no constructor taking the maps, which would both bypass that and
+	// have to grow a parameter with every new SingleValueType. Fill an instanz
+	// through addValuekeys instead. See
+	// https://github.com/Tobias-Bonsack/Tonsias/issues/61
 	private BiMap<String, String> _singleStringKeyValueMap;
 
 	private BiMap<String, String> _singleIntegerKeyValueMap;
@@ -45,21 +49,11 @@ public abstract class AInstanz implements IInstanz {
 		this._ownKey = key;
 	}
 
+	// unreachable too: Instanz is the only subclass and passes on the key alone.
+	// See https://github.com/Tobias-Bonsack/Tonsias/issues/65
 	public AInstanz(String key, String parent) {
 		this._ownKey = key;
 		this._parentKey = parent;
-	}
-
-	public AInstanz(String _parentKey, String _ownKey, Set<String> _childKeys,
-			BiMap<String, String> _singleStringKeyValueMap, BiMap<String, String> _singleIntegerKeyValueMap,
-			BiMap<String, String> _singleBooleanKeyValueMap, BiMap<String, String> _singleFloatKeyValueMap) {
-		this._parentKey = _parentKey;
-		this._ownKey = _ownKey;
-		this._childKeys = _childKeys;
-		this._singleStringKeyValueMap = _singleStringKeyValueMap;
-		this._singleIntegerKeyValueMap = _singleIntegerKeyValueMap;
-		this._singleBooleanKeyValueMap = _singleBooleanKeyValueMap;
-		this._singleFloatKeyValueMap = _singleFloatKeyValueMap;
 	}
 
 	@Override
