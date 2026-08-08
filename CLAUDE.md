@@ -70,7 +70,7 @@ delta.view.*         the Delta view feature: logic / ui (fragment.e4xmi) / ui.te
 
 **Dependency injection — three mechanisms coexist.**
 
-1. **DS `@Component` + `@Reference`** for the plain services. Components are declared by **hand-maintained XML in `OSGI-INF/` referenced from `Service-Component:`** — adding one means both edits. (`de.tonsias.basis.osgi/META-INF/MANIFEST.MF` still lists two `…osgi.util.*.xml` files that do not exist.)
+1. **DS `@Component` + `@Reference`** for the plain services. Components are declared by **hand-maintained XML in `OSGI-INF/` referenced from `Service-Component:`** — adding one means both edits.
 2. **`ContextFunction`** for services needing the e4 context (`EventBrokerContextFunction`, `DeltaServiceContextFunction`). Both extend `SharedInstanceContextFunction`, which builds the instance once out of the bundle's own service context and answers every later `compute(..)` out of the service registry — an e4 context caches per *asking* context, so a per-call instance would give every part its own delta log.
 3. **`OsgiUtil.lazyLoading(Class, Consumer)`** for code constructed before OSGi is ready (`ChangePropagationListener`).
 
