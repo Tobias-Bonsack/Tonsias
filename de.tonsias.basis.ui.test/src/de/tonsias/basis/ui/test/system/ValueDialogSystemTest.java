@@ -1,0 +1,282 @@
+package de.tonsias.basis.ui.test.system;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import de.tonsias.basis.model.impl.value.SingleFloatValue;
+import de.tonsias.basis.model.impl.value.SingleIntegerValue;
+import de.tonsias.basis.model.interfaces.IInstanz;
+import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
+import de.tonsias.basis.osgi.test.ProductRuntime;
+import de.tonsias.basis.ui.dialog.AValueDialog;
+import de.tonsias.basis.ui.dialog.BooleanValueDialog;
+import de.tonsias.basis.ui.dialog.FloatValueDialog;
+import de.tonsias.basis.ui.dialog.IntegerValueDialog;
+import de.tonsias.basis.ui.dialog.StringValueDialog;
+import de.tonsias.basis.ui.i18n.Messages;
+
+/**
+ * The value dialogs on a real {@link Display}, built the way JFace builds them:
+ * {@code Window.create()} runs {@code createDialogArea} and
+ * {@code createButtonBar}, which is everything that happens before the user
+ * sees the dialog. Nothing is called by hand afterwards - the widgets are found
+ * on the shell and read the way a user would see them.
+ * <p>
+ * What is checked is the one promise the OK button makes: it is offered for
+ * exactly the input the type's {@code tryToSetValue} would take. It used to
+ * make that promise only from the first keystroke on, so a dialog opened for a
+ * new value offered OK over an empty field and created a value silently left at
+ * the start value of its type. See
+ * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/62">#62</a>.
+ * </p>
+ */
+public class ValueDialogSystemTest {
+
+	private static Display _display;
+
+	private static Shell _shell;
+
+	private IInstanz _instanz;
+
+	private Messages _messages;
+
+	private final List<Dialog> _built = new ArrayList<>();
+
+	@BeforeAll
+	static void beforeAll() {
+		_display = Display.getDefault();
+		_shell = new Shell(_display);
+	}
+
+	@AfterAll
+	static void afterAll() {
+		if (_shell != null && !_shell.isDisposed()) {
+			_shell.dispose();
+		}
+	}
+
+	@BeforeEach
+	void beforeEach() {
+		ProductRuntime.start();
+		// the runtime is shared by the whole bundle, so every dialog gets an instanz of
+		// its own rather than the root everyone else writes to
+		_instanz = ProductRuntime.instanzService().createInstanz(ProductRuntime.ROOT, Type.SEND);
+		_messages = messages();
+	}
+
+	@AfterEach
+	void afterEach() {
+		_built.forEach(Dialog::close);
+		_built.clear();
+		ProductRuntime.flushDeltas();
+	}
+
+	// ---------- opening a dialog for a new value ----------
+
+	/**
+	 * The empty field a new value opens on is the one {@code tryToSetValue}
+	 * rejects, so OK may not be on offer for it.
+	 */
+	@Test
+	void testCreate_newFloatValue_okIsDisabledOverTheEmptyField() {
+		FloatValueDialog dialog = built(new FloatValueDialog(_shell, _instanz, _messages));
+
+		assertThat(okButton(dialog).isEnabled(), is(false));
+	}
+
+	@Test
+	void testCreate_newIntegerValue_okIsDisabledOverTheEmptyField() {
+		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, _instanz, _messages));
+
+		assertThat(okButton(dialog).isEnabled(), is(false));
+	}
+
+	/** An empty string is a string - nothing here is rejected. */
+	@Test
+	void testCreate_newStringValue_okIsEnabled() {
+		StringValueDialog dialog = built(new StringValueDialog(_shell, _instanz, _messages));
+
+		assertThat(okButton(dialog).isEnabled(), is(true));
+	}
+
+	/** A check box cannot hold an invalid state, cleared is a value like any other. */
+	@Test
+	void testCreate_newBooleanValue_okIsEnabled() {
+		BooleanValueDialog dialog = built(new BooleanValueDialog(_shell, _instanz, _messages));
+
+		assertThat(okButton(dialog).isEnabled(), is(true));
+	}
+
+	// ---------- opening a dialog on an existing value ----------
+
+	/**
+	 * Editing a stored value must not start out blocked: what is in the field came
+	 * out of the model and is by definition acceptable.
+	 */
+	@Test
+	void testCreate_existingFloatValue_okIsEnabledOverTheStoredValue() {
+		SingleFloatValue value = ProductRuntime.singleValueService().createNew(SingleFloatValue.class,
+				_instanz.getOwnKey(), "stored float", "3.5", Type.SEND);
+
+		FloatValueDialog dialog = built(new FloatValueDialog(_shell, value, _instanz, _messages));
+
+		assertThat(valueText(dialog).getText(), is("3.5"));
+		assertThat(okButton(dialog).isEnabled(), is(true));
+	}
+
+	@Test
+	void testCreate_existingIntegerValue_okIsEnabledOverTheStoredValue() {
+		SingleIntegerValue value = ProductRuntime.singleValueService().createNew(SingleIntegerValue.class,
+				_instanz.getOwnKey(), "stored integer", "42", Type.SEND);
+
+		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, value, _instanz, _messages));
+
+		assertThat(valueText(dialog).getText(), is("42"));
+		assertThat(okButton(dialog).isEnabled(), is(true));
+	}
+
+	// ---------- the button and the model agree, whatever is typed ----------
+
+	/**
+	 * Both ends of the same rule: whatever stands in the field, the button says
+	 * what the model would do with it. The untouched empty field is in the list, so
+	 * the state before the first keystroke is held to the same standard as every
+	 * one after it.
+	 */
+	@ParameterizedTest
+	@ValueSource(strings = { "", " ", "3.14", "-3.14", "42", "0.0", "3,14", "NaN", "Infinity", "1e5", "3f", "0x1p3",
+			".", "-", "1.2.3" })
+	void testValueControl_floatOkFollowsWhatTheModelWouldTake(String typed) {
+		FloatValueDialog dialog = built(new FloatValueDialog(_shell, _instanz, _messages));
+
+		valueText(dialog).setText(typed);
+
+		assertThat("OK for '" + typed + "'", okButton(dialog).isEnabled(), is(floatTakes(typed)));
+	}
+
+	/**
+	 * The inputs leave out a leading plus and numbers outside the {@code int}
+	 * range, where the dialog's pattern and {@code Integer.valueOf} disagree to
+	 * this day - that is
+	 * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/68">#68</a>, not
+	 * what this test is about.
+	 */
+	@ParameterizedTest
+	@ValueSource(strings = { "", " ", "42", "-42", "0", "3.14", "abc", "1,000", "-", "4 2" })
+	void testValueControl_integerOkFollowsWhatTheModelWouldTake(String typed) {
+		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, _instanz, _messages));
+
+		valueText(dialog).setText(typed);
+
+		assertThat("OK for '" + typed + "'", okButton(dialog).isEnabled(), is(integerTakes(typed)));
+	}
+
+	// ---------- what the model would do ----------
+
+	/**
+	 * Whether {@link SingleFloatValue} would take this text. The value is seeded
+	 * away from everything the test types, because {@code setValue} answers
+	 * {@code false} both for "rejected" and for "already that value" - deliberately,
+	 * it is what keeps the services from re-entering each other - and
+	 * {@code tryToSetValue} passes that on.
+	 */
+	private boolean floatTakes(String typed) {
+		return new SingleFloatValue("float-rule", Float.MIN_VALUE, Set.of()).tryToSetValue(typed);
+	}
+
+	/** @see #floatTakes(String) */
+	private boolean integerTakes(String typed) {
+		return new SingleIntegerValue("integer-rule", Integer.MIN_VALUE, Set.of()).tryToSetValue(typed);
+	}
+
+	// ---------- building the dialog and finding its widgets ----------
+
+	/**
+	 * Builds the widgets without putting the dialog on screen:
+	 * {@code Window.create()} is what {@code open()} does first, and the part after
+	 * it only shows and pumps the event loop.
+	 */
+	private <D extends AValueDialog<?, ?>> D built(D dialog) {
+		dialog.create();
+		_built.add(dialog);
+		return dialog;
+	}
+
+	/**
+	 * The OK button, found the way JFace marks it: {@code Dialog.createButton} puts
+	 * the button id into the widget's data. {@code Dialog.getButton(int)} is
+	 * protected, and matching on the label would depend on the locale.
+	 */
+	private Button okButton(Dialog dialog) {
+		return controls(dialog.getShell()).stream()//
+				.filter(Button.class::isInstance).map(Button.class::cast)//
+				.filter(button -> Integer.valueOf(IDialogConstants.OK_ID).equals(button.getData()))//
+				.findFirst()//
+				.orElseThrow(() -> new AssertionError("no OK button in " + dialog.getClass().getSimpleName()));
+	}
+
+	/**
+	 * The field the value is typed into. It is the last {@link Text} the dialog
+	 * creates - key and name come first, both from {@code AValueDialog} - and the
+	 * count is asserted so a fourth field fails here rather than silently moving
+	 * the test onto the wrong widget.
+	 */
+	private Text valueText(Dialog dialog) {
+		List<Text> texts = controls(dialog.getShell()).stream()//
+				.filter(Text.class::isInstance).map(Text.class::cast)//
+				.toList();
+		assertThat("key, name and value", texts, hasSize(3));
+		return texts.get(2);
+	}
+
+	/** every control below {@code root}, in the order the dialog created them */
+	private List<Control> controls(Composite root) {
+		List<Control> all = new ArrayList<>();
+		for (Control child : root.getChildren()) {
+			all.add(child);
+			if (child instanceof Composite composite) {
+				all.addAll(controls(composite));
+			}
+		}
+		return all;
+	}
+
+	/**
+	 * The dialog puts every one of these onto a label and would fail on a
+	 * {@code null}. What they say is not what this test is about, so they are
+	 * filled in rather than translated - {@code TranslationCoverageTest} is what
+	 * holds the real texts to their keys.
+	 */
+	private Messages messages() {
+		Messages messages = new Messages();
+		messages.constant_cancel = "Cancel";
+		messages.constant_key = "Key";
+		messages.constant_name = "Name";
+		messages.constant_singleValue = "Value";
+		messages.dialog_value_instanzSide = "Instanz";
+		messages.dialog_value_usedName = "name already used";
+		messages.dialog_value_valueSide = "Value";
+		return messages;
+	}
+}

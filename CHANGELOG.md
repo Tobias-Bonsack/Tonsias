@@ -53,7 +53,14 @@ Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
   whoever had used it would have bypassed the lazy map creation in `getSingleValues` and
   could have left a map at `null` ([#61]).
 
-### Fixed — nothing yet, but found
+### Fixed
+
+- The OK button of a value dialog is now set from the dialog's own validation the
+  moment the dialog is built, not only from the first keystroke on. A dialog opened
+  for a new integer or float value used to offer OK over its empty field — pressing it
+  created a value whose input `tryToSetValue` then rejected, silently leaving it at `0`
+  or `0.0`. The rule lives in `AValueDialog.isValueAcceptable()` now, so every dialog
+  answers for its own type in one place ([#62]).
 
 The rewrite surfaced two defects, filed rather than silently patched: the e4 context
 functions build a new service instance on every `compute(..)`, so the Delta view can
@@ -63,6 +70,7 @@ same failure ([#53]).
 
 [#52]: https://github.com/Tobias-Bonsack/Tonsias/issues/52
 [#53]: https://github.com/Tobias-Bonsack/Tonsias/issues/53
+[#62]: https://github.com/Tobias-Bonsack/Tonsias/issues/62
 [#61]: https://github.com/Tobias-Bonsack/Tonsias/issues/61
 
 ## [0.1.0] - 2026-08-07

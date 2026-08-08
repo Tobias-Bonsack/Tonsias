@@ -2,7 +2,6 @@ package de.tonsias.basis.ui.dialog;
 
 import java.util.Optional;
 
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.widgets.TextFactory;
 import org.eclipse.swt.SWT;
@@ -37,13 +36,7 @@ public class IntegerValueDialog extends AValueDialog<SingleIntegerValue, Text> {
 	protected Control createDialogArea(Composite parent) {
 		Control control = super.createDialogArea(parent);
 
-		_valueControl.addModifyListener(event -> {
-			if (_valueControl.getText().isBlank() || !isInteger(_valueControl.getText())) {
-				getButton(IDialogConstants.OK_ID).setEnabled(false);
-			} else if (isInteger(_valueControl.getText())) {
-				getButton(IDialogConstants.OK_ID).setEnabled(true);
-			}
-		});
+		_valueControl.addModifyListener(event -> refreshOkButton());
 
 		return control;
 	}
@@ -65,8 +58,19 @@ public class IntegerValueDialog extends AValueDialog<SingleIntegerValue, Text> {
 		super.okPressed();
 	}
 
-	private boolean isInteger(String str) {
-		return str != null && str.matches("-?\\d+");
+	/**
+	 * Digits with an optional minus, which is what
+	 * {@link SingleIntegerValue#tryToSetValue} takes - the empty field a new value
+	 * opens on is therefore rejected too, rather than being created as a silent 0.
+	 * <p>
+	 * The pattern and {@code Integer.valueOf} do not agree on every input; a leading
+	 * plus and numbers outside the {@code int} range are
+	 * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/68">#68</a>.
+	 * </p>
+	 */
+	@Override
+	protected boolean isValueAcceptable() {
+		return _valueControl.getText().matches("-?\\d+");
 	}
 
 	@Override
