@@ -41,6 +41,10 @@ public abstract class AValueDialog<T extends ISingleValue<?>, C extends Control>
 
 	IInstanzService _iService = OsgiUtil.getService(IInstanzService.class);
 
+	// empty while a new value is being created, and then set by okPressed. Present
+	// means an existing value is being edited - which today only the tests do, and
+	// where okPressed writes the name back but not the value. See
+	// https://github.com/Tobias-Bonsack/Tonsias/issues/72
 	Optional<T> _value;
 
 	IInstanz _instanz;
@@ -176,6 +180,9 @@ public abstract class AValueDialog<T extends ISingleValue<?>, C extends Control>
 				_nameText.setMessage("");
 			} else {
 				_nameText.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_RED));
+				// the red field is all the user sees: setMessage is the placeholder of the
+				// field and SWT shows it only while the field is empty, which is never the
+				// case here. See https://github.com/Tobias-Bonsack/Tonsias/issues/71
 				_nameText.setMessage(_messages.dialog_value_usedName);
 			}
 			refreshOkButton();
