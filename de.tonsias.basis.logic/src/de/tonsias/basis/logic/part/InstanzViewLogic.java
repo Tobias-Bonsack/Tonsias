@@ -20,6 +20,7 @@ import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
+import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueEvent;
 
 public class InstanzViewLogic {
 
@@ -139,6 +140,22 @@ public class InstanzViewLogic {
 			broker.send(InstanzEventConstants.SELECTED, Map.of(IEventBroker.DATA, data));
 			return;
 		}
+	}
+
+	/**
+	 * Whether a single value delta concerns the instanz currently shown. As long as
+	 * nothing is selected there is no key to compare against, so no delta concerns
+	 * the view.
+	 */
+	public boolean affectsShownInstanz(IInstanz shownInstanz, SingleValueEvent event) {
+		if (shownInstanz == null) {
+			return false;
+		}
+
+		SingleValueType type = event.getType();
+		return _svService.resolveKey(type.getPath(), event.getKey(), type.getClazz())//
+				.map(sv -> sv.getConnectedInstanzKeys().contains(shownInstanz.getOwnKey()))//
+				.orElse(false);
 	}
 
 	private void addConsumerOperation(IEventBrokerBridge broker, String openOperation, Consumer<Job> consumer) {
