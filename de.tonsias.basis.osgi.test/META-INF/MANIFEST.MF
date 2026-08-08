@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Test
 Bundle-SymbolicName: de.tonsias.basis.osgi.test
 Bundle-Version: 0.2.0.qualifier
-Export-Package: de.tonsias.basis.osgi.test;x-friends:="de.tonsias.basis.logic.test,de.tonsias.delta.view.ui.test"
+Export-Package: de.tonsias.basis.osgi.test;x-friends:="de.tonsias.basis.logic.test,de.tonsias.basis.ui.test,de.tonsias.delta.view.ui.test"
 Require-Bundle: de.tonsias.basis.osgi;bundle-version="0.2.0",
  org.osgi.service.event;bundle-version="1.4.1",
  org.hamcrest;bundle-version="2.2.0",

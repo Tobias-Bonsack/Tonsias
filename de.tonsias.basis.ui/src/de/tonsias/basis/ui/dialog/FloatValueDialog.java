@@ -2,7 +2,6 @@ package de.tonsias.basis.ui.dialog;
 
 import java.util.Optional;
 
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.widgets.TextFactory;
 import org.eclipse.swt.SWT;
@@ -37,9 +36,7 @@ public class FloatValueDialog extends AValueDialog<SingleFloatValue, Text> {
 	protected Control createDialogArea(Composite parent) {
 		Control control = super.createDialogArea(parent);
 
-		_valueControl.addModifyListener(event -> {
-			getButton(IDialogConstants.OK_ID).setEnabled(isFloat(_valueControl.getText()));
-		});
+		_valueControl.addModifyListener(event -> refreshOkButton());
 
 		return control;
 	}
@@ -62,15 +59,13 @@ public class FloatValueDialog extends AValueDialog<SingleFloatValue, Text> {
 	}
 
 	/**
-	 * The rule {@link SingleFloatValue#tryToSetValue} applies, so the button is
-	 * disabled for exactly the input that would be discarded - from the first
-	 * change on, that is: the button starts out enabled over an empty field, like
-	 * the one in {@link IntegerValueDialog}.
-	 *
-	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/62">#62</a>
+	 * The rule {@link SingleFloatValue#tryToSetValue} applies, stripped the same
+	 * way, so the button is disabled for exactly the input that would be discarded -
+	 * the empty field a new value opens on included.
 	 */
-	private boolean isFloat(String str) {
-		return str != null && str.strip().matches(SingleFloatValue.DECIMAL_PATTERN);
+	@Override
+	protected boolean isValueAcceptable() {
+		return _valueControl.getText().strip().matches(SingleFloatValue.DECIMAL_PATTERN);
 	}
 
 	@Override

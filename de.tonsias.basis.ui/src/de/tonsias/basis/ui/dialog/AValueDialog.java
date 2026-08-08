@@ -107,9 +107,36 @@ public abstract class AValueDialog<T extends ISingleValue<?>, C extends Control>
 				}
 			}
 		});
-		
-		
+
+		// Dialog.createContents builds the dialog area before the button bar, so the
+		// value control is there to be judged and the button, only now, to be set.
+		refreshOkButton();
+
 		return buttonBar;
+	}
+
+	/**
+	 * Whether the value control currently holds something the type's
+	 * {@code tryToSetValue} would take. The base answer is yes - a text field of any
+	 * content is a string, and a check box cannot hold an invalid state; the numeric
+	 * dialogs answer with their pattern.
+	 */
+	protected boolean isValueAcceptable() {
+		return true;
+	}
+
+	/**
+	 * Puts the OK button into the state {@link #isValueAcceptable()} calls for.
+	 * Runs once the button bar exists and again from whatever listener the subclass
+	 * puts on its value control, so an untouched field is judged by the same rule as
+	 * a typed one. Before this, a dialog opened for a new value offered OK over the
+	 * empty field its own validation rejects, and pressing it created a value silently
+	 * left at the start value of its type.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/62">#62</a>
+	 */
+	protected void refreshOkButton() {
+		getButton(IDialogConstants.OK_ID).setEnabled(isValueAcceptable());
 	}
 
 	private void createInstanzPart(Composite composite) {
@@ -129,6 +156,9 @@ public abstract class AValueDialog<T extends ISingleValue<?>, C extends Control>
 		String name = _instanz.getSingleValues(_type).getOrDefault(keyString, "");
 		_nameText = TextFactory.newText(SWT.SEARCH).text(name).enabled(true).create(composite);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(_nameText);
+		// this listener still sets the OK button from the name alone, and
+		// refreshOkButton from the value alone, so the later of the two overrides the
+		// other's verdict. See https://github.com/Tobias-Bonsack/Tonsias/issues/67
 		_nameText.addModifyListener(modifyEvent -> {
 			BiMap<String, String> biMap = _instanz.getSingleValues(_type);
 			if (biMap.inverse().containsKey(_nameText.getText())) {
