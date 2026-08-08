@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleBooleanValue;
+import de.tonsias.basis.model.impl.value.SingleFloatValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.ISingleValue;
@@ -36,6 +37,11 @@ public class SingleValueTypeTest {
 	void testGetByClass_booleanValue() {
 		assertThat(SingleValueType.getByClass(SingleBooleanValue.class),
 				is(Optional.of(SingleValueType.SINGLE_BOOLEAN)));
+	}
+
+	@Test
+	void testGetByClass_floatValue() {
+		assertThat(SingleValueType.getByClass(SingleFloatValue.class), is(Optional.of(SingleValueType.SINGLE_FLOAT)));
 	}
 
 	@Test

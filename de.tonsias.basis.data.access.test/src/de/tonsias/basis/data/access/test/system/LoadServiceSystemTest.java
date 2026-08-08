@@ -22,6 +22,7 @@ import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.Instanz;
+import de.tonsias.basis.model.impl.value.SingleFloatValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 
@@ -61,6 +62,7 @@ public class LoadServiceSystemTest {
 		saved.addValuekeys(SingleValueType.SINGLE_STRING, java.util.Map.entry("sKey", "sName"));
 		saved.addValuekeys(SingleValueType.SINGLE_INTEGER, java.util.Map.entry("iKey", "iName"));
 		saved.addValuekeys(SingleValueType.SINGLE_BOOLEAN, java.util.Map.entry("bKey", "bName"));
+		saved.addValuekeys(SingleValueType.SINGLE_FLOAT, java.util.Map.entry("fKey", "fName"));
 
 		_saveService.safeAsGson(saved, saved.getClass());
 		IInstanz loaded = _loadService.loadFromGson("instanz/load_bimap", Instanz.class);
@@ -68,6 +70,7 @@ public class LoadServiceSystemTest {
 		assertThat(loaded.getSingleValues(SingleValueType.SINGLE_STRING), hasEntry("sKey", "sName"));
 		assertThat(loaded.getSingleValues(SingleValueType.SINGLE_INTEGER), hasEntry("iKey", "iName"));
 		assertThat(loaded.getSingleValues(SingleValueType.SINGLE_BOOLEAN), hasEntry("bKey", "bName"));
+		assertThat(loaded.getSingleValues(SingleValueType.SINGLE_FLOAT), hasEntry("fKey", "fName"));
 		// the inverse view is what TreeLabelProvider looks a name up in
 		assertThat(loaded.getSingleValues(SingleValueType.SINGLE_STRING).inverse().get("sName"), is("sKey"));
 	}
@@ -102,6 +105,22 @@ public class LoadServiceSystemTest {
 
 		assertThat(loaded.getValue(), is(42));
 		assertThat(loaded.getConnectedInstanzKeys(), contains("owner"));
+	}
+
+	/**
+	 * {@code ASingleValue} declares its value as the type variable {@code T}, which
+	 * is erased in the field - Gson has to resolve it through the concrete class to
+	 * read a JSON number back as a {@code Float} rather than as a {@code Double}.
+	 */
+	@Test
+	void testLoadFromGson_roundTripOfAFloatValue() {
+		SingleFloatValue saved = new SingleFloatValue("load_float");
+		saved.tryToSetValue(3.14f);
+
+		_saveService.safeAsGson(saved, saved.getClass());
+		SingleFloatValue loaded = _loadService.loadFromGson("single_value/float/load_float", SingleFloatValue.class);
+
+		assertThat(loaded.getValue(), is(3.14f));
 	}
 
 	@Test
