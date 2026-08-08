@@ -57,7 +57,7 @@ Only `win32/win32/x86_64` is built; add `<environment>`s to `target-platform-con
 
 - **Target platform**: `target-platform/target-platform.target` — Eclipse SDK 4.36 (2025-06) + Maven-sourced Guava 33.1.0, Gson 2.10.1, JUnit Jupiter 5.14.4, Mockito 5.23.0. It is the single source of truth for **both** the IDE and the Tycho build (consumed as an `eclipse-target-definition` module), so edit it rather than the poms when changing dependencies. Set it as the active target platform in the IDE before anything resolves.
 - **Run the app**: launch `de.tonsias.basis.product/tonsias.product` (E4Application, `-clearPersistedState`). Note `autoStart` config for `org.apache.felix.scr` and `org.eclipse.equinox.event` — DS and the event admin must be running or none of the services resolve. The Tycho test runtime configures the same two bundles for the same reason.
-- **Tests** are JUnit 5, and all three bundles need an OSGi runtime — run them as an **Eclipse JUnit Plug-in Test** in the IDE, or via `./mvnw verify`. What differs is how they obtain their subject:
+- **Tests** are JUnit 5, and every test bundle needs an OSGi runtime — run them as an **Eclipse JUnit Plug-in Test** in the IDE, or via `./mvnw verify`. What differs is how they obtain their subject:
   - Most tests construct it directly or with `@InjectMocks` and need nothing further.
   - Tests that resolve real services through `OsgiUtil.getService(...)` (`InstanzServiceImplTest`, `SingleValueServiceImplTest`, `OsgiUtilTest`) must first call **`E4ServiceContext.prime()`** in `@BeforeEach`. `IEventBrokerBridge` and `IDeltaService` are not plain DS components — they come from `IContextFunction`s that only run when an `IEclipseContext` is asked for their key, and `ChangePropagationListener` is contributed as an e4 _addon_ in `Application.e4xmi`. In the product the workbench triggers all three; headless nothing does, so without priming `InstanzServiceImpl`'s mandatory `@Reference IEventBrokerBridge` stays unsatisfied and the component never activates. Add `prime()` to any new test that touches real services.
   - Those tests also need a **root instanz** (`_inse.getRoot()`), which `ModelView` creates at start-up in the product but nothing creates in a fresh test workspace. They write real files to the instance location (`target/work/data`), which is cleaned per run.
@@ -153,7 +153,7 @@ Every feature follows this sequence end to end:
 
 Never commit directly to `main`.
 
-Step 5 is `.\build.ps1` (or `./mvnw clean verify`). The suite is **green on `main`** — 303 tests across the six test bundles, all passing — so any failure is yours. Never "fix" one by weakening an assertion; if a test looks wrong, check it against the production code first (several once verified `post(..)` where the code had moved to `send(..)`).
+Step 5 is `.\build.ps1` (or `./mvnw clean verify`). The suite is **green on `main`** — every test in every bundle passes — so any failure is yours. Never "fix" one by weakening an assertion; if a test looks wrong, check it against the production code first (several once verified `post(..)` where the code had moved to `send(..)`).
 
 Step 6 places tests in the test bundle matching the layer under test. All run inside OSGi; prefer `OsgiUtil.getService(...)`, which only resolves under a running e4 context, over `@InjectMocks` direct construction. A new bundle's internals need `x-friends` on its `Export-Package` before its test bundle can see them.
 

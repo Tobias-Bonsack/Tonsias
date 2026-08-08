@@ -62,8 +62,8 @@ and revocable until it is saved.
 
 - A headless **Tycho** build mirrors the IDE: `.\build.ps1` compiles every bundle, runs
   every test bundle inside a real Equinox, and materialises the runnable product.
-- **282 tests** across five test bundles cover the model, the JSON persistence, the
-  services, the view logic and the complete event chain. All of them run inside OSGi.
+- The test bundles cover the model, the JSON persistence, the services, the view logic
+  and the complete event chain. All of them run inside OSGi.
 - GitHub Actions builds every push and pull request on Windows and posts the per-bundle
   test results as a single, edited-in-place pull request comment.
 
