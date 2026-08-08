@@ -23,6 +23,10 @@ public class DeltaServiceContextFunction extends SharedInstanceContextFunction<I
 
 	@Override
 	protected IDeltaService create(IEclipseContext context) {
+		// the impl also injects IInstanzService and ISingleValueService, and those only
+		// activate once the bridge is registered - which happens while its own field is
+		// injected. That the bridge comes first is the field order and nothing else,
+		// see https://github.com/Tobias-Bonsack/Tonsias/issues/56
 		DeltaServiceImpl deltaService = ContextInjectionFactory.make(DeltaServiceImpl.class, context);
 		deltaService.postConstruct();
 		return deltaService;
