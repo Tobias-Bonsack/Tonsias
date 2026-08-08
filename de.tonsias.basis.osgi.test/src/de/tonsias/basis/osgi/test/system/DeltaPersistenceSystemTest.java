@@ -14,7 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.CompletionException;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
@@ -286,11 +285,7 @@ public class DeltaPersistenceSystemTest {
 	}
 
 	private void flush() {
-		try {
-			_delta.saveDeltas();
-		} catch (CompletionException e) {
-			// an earlier test may have left a delete for a file that was never written
-		}
+		_delta.saveDeltas();
 	}
 
 	private Instanz reloadInstanz(String key) {

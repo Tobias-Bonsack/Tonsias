@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.concurrent.CompletionException;
 
 import org.eclipse.e4.core.services.events.IEventBroker;
 import org.osgi.service.event.Event;
@@ -71,13 +72,40 @@ public class DeltaServiceImpl implements IDeltaService {
 			}
 		}
 
-		_instanzService.saveAll(instanzKeysToSave);
-		_instanzService.deleteAll(instanzKeysToDelete);
-		_singleValueService.saveAll(singlevalueKeysToSave);
-		_singleValueService.deleteAll(singlevalueKeysToDelete);
+		// a value that is created and dropped again within one log is in both sets:
+		// it is written first and removed afterwards, so nothing is left behind
+		CompletionException failures = new CompletionException("saving the deltas failed", null);
+		try {
+			attempt(failures, () -> _instanzService.saveAll(instanzKeysToSave));
+			attempt(failures, () -> _instanzService.deleteAll(instanzKeysToDelete));
+			attempt(failures, () -> _singleValueService.saveAll(singlevalueKeysToSave));
+			attempt(failures, () -> _singleValueService.deleteAll(singlevalueKeysToDelete));
+		} finally {
+			// The log is the difference against the disk, and every one of the four steps
+			// was given its chance - so it is spent, whatever came of it. Keeping it would
+			// fold the same set again on the next save, fail on the same step again, and
+			// from then on nothing would ever be written, see
+			// https://github.com/Tobias-Bonsack/Tonsias/issues/53
+			_notSavedEvents.clear();
+			_notSavedEvents.add(START_EVENT);
+		}
 
-		_notSavedEvents.clear();
-		_notSavedEvents.add(START_EVENT);
+		if (failures.getSuppressed().length > 0) {
+			throw failures;
+		}
+	}
+
+	/**
+	 * Runs one step of the save and keeps what it threw instead of letting it end
+	 * the save - the other three steps have files of their own to write, and they
+	 * are not lost because one of them could not.
+	 */
+	private void attempt(CompletionException failures, Runnable step) {
+		try {
+			step.run();
+		} catch (RuntimeException e) {
+			failures.addSuppressed(e);
+		}
 	}
 
 	private void handleSingleValueEvents(Event event, Set<String> singlevalueKeysToSave,
