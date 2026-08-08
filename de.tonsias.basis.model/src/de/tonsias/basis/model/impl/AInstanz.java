@@ -39,6 +39,8 @@ public abstract class AInstanz implements IInstanz {
 
 	private BiMap<String, String> _singleBooleanKeyValueMap;
 
+	private BiMap<String, String> _singleFloatKeyValueMap;
+
 	public AInstanz(String key) {
 		this._ownKey = key;
 	}
@@ -50,13 +52,14 @@ public abstract class AInstanz implements IInstanz {
 
 	public AInstanz(String _parentKey, String _ownKey, Set<String> _childKeys,
 			BiMap<String, String> _singleStringKeyValueMap, BiMap<String, String> _singleIntegerKeyValueMap,
-			BiMap<String, String> _singleBooleanKeyValueMap) {
+			BiMap<String, String> _singleBooleanKeyValueMap, BiMap<String, String> _singleFloatKeyValueMap) {
 		this._parentKey = _parentKey;
 		this._ownKey = _ownKey;
 		this._childKeys = _childKeys;
 		this._singleStringKeyValueMap = _singleStringKeyValueMap;
 		this._singleIntegerKeyValueMap = _singleIntegerKeyValueMap;
 		this._singleBooleanKeyValueMap = _singleBooleanKeyValueMap;
+		this._singleFloatKeyValueMap = _singleFloatKeyValueMap;
 	}
 
 	@Override
@@ -125,6 +128,11 @@ public abstract class AInstanz implements IInstanz {
 				_singleBooleanKeyValueMap = HashBiMap.create();
 			}
 			return _singleBooleanKeyValueMap;
+		case SINGLE_FLOAT:
+			if (_singleFloatKeyValueMap == null) {
+				_singleFloatKeyValueMap = HashBiMap.create();
+			}
+			return _singleFloatKeyValueMap;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + type);
 		}
