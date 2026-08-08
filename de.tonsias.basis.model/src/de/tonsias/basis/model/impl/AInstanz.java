@@ -45,15 +45,13 @@ public abstract class AInstanz implements IInstanz {
 
 	private BiMap<String, String> _singleFloatKeyValueMap;
 
+	// the only constructor, and it takes the key alone: a parent set here would be
+	// set past IInstanzService, so neither would ChangePropagationListener pull the
+	// other side along nor would a delta be written. Use
+	// IInstanzService.createInstanz(parentKey, Type), or setParentKey below.
+	// See https://github.com/Tobias-Bonsack/Tonsias/issues/65
 	public AInstanz(String key) {
 		this._ownKey = key;
-	}
-
-	// unreachable too: Instanz is the only subclass and passes on the key alone.
-	// See https://github.com/Tobias-Bonsack/Tonsias/issues/65
-	public AInstanz(String key, String parent) {
-		this._ownKey = key;
-		this._parentKey = parent;
 	}
 
 	@Override

@@ -14,7 +14,8 @@ Require-Bundle: de.tonsias.basis.ui;bundle-version="0.2.0",
  org.hamcrest;bundle-version="2.2.0",
  junit-jupiter-api;bundle-version="5.11.1",
  junit-jupiter-engine;bundle-version="5.11.1",
- junit-jupiter-params;bundle-version="5.11.1"
+ junit-jupiter-params;bundle-version="5.11.1",
+ com.google.guava;bundle-version="33.1.0"
 Import-Package: org.osgi.framework
 Automatic-Module-Name: de.tonsias.basis.ui.test
 Bundle-ActivationPolicy: lazy

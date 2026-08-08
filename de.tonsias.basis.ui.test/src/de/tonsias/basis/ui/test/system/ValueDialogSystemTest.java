@@ -1,7 +1,9 @@
 package de.tonsias.basis.ui.test.system;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 
 import java.util.ArrayList;
@@ -10,10 +12,13 @@ import java.util.Set;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.junit.jupiter.api.AfterAll;
@@ -24,8 +29,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.impl.value.SingleBooleanValue;
 import de.tonsias.basis.model.impl.value.SingleFloatValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
+import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.test.ProductRuntime;
@@ -49,6 +57,20 @@ import de.tonsias.basis.ui.i18n.Messages;
  * new value offered OK over an empty field and created a value silently left at
  * the start value of its type. See
  * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/62">#62</a>.
+ * </p>
+ * <p>
+ * The name is part of the same promise: the button is on offer when the name is
+ * free <em>and</em> the value acceptable. Each check used to set the button from
+ * its own result alone, so whichever field was touched last had the last word -
+ * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/67">#67</a>.
+ * </p>
+ * <p>
+ * The rest is what the dialog says and does: the reason a name is refused, on a
+ * widget that shows it (<a href=
+ * "https://github.com/Tobias-Bonsack/Tonsias/issues/71">#71</a>), and what
+ * pressing OK leaves behind - for a stored value that used to be the name alone,
+ * with the value in the field read for the button and then dropped (<a href=
+ * "https://github.com/Tobias-Bonsack/Tonsias/issues/72">#72</a>).
  * </p>
  */
 public class ValueDialogSystemTest {
@@ -166,7 +188,7 @@ public class ValueDialogSystemTest {
 	 */
 	@ParameterizedTest
 	@ValueSource(strings = { "", " ", "3.14", "-3.14", "42", "0.0", "3,14", "NaN", "Infinity", "1e5", "3f", "0x1p3",
-			".", "-", "1.2.3" })
+			".", "-", "1.2.3", "10000000000000000000000000000000000000000" })
 	void testValueControl_floatOkFollowsWhatTheModelWouldTake(String typed) {
 		FloatValueDialog dialog = built(new FloatValueDialog(_shell, _instanz, _messages));
 
@@ -176,20 +198,193 @@ public class ValueDialogSystemTest {
 	}
 
 	/**
-	 * The inputs leave out a leading plus and numbers outside the {@code int}
-	 * range, where the dialog's pattern and {@code Integer.valueOf} disagree to
-	 * this day - that is
-	 * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/68">#68</a>, not
-	 * what this test is about.
+	 * A leading plus and numbers outside the {@code int} range are in the list: the
+	 * dialog used to answer them from a pattern of its own, which took
+	 * "99999999999" that {@code Integer.valueOf} then threw on, and refused "+5"
+	 * that it would have read.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/68">#68</a>
 	 */
 	@ParameterizedTest
-	@ValueSource(strings = { "", " ", "42", "-42", "0", "3.14", "abc", "1,000", "-", "4 2" })
+	@ValueSource(strings = { "", " ", "42", "-42", "0", "3.14", "abc", "1,000", "-", "4 2", "+5", "99999999999",
+			"2147483647", "2147483648" })
 	void testValueControl_integerOkFollowsWhatTheModelWouldTake(String typed) {
 		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, _instanz, _messages));
 
 		valueText(dialog).setText(typed);
 
 		assertThat("OK for '" + typed + "'", okButton(dialog).isEnabled(), is(integerTakes(typed)));
+	}
+
+	// ---------- name and value are judged together ----------
+
+	/**
+	 * A name another value of the same type already carries is not free - the
+	 * {@code BiMap} on the instanz holds names unique, so a second value under it
+	 * would push the first one out. Typing a perfectly good value afterwards must
+	 * not hand OK back; the two checks used to overwrite each other's verdict.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/67">#67</a>
+	 */
+	@Test
+	void testNameControl_usedNameDisablesOk_andTheValueFieldDoesNotHandItBack() {
+		ProductRuntime.singleValueService().createNew(SingleIntegerValue.class, _instanz.getOwnKey(), "taken name", "1",
+				Type.SEND);
+		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, _instanz, _messages));
+
+		nameText(dialog).setText("taken name");
+		assertThat("a used name", okButton(dialog).isEnabled(), is(false));
+
+		valueText(dialog).setText("42");
+		assertThat("a number does not make the name free", okButton(dialog).isEnabled(), is(false));
+	}
+
+	/**
+	 * The other way round: a value the model would discard stays discarded while
+	 * the name is typed.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/67">#67</a>
+	 */
+	@Test
+	void testValueControl_rejectedValueDisablesOk_andTheNameFieldDoesNotHandItBack() {
+		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, _instanz, _messages));
+
+		valueText(dialog).setText("abc");
+		assertThat("not a number", okButton(dialog).isEnabled(), is(false));
+
+		nameText(dialog).setText("a free name");
+		assertThat("a free name does not make 'abc' a number", okButton(dialog).isEnabled(), is(false));
+	}
+
+	/** Both sides content is the one case OK is on offer for. */
+	@Test
+	void testNameAndValueControl_bothAcceptable_okIsEnabled() {
+		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, _instanz, _messages));
+
+		nameText(dialog).setText("a free name");
+		valueText(dialog).setText("42");
+
+		assertThat(okButton(dialog).isEnabled(), is(true));
+	}
+
+	/**
+	 * The name in the field of an existing value is that value's own, so it may not
+	 * count as taken against itself - the dialog would open on a name it refuses.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/67">#67</a>
+	 */
+	@Test
+	void testNameControl_existingValueKeepsItsOwnName() {
+		SingleStringValue value = ProductRuntime.singleValueService().createNew(SingleStringValue.class,
+				_instanz.getOwnKey(), "own name", "text", Type.SEND);
+
+		StringValueDialog dialog = built(new StringValueDialog(_shell, value, _instanz, _messages));
+
+		assertThat(nameText(dialog).getText(), is("own name"));
+		assertThat("untouched", okButton(dialog).isEnabled(), is(true));
+
+		nameText(dialog).setText("own name");
+		assertThat("typed again", okButton(dialog).isEnabled(), is(true));
+	}
+
+	/** The name of another value is taken for an existing value too. */
+	@Test
+	void testNameControl_existingValueTakingAnotherName() {
+		ProductRuntime.singleValueService().createNew(SingleStringValue.class, _instanz.getOwnKey(), "neighbour",
+				"text", Type.SEND);
+		SingleStringValue value = ProductRuntime.singleValueService().createNew(SingleStringValue.class,
+				_instanz.getOwnKey(), "own name", "text", Type.SEND);
+
+		StringValueDialog dialog = built(new StringValueDialog(_shell, value, _instanz, _messages));
+		nameText(dialog).setText("neighbour");
+
+		assertThat(okButton(dialog).isEnabled(), is(false));
+	}
+
+	/**
+	 * The button is only half the answer - the dialog also has to say why. The
+	 * reason used to go to {@code Text.setMessage}, the placeholder SWT draws over
+	 * an empty field, so it was never on screen in the one case it was set for.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/71">#71</a>
+	 */
+	@Test
+	void testNameControl_usedNameIsSaidInSoManyWords() {
+		ProductRuntime.singleValueService().createNew(SingleIntegerValue.class, _instanz.getOwnKey(), "taken name", "1",
+				Type.SEND);
+		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, _instanz, _messages));
+
+		assertThat("nothing to say about a free name", nameMessage(dialog).getText(), is(""));
+
+		nameText(dialog).setText("taken name");
+		assertThat(nameMessage(dialog).getText(), is(_messages.dialog_value_usedName));
+
+		nameText(dialog).setText("a free name");
+		assertThat("taken back", nameMessage(dialog).getText(), is(""));
+	}
+
+	// ---------- what pressing OK leaves behind ----------
+
+	/**
+	 * A dialog opened on a stored value used to hand on the name alone: the number
+	 * in the field was read for the OK button and then dropped, and the dialog
+	 * closed as if it had done something.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/72">#72</a>
+	 */
+	@Test
+	void testOkPressed_existingIntegerValue_writesTheValueBack() {
+		SingleIntegerValue value = ProductRuntime.singleValueService().createNew(SingleIntegerValue.class,
+				_instanz.getOwnKey(), "count", "1", Type.SEND);
+		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, value, _instanz, _messages));
+
+		valueText(dialog).setText("99");
+		press(okButton(dialog));
+
+		assertThat(value.getValue(), is(99));
+	}
+
+	/** the same for the check box, which is read differently */
+	@Test
+	void testOkPressed_existingBooleanValue_writesTheCheckBoxBack() {
+		SingleBooleanValue value = ProductRuntime.singleValueService().createNew(SingleBooleanValue.class,
+				_instanz.getOwnKey(), "flag", Boolean.FALSE, Type.SEND);
+		BooleanValueDialog dialog = built(new BooleanValueDialog(_shell, value, _instanz, _messages));
+
+		checkBox(dialog).setSelection(true);
+		press(okButton(dialog));
+
+		assertThat(value.getValue(), is(true));
+	}
+
+	/** and the name, which is what the else branch did do all along */
+	@Test
+	void testOkPressed_existingValue_writesTheNameBack() {
+		SingleIntegerValue value = ProductRuntime.singleValueService().createNew(SingleIntegerValue.class,
+				_instanz.getOwnKey(), "count", "1", Type.SEND);
+		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, value, _instanz, _messages));
+
+		nameText(dialog).setText("counter");
+		press(okButton(dialog));
+
+		assertThat(_instanz.getSingleValues(SingleValueType.SINGLE_INTEGER).get(value.getOwnKey()), is("counter"));
+	}
+
+	/**
+	 * A new value is still created from both fields. The name travels to the
+	 * instanz on a posted event, which is {@code ChangePropagationListener}'s and
+	 * has its own tests - what is asserted here is what the dialog itself left.
+	 */
+	@Test
+	void testOkPressed_newValue_createsItFromBothFields() {
+		IntegerValueDialog dialog = built(new IntegerValueDialog(_shell, _instanz, _messages));
+
+		nameText(dialog).setText("fresh");
+		valueText(dialog).setText("7");
+		press(okButton(dialog));
+
+		assertThat(dialog.getSingleValue().getValue(), is(7));
+		assertThat(dialog.getSingleValue().getConnectedInstanzKeys(), contains(_instanz.getOwnKey()));
 	}
 
 	// ---------- what the model would do ----------
@@ -243,11 +438,48 @@ public class ValueDialogSystemTest {
 	 * the test onto the wrong widget.
 	 */
 	private Text valueText(Dialog dialog) {
+		return texts(dialog).get(2);
+	}
+
+	/** the name field, the second of the three - see {@link #valueText(Dialog)} */
+	private Text nameText(Dialog dialog) {
+		return texts(dialog).get(1);
+	}
+
+	/**
+	 * The label carrying the reason a name is refused. The dialog creates it right
+	 * after the name field, so it is the next control in creation order.
+	 */
+	private Label nameMessage(Dialog dialog) {
+		List<Control> all = controls(dialog.getShell());
+		Control next = all.get(all.indexOf(nameText(dialog)) + 1);
+		assertThat("the label after the name field", next, instanceOf(Label.class));
+		return (Label) next;
+	}
+
+	/** the check box a {@link BooleanValueDialog} enters its value with */
+	private Button checkBox(Dialog dialog) {
+		return controls(dialog.getShell()).stream()//
+				.filter(Button.class::isInstance).map(Button.class::cast)//
+				.filter(button -> (button.getStyle() & SWT.CHECK) != 0)//
+				.findFirst()//
+				.orElseThrow(() -> new AssertionError("no check box in " + dialog.getClass().getSimpleName()));
+	}
+
+	/**
+	 * Presses a button the way a click does - JFace turns the selection into
+	 * {@code buttonPressed(id)} and, for OK, into {@code okPressed()}.
+	 */
+	private void press(Button button) {
+		button.notifyListeners(SWT.Selection, new Event());
+	}
+
+	private List<Text> texts(Dialog dialog) {
 		List<Text> texts = controls(dialog.getShell()).stream()//
 				.filter(Text.class::isInstance).map(Text.class::cast)//
 				.toList();
 		assertThat("key, name and value", texts, hasSize(3));
-		return texts.get(2);
+		return texts;
 	}
 
 	/** every control below {@code root}, in the order the dialog created them */
