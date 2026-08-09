@@ -107,8 +107,10 @@ public class ChangePropagationListener {
 	 */
 	private void emptyReferencesPointingAt(IInstanz target) {
 		for (String valueKey : List.copyOf(target.getReferencingValueKeys())) {
-			// changeValue reads the cache, and a relation stored in an earlier session has
-			// never been in it - resolving is what puts it there
+			// changeValue reads the cache and nothing else, so a relation stored in an
+			// earlier session would take it down with a NullPointerException - resolving
+			// first is what puts it there, see
+			// https://github.com/Tobias-Bonsack/Tonsias/issues/78
 			if (relationOf(valueKey).isPresent()) {
 				_singleValue.changeValue(valueKey, "", Type.SEND);
 			}
