@@ -7,7 +7,7 @@ All notable changes to Tonsias are documented here. The format follows
 
 ## [Unreleased]
 
-Nothing yet. The reactor is at `0.2.0`.
+Development towards 0.3.0. The reactor is at `0.3.0-SNAPSHOT`.
 
 ## [0.2.0] - 2026-08-09
 
