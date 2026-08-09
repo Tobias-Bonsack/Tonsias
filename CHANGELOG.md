@@ -35,14 +35,11 @@ Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
   that named it back to pointing nowhere instead of leaving a key that resolves to
   nothing. The attribute itself stays — it belongs to its owner, under the name that
   owner gave it. The set travels to disk with its instanz on the new
-  `instanz/delta/referenceChange` topic
-  ([#74](https://github.com/Tobias-Bonsack/Tonsias/issues/74)).
+  `instanz/delta/referenceChange` topic ([#74]).
 - The target of a relation is chosen from a **tree with a filter field** rather than
   from a flat combo box of every instanz in the model, so a large model stays navigable
   and searchable. The instanz view and the value column of the create-instanz dialog
-  open it as a dialog; the relation's own value dialog shows it inline
-  ([#75](https://github.com/Tobias-Bonsack/Tonsias/issues/75),
-  [#76](https://github.com/Tobias-Bonsack/Tonsias/issues/76)).
+  open it as a dialog; the relation's own value dialog shows it inline ([#75], [#76]).
 
 ### Changed — tests
 
@@ -121,6 +118,16 @@ Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
   field was prefilled, editable and read for the OK button, and its content was then
   dropped on OK. `okPressed()` moved up into `AValueDialog`, which is where the four
   dialogs only differed in how their widget is read ([#72]).
+- `ISingleValueService.changeValue(..)` and `markSingleValueAsDelete(..)` resolve the
+  value they are given the key of instead of assuming it is in the cache. Both read the
+  cache and dereferenced the result, so every value the session had not touched — after
+  a restart, every value there is — came back as a `NullPointerException` out of the
+  service. A key does not say which type it belongs to, only the folder its file lies in
+  does, so the lookup tries one type folder after the other, the same way `deleteFile`
+  already did ([#78]).
+- `ISingleValueService.resolveKey(..)` no longer remembers a failed load. It put the
+  `null` into the cache, so the key counted as asked and answered from then on and the
+  next look — in the right folder — got the same nothing back ([#79]).
 
 [#52]: https://github.com/Tobias-Bonsack/Tonsias/issues/52
 [#53]: https://github.com/Tobias-Bonsack/Tonsias/issues/53
@@ -133,6 +140,11 @@ Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
 [#68]: https://github.com/Tobias-Bonsack/Tonsias/issues/68
 [#71]: https://github.com/Tobias-Bonsack/Tonsias/issues/71
 [#72]: https://github.com/Tobias-Bonsack/Tonsias/issues/72
+[#74]: https://github.com/Tobias-Bonsack/Tonsias/issues/74
+[#75]: https://github.com/Tobias-Bonsack/Tonsias/issues/75
+[#76]: https://github.com/Tobias-Bonsack/Tonsias/issues/76
+[#78]: https://github.com/Tobias-Bonsack/Tonsias/issues/78
+[#79]: https://github.com/Tobias-Bonsack/Tonsias/issues/79
 
 ## [0.1.0] - 2026-08-07
 
