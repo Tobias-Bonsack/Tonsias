@@ -45,6 +45,8 @@ public abstract class AInstanz implements IInstanz {
 
 	private BiMap<String, String> _singleFloatKeyValueMap;
 
+	private BiMap<String, String> _singleInstanzKeyValueMap;
+
 	// the only constructor, and it takes the key alone: a parent set here would be
 	// set past IInstanzService, so neither would ChangePropagationListener pull the
 	// other side along nor would a delta be written. Use
@@ -125,6 +127,11 @@ public abstract class AInstanz implements IInstanz {
 				_singleFloatKeyValueMap = HashBiMap.create();
 			}
 			return _singleFloatKeyValueMap;
+		case SINGLE_INSTANZ:
+			if (_singleInstanzKeyValueMap == null) {
+				_singleInstanzKeyValueMap = HashBiMap.create();
+			}
+			return _singleInstanzKeyValueMap;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + type);
 		}
