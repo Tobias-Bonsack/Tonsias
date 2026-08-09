@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Tonsias" uid="tonsias" id="de.tonsias.basis.ui.product" application="org.eclipse.e4.ui.workbench.swt.E4Application" version="0.2.0.qualifier" type="mixed" includeLaunchers="true" autoIncludeRequirements="true">
+<product name="Tonsias" uid="tonsias" id="de.tonsias.basis.ui.product" application="org.eclipse.e4.ui.workbench.swt.E4Application" version="0.2.0" type="mixed" includeLaunchers="true" autoIncludeRequirements="true">
 
    <configIni use="default">
    </configIni>

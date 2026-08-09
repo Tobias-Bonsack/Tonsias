@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Logic
 Bundle-SymbolicName: de.tonsias.basis.logic
-Bundle-Version: 0.2.0.qualifier
+Bundle-Version: 0.2.0
 Automatic-Module-Name: de.tonsias.basis.logic
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-24

@@ -7,7 +7,13 @@ All notable changes to Tonsias are documented here. The format follows
 
 ## [Unreleased]
 
-Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
+Nothing yet. The reactor is at `0.2.0`.
+
+## [0.2.0] - 2026-08-09
+
+Two more attribute types — a decimal number and, for the first time, a **relation** that
+points at another instanz — and a test suite that no longer substitutes anything: every
+one of the 588 tests drives the services the running application registers.
 
 ### Added
 
@@ -128,6 +134,9 @@ Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
 - `ISingleValueService.resolveKey(..)` no longer remembers a failed load. It put the
   `null` into the cache, so the key counted as asked and answered from then on and the
   next look — in the right folder — got the same nothing back ([#79]).
+- The `README.md` example for running a single test names `KeyServiceSystemTest`, which
+  exists, instead of `KeyServiceImplTest`, which has not since the tests were rewritten
+  ([#80]).
 
 [#52]: https://github.com/Tobias-Bonsack/Tonsias/issues/52
 [#53]: https://github.com/Tobias-Bonsack/Tonsias/issues/53
@@ -145,6 +154,27 @@ Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
 [#76]: https://github.com/Tobias-Bonsack/Tonsias/issues/76
 [#78]: https://github.com/Tobias-Bonsack/Tonsias/issues/78
 [#79]: https://github.com/Tobias-Bonsack/Tonsias/issues/79
+[#80]: https://github.com/Tobias-Bonsack/Tonsias/issues/80
+
+### Distribution
+
+- `tonsias-win32.win32.x86_64.zip` — the runnable application for Windows x86_64, with
+  the `jre` directory `jlink` builds next to the launcher. No Java on the `PATH` is
+  needed any more; the product declares no `-vm`, so that directory has to travel with
+  it.
+- `de.tonsias.basis.product-0.2.0.zip` — the p2 repository, for installing or updating
+  from Eclipse.
+
+### Known limitations
+
+- Only a Windows x86_64 product is built. Other platforms need additional
+  `<environment>` entries in `target-platform-configuration`.
+- Instanzen can be created but not deleted from the user interface.
+- A single value's `REMOVE` direction is still open in two places of
+  `ChangePropagationListener`: dropping a value key from an instanz, and dropping an
+  instanz from a value's owner list, are answered by the services alone.
+- The bundles declare inconsistent Java compliance levels (19 / 22 / 24), which is why
+  the build pins its resolution execution environment to `JavaSE-24`.
 
 ## [0.1.0] - 2026-08-07
 
@@ -234,5 +264,6 @@ is a summary of what the release contains rather than of what changed.
 - The bundles declare inconsistent Java compliance levels (19 / 22 / 24), which is why
   the build pins its resolution execution environment to `JavaSE-24`.
 
-[Unreleased]: https://github.com/Tobias-Bonsack/Tonsias/compare/v0.1.0...main
+[Unreleased]: https://github.com/Tobias-Bonsack/Tonsias/compare/v0.2.0...main
+[0.2.0]: https://github.com/Tobias-Bonsack/Tonsias/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Tobias-Bonsack/Tonsias/releases/tag/v0.1.0

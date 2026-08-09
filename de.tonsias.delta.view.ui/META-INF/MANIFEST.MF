@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DeltaViewUI
 Bundle-SymbolicName: de.tonsias.delta.view.ui
-Bundle-Version: 0.2.0.qualifier
+Bundle-Version: 0.2.0
 Export-Package: de.tonsias.delta.view.ui;x-friends:="de.tonsias.delta.vi
  ew.ui.test",de.tonsias.delta.view.ui.tree;x-friends:="de.tonsias.delta.
  view.ui.test"

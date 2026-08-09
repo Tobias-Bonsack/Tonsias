@@ -3,23 +3,24 @@
 [![Build](https://github.com/Tobias-Bonsack/Tonsias/actions/workflows/build.yml/badge.svg)](https://github.com/Tobias-Bonsack/Tonsias/actions/workflows/build.yml)
 
 Tonsias is an Eclipse RCP / e4 desktop application for modelling data as a tree.
-Every node is an _Instanz_; every Instanz carries named _single values_ (string or
-integer) as its attributes. Nothing is stored in one big document — each Instanz and
-each value is its own small JSON file, and every change travels through an event bus
-before it is written, so the whole model stays observable and every edit is visible
-and revocable until it is saved.
+Every node is an _Instanz_; every Instanz carries named _single values_ (text, whole
+number, decimal number, yes-or-no, or a reference to another Instanz) as its
+attributes. Nothing is stored in one big document — each Instanz and each value is its
+own small JSON file, and every change travels through an event bus before it is
+written, so the whole model stays observable and every edit is visible and revocable
+until it is saved.
 
-> **Version 0.1.0 is the first release.** It is an early, functional snapshot: the
-> model, the persistence, the event chain and three views work end to end, but the
-> feature set is deliberately small and only a Windows x86_64 build is produced.
+> **Version 0.2.0 is the current release.** It is still an early snapshot: the model,
+> the persistence, the event chain and three views work end to end, but the feature set
+> is deliberately small and only a Windows x86_64 build is produced.
 
-## Features in 0.1.0
+## Features in 0.2.0
 
 ### Views
 
 - **Model View** — the whole model as a tree of Instanzen and their values.
-  Its context menu (also reachable with `Ctrl+N`) creates a child Instanz, adds a
-  string or an integer single value through a dialog, or deletes a value. The tree
+  Its context menu (also reachable with `Ctrl+N`) creates a child Instanz, adds a single
+  value of any of the five types through a dialog, or deletes a value. The tree
   refreshes itself from model events instead of polling, and which value is used as a
   node's label is a preference.
 - **Property View** — everything about the selected Instanz: own key, parent key,
@@ -29,6 +30,17 @@ and revocable until it is saved.
   and switching to another Instanz while dirty asks first whether to keep the changes.
 - **Delta View** — every change since the last save, as a tree grouped per operation.
   Its toolbar refreshes the tree and saves everything in one go.
+
+### Attribute types
+
+- **Text**, **whole number**, **decimal number** and **yes-or-no**. Each type answers for
+  what it takes: the dialog asks the type itself, greys out its OK button for input the
+  model would discard, and nothing is silently stored as `0` or left cleared.
+- **Instanz reference** — a relation, pointing at another Instanz. The target is chosen
+  from a tree of the model with a filter field, never typed as a raw key, and it can be
+  followed back to the Instanz it names. The relation is held at both ends: deleting the
+  target puts every reference to it back to pointing nowhere instead of leaving a key
+  that resolves to nothing, and the attribute itself stays with its owner.
 
 ### Editing and saving
 
@@ -44,7 +56,8 @@ and revocable until it is saved.
 ### Persistence
 
 - One JSON file per object, written with Gson under the Eclipse instance location:
-  `instanz/<key>.json`, `single_value/string/<key>.json`, `single_value/integer/<key>.json`.
+  `instanz/<key>.json` and `single_value/<type>/<key>.json`, one folder per attribute
+  type.
 - Objects are referenced by string key, never by object reference; the services cache
   what they have loaded and only touch the disk on a miss or a save.
 - Keys come from a base-36 counter over a lower-case alphabet, persisted in the Eclipse
@@ -62,27 +75,29 @@ and revocable until it is saved.
 
 - A headless **Tycho** build mirrors the IDE: `.\build.ps1` compiles every bundle, runs
   every test bundle inside a real Equinox, and materialises the runnable product.
-- The test bundles cover the model, the JSON persistence, the services, the view logic
-  and the complete event chain. All of them run inside OSGi.
+- **Every one of the 588 tests is a system test**: it drives the services the running
+  application registers, on the real event bus, against the real workspace files, and —
+  for the views — on a real SWT `Display`. Nothing is substituted; there is no mocking
+  framework in the target platform.
 - GitHub Actions builds every push and pull request on Windows and posts the per-bundle
   test results as a single, edited-in-place pull request comment.
 
 ## Download and run
 
 1. Take `tonsias-win32.win32.x86_64.zip` from the
-   [0.1.0 release](https://github.com/Tobias-Bonsack/Tonsias/releases/tag/v0.1.0).
+   [0.2.0 release](https://github.com/Tobias-Bonsack/Tonsias/releases/tag/v0.2.0).
 2. Unzip it anywhere and start `Tonsias.exe`.
 
-From 0.2.0 on the zip is self-contained: it carries its own Java runtime in `jre/`
-next to the launcher, so **nothing has to be installed** and the launcher finds a VM
-without a `-vm` argument. The 0.1.0 zip does not — it needs Java 24 or newer on the
-`PATH`, or an explicit `Tonsias.exe -vm <jdk>\bin\javaw.exe`, and starts silently into
-nothing without either.
+The zip is self-contained: it carries its own Java runtime in `jre/` next to the
+launcher, so **nothing has to be installed** and the launcher finds a VM without a
+`-vm` argument. Keep that directory next to the executable — the product declares no
+`-vm`, so without it the launcher starts silently into nothing. (The older 0.1.0 zip
+has no `jre/` and needs Java 24 or newer on the `PATH`.)
 
 The model is written to the application's instance location — the path is shown in
 `Window > Preferences` and can be pointed elsewhere with `-data <directory>`.
 
-`de.tonsias.basis.product-0.1.0.zip` in the same release is the p2 repository, for
+`de.tonsias.basis.product-0.2.0.zip` in the same release is the p2 repository, for
 installing or updating Tonsias from within Eclipse instead.
 
 ## Build from source
@@ -90,7 +105,7 @@ installing or updating Tonsias from within Eclipse instead.
 ```powershell
 .\build.ps1                                # compile, test, materialize the product
 .\build.ps1 -SkipTests                     # product only
-.\build.ps1 -- -Dtest=KeyServiceImplTest   # everything after -- goes to Maven verbatim
+.\build.ps1 -- -Dtest=KeyServiceSystemTest # everything after -- goes to Maven verbatim
 ```
 
 `build.ps1` exists because `JAVA_HOME` is usually not set on a development machine: it
@@ -165,10 +180,9 @@ package is exported to the test bundle alone.
   injection mechanisms that coexist, persistence layout, conventions, and the rules a
   change has to follow.
 
-## Known limitations in 0.1.0
+## Known limitations in 0.2.0
 
 - Only a Windows x86_64 product is built.
-- Single values are limited to string and integer.
 - Instanzen can be created but not deleted from the user interface; values can.
 - The Java compliance levels of the bundles are inconsistent (19 / 22 / 24), which is
   why the Tycho build has to pin its resolution execution environment.
