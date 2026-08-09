@@ -55,6 +55,13 @@ public class CreateInstanzDialogLogic {
 		return _tableInput;
 	}
 
+	/**
+	 * A row of the table, and the value in it is whatever the cell editor of the
+	 * column left there - text, for every type alike. A
+	 * {@code SingleValueType.SINGLE_INSTANZ} row therefore has to be given the raw
+	 * key of its target instead of choosing it from a list, see
+	 * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/75">#75</a>.
+	 */
 	public class TableRecord {
 		public SingleValueType type;
 		public String parameterName;
