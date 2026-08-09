@@ -22,6 +22,7 @@ import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.Instanz;
+import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
@@ -100,6 +101,20 @@ public class InstanzServiceImpl implements IInstanzService {
 		}
 
 		return Optional.empty();
+	}
+
+	@Override
+	public Optional<IInstanz> resolveInstanzValue(SingleInstanzValue value) {
+		if (value == null) {
+			return Optional.empty();
+		}
+		String targetKey = value.getValue();
+		// a fresh reference holds the empty string, which resolveKey would look for a
+		// file named "instanz/.json" with
+		if (targetKey == null || targetKey.isBlank()) {
+			return Optional.empty();
+		}
+		return resolveKey(targetKey);
 	}
 
 	@Override

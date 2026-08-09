@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleBooleanValue;
 import de.tonsias.basis.model.impl.value.SingleFloatValue;
+import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
@@ -159,6 +160,75 @@ public class SingleValueServiceSystemTest {
 				SingleFloatValue.class);
 		assertThat(reloaded.getValue(), is(-0.5f));
 		assertThat(reloaded.getConnectedInstanzKeys(), contains(_owner.getOwnKey()));
+	}
+
+	// ---------- the relation ----------
+
+	/**
+	 * A relation is a value like any other on the way in: it lands in the map of its
+	 * own type, and what it stores is the key of the instanz it points at.
+	 */
+	@Test
+	void testCreateNew_instanzValueStoresTheTargetKey() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		_recorder.clear();
+
+		SingleInstanzValue created = _svs.createNew(SingleInstanzValue.class, _owner.getOwnKey(), "points at",
+				target.getOwnKey(), Type.SEND);
+
+		assertThat(created.getValue(), is(target.getOwnKey()));
+		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_INSTANZ).get(created.getOwnKey()), is("points at"));
+		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey(created.getOwnKey()), is(false));
+		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
+				is(SingleValueType.SINGLE_INSTANZ));
+	}
+
+	/**
+	 * The relation has a folder of its own below {@code single_value/}, so it never
+	 * meets the {@code instanz/} folder the target itself is written into.
+	 */
+	@Test
+	void testSaveAll_anInstanzValueSurvivesTheRoundTripThroughItsOwnFolder() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		SingleInstanzValue created = _svs.createNew(SingleInstanzValue.class, _owner.getOwnKey(), "points at",
+				target.getOwnKey(), Type.SEND);
+
+		assertThat(_svs.saveAll(Set.of(created.getOwnKey())), is(true));
+
+		assertThat(ProductRuntime.valueFileExists(SingleValueType.SINGLE_INSTANZ, created.getOwnKey()), is(true));
+		SingleInstanzValue reloaded = ProductRuntime.reloadValue(SingleValueType.SINGLE_INSTANZ, created.getOwnKey(),
+				SingleInstanzValue.class);
+		assertThat(reloaded.getValue(), is(target.getOwnKey()));
+		assertThat(reloaded.getConnectedInstanzKeys(), contains(_owner.getOwnKey()));
+	}
+
+	/** the relation followed, which is the whole point of the type */
+	@Test
+	void testResolveInstanzValue_findsTheTarget() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		SingleInstanzValue created = _svs.createNew(SingleInstanzValue.class, _owner.getOwnKey(), "points at",
+				target.getOwnKey(), Type.SEND);
+
+		assertThat(_inse.resolveInstanzValue(created), is(Optional.of(target)));
+	}
+
+	/**
+	 * A reference that points nowhere comes back empty rather than throwing: a fresh
+	 * one holds the empty string, and a stored one keeps its key after the target
+	 * has been deleted, because nothing records who points at an instanz.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/74">#74</a>
+	 */
+	@Test
+	void testResolveInstanzValue_pointingNowhereIsEmpty() {
+		SingleInstanzValue fresh = _svs.createNew(SingleInstanzValue.class, _owner.getOwnKey(), "unset",
+				_owner.getOwnKey(), Type.SEND);
+		fresh.tryToSetValue("zzzzzz");
+
+		assertThat("a key no instanz carries", _inse.resolveInstanzValue(fresh), is(Optional.empty()));
+		assertThat("no value at all", _inse.resolveInstanzValue(null), is(Optional.empty()));
+		assertThat("the empty string a fresh one holds",
+				_inse.resolveInstanzValue(new SingleInstanzValue("unsaved")), is(Optional.empty()));
 	}
 
 	@Test

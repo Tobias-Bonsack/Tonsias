@@ -25,6 +25,7 @@ import de.tonsias.basis.data.access.osgi.intf.SaveService;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleBooleanValue;
 import de.tonsias.basis.model.impl.value.SingleFloatValue;
+import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.ISingleValue;
@@ -123,6 +124,8 @@ public class SingleValueServiceImpl implements ISingleValueService {
 			return (E) new SingleBooleanValue(key);
 		case SINGLE_FLOAT:
 			return (E) new SingleFloatValue(key);
+		case SINGLE_INSTANZ:
+			return (E) new SingleInstanzValue(key);
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + type);
 		}

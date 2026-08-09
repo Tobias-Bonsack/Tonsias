@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionException;
 
 import de.tonsias.basis.data.access.osgi.intf.DeleteService;
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.util.ChangePropagationListener;
@@ -37,6 +38,20 @@ public interface IInstanzService {
 	 * @return collection of resolvable {@link IInstanz}
 	 */
 	Collection<IInstanz> resolveKeys(Collection<String> keys);
+
+	/**
+	 * Follows a relation: a {@link SingleInstanzValue} carries the key of the
+	 * instanz it points at, and this is the one place that turns it back into the
+	 * object. The value itself cannot - {@code de.tonsias.basis.model} has no OSGi
+	 * dependency to reach a service with.
+	 *
+	 * @param value the reference to follow, may be {@code null}
+	 * @return the target, or empty when the value points nowhere - which a stored
+	 *         reference does once its target has been deleted, because nothing
+	 *         records who points at an instanz, see
+	 *         <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/74">#74</a>
+	 */
+	Optional<IInstanz> resolveInstanzValue(SingleInstanzValue value);
 
 	/**
 	 * Creates a new {@link IInstanz}, but does not save it
