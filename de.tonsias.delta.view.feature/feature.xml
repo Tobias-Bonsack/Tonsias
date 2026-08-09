@@ -2,7 +2,7 @@
 <feature
       id="de.tonsias.delta.view.feature"
       label="Tonsias Delta View"
-      version="0.2.0.qualifier"
+      version="0.2.0"
       provider-name="TONSIAS">
 
    <description url="https://github.com/Tobias-Bonsack/Tonsias">

@@ -7,11 +7,11 @@
 	<parent>
 		<groupId>de.tonsias</groupId>
 		<artifactId>de.tonsias.parent</artifactId>
-		<version>0.2.0-SNAPSHOT</version>
+		<version>0.2.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>de.tonsias.delta.view.ui.test</artifactId>
-	<version>0.2.0-SNAPSHOT</version>
+	<version>0.2.0</version>
 	<packaging>eclipse-test-plugin</packaging>
 </project>

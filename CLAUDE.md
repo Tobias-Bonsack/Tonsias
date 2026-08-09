@@ -104,7 +104,7 @@ Every change follows this sequence, and **never commit directly to `main`**:
 
 ## Releasing
 
-Latest release **0.1.0**; the reactor is on **0.2.0-SNAPSHOT**. `CHANGELOG.md` is the per-release record, `README.md` the user-facing overview. Versions live in 37 files — **never edit them by hand**:
+Latest release **0.2.0**; the reactor is on **0.3.0-SNAPSHOT**. `CHANGELOG.md` is the per-release record, `README.md` the user-facing overview. Versions live in 37 files — **never edit them by hand**:
 
 ```powershell
 $env:JAVA_HOME = '<jdk24>'
