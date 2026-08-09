@@ -26,11 +26,23 @@ Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
   points at another instanz. What it stores is the target's key — the model references
   everything by key, and resolving one needs a service the model bundle deliberately
   cannot reach — so it is persisted by the same Gson as every other value, under
-  `single_value/instanz/`, and no new event topic was needed. It is created from the
-  model view and edited in the instanz view by choosing from a list of the model's
-  instanzen rather than by typing, and `IInstanzService.resolveInstanzValue` follows it
-  back to the instanz. A reference whose target has been deleted keeps its key and
-  resolves to nothing ([#74](https://github.com/Tobias-Bonsack/Tonsias/issues/74)).
+  `single_value/instanz/`. It is created from the model view, from the create-instanz
+  dialog and from the instanz view by *choosing* the target — never by typing its key —
+  and `IInstanzService.resolveInstanzValue` follows it back to the instanz.
+- The relation is held at both ends. An instanz now carries the keys of the relations
+  pointing *at* it, `ChangePropagationListener` keeps that set in step with every
+  create, repoint and delete of a relation, and deleting an instanz puts every relation
+  that named it back to pointing nowhere instead of leaving a key that resolves to
+  nothing. The attribute itself stays — it belongs to its owner, under the name that
+  owner gave it. The set travels to disk with its instanz on the new
+  `instanz/delta/referenceChange` topic
+  ([#74](https://github.com/Tobias-Bonsack/Tonsias/issues/74)).
+- The target of a relation is chosen from a **tree with a filter field** rather than
+  from a flat combo box of every instanz in the model, so a large model stays navigable
+  and searchable. The instanz view and the value column of the create-instanz dialog
+  open it as a dialog; the relation's own value dialog shows it inline
+  ([#75](https://github.com/Tobias-Bonsack/Tonsias/issues/75),
+  [#76](https://github.com/Tobias-Bonsack/Tonsias/issues/76)).
 
 ### Changed — tests
 

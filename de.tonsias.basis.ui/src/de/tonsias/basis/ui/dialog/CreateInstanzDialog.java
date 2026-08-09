@@ -12,12 +12,14 @@ import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ComboBoxCellEditor;
+import org.eclipse.jface.viewers.DialogCellEditor;
 import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.widgets.ButtonFactory;
 import org.eclipse.jface.widgets.CompositeFactory;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Point;
@@ -36,6 +38,7 @@ import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.util.OsgiUtil;
 import de.tonsias.basis.ui.i18n.Messages;
 import de.tonsias.basis.ui.util.MessagesUtil;
+import de.tonsias.basis.ui.widget.InstanzSelectionDialog;
 
 public class CreateInstanzDialog extends Dialog {
 
@@ -109,7 +112,9 @@ public class CreateInstanzDialog extends Dialog {
 				tRec -> MessagesUtil.getSingleValueTypeLabel(_messages, tRec.type), //
 				getEditingSupport(//
 						(element, value) -> {
-							element.type = SingleValueType.values()[(int) value];
+							// the logic drops a value the new type would not take with it, so the row
+							// never carries text under a type that stores a key
+							_logic.setType(element, SingleValueType.values()[(int) value]);
 							_viewer.update(element, null);
 						}, //
 						element -> Arrays.asList(SingleValueType.values()).indexOf(element.type), //
@@ -131,18 +136,47 @@ public class CreateInstanzDialog extends Dialog {
 						element -> element.parameterName, //
 						element -> new TextCellEditor(_viewer.getTable())));
 
-		createColumn(_messages.constant_value, 200, tRec -> tRec.value.toString(), //
+		// the one column whose editor depends on the row: a relation is chosen from the
+		// tree the value dialog offers, not typed as a raw key, see
+		// https://github.com/Tobias-Bonsack/Tonsias/issues/75
+		createColumn(_messages.constant_value, 200, tRec -> _logic.valueLabel(tRec), //
 				getEditingSupport(//
 						(element, value) -> {
 							element.value = value;
 							_viewer.update(element, null);
 						}, //
 						element -> element.value, //
-						element -> new TextCellEditor(_viewer.getTable())));
+						element -> element.type == SingleValueType.SINGLE_INSTANZ ? instanzCellEditor()
+								: new TextCellEditor(_viewer.getTable())));
 
 
 		_viewer.setContentProvider(ArrayContentProvider.getInstance());
 		_viewer.setInput(_logic.getInput());
+	}
+
+	/**
+	 * The cell editor of a relation: a cell that opens {@link InstanzSelectionDialog}
+	 * rather than one that is typed into. What it keeps is the key of the chosen
+	 * instanz, and what it shows is the label - the same pair the Instanz View
+	 * shows on its button.
+	 */
+	private CellEditor instanzCellEditor() {
+		return new DialogCellEditor(_viewer.getTable()) {
+
+			@Override
+			protected Object openDialogBox(Control cellEditorWindow) {
+				var dialog = new InstanzSelectionDialog(cellEditorWindow.getShell(), _logic.instanzChoices().tree(),
+						_messages, String.valueOf(getValue()));
+				// cancelling keeps what the cell held - the editor writes back whatever comes
+				// out of here, so handing back null would empty the cell
+				return dialog.open() == Window.OK ? dialog.getSelectedKey() : getValue();
+			}
+
+			@Override
+			protected void updateContents(Object value) {
+				super.updateContents(_logic.instanzChoices().labelOf(String.valueOf(value)).orElse(""));
+			}
+		};
 	}
 
 	private void createColumn(String title, int width, IColumnLabelProvider provider, EditingSupport editingSupport) {
