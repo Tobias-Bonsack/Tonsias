@@ -329,6 +329,31 @@ public class SingleValueServiceSystemTest {
 				SingleIntegerValue.class), is(Optional.empty()));
 	}
 
+	/**
+	 * A folder without the file is no answer, and the service may not remember it
+	 * as one. It used to put the {@code null} into the cache, and from then on the
+	 * key counted as asked and answered: the very next call, in the right folder,
+	 * got the same nothing back. Looking in one folder after another is what the
+	 * service itself does when a key does not say its type, so the first look is
+	 * regularly the wrong one.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/79">#79</a>
+	 */
+	@Test
+	void testResolveKey_aMissTheWrongFolderGivesIsNotRemembered() {
+		SingleStringValue created = newStringValue("parameter", "content");
+		String key = created.getOwnKey();
+		ProductRuntime.flushDeltas();
+		_svs.removeFromCache(key);
+
+		assertThat("no string value lies in the float folder",
+				_svs.resolveKey(SingleValueType.SINGLE_FLOAT.getPath(), key, SingleFloatValue.class),
+				is(Optional.empty()));
+
+		assertThat("and the right folder still answers", _svs.resolveKey(STRING_PATH, key, SingleStringValue.class)
+				.map(SingleStringValue::getValue), is(Optional.of("content")));
+	}
+
 	@Test
 	void testResolveKeys_skipsWhatCannotBeResolved() {
 		SingleStringValue known = newStringValue("parameter", "content");
@@ -376,6 +401,69 @@ public class SingleValueServiceSystemTest {
 		assertThat(_svs.changeValue(value.getOwnKey(), 42, Type.SEND), is(false));
 
 		assertThat(value.getValue(), is("text"));
+		assertThat(_recorder.events(), hasSize(0));
+	}
+
+	/**
+	 * A value that has not been touched in this session is not in the cache - after
+	 * a restart no value is. Reading the cache and nothing else made every one of
+	 * them a {@code NullPointerException} out of the service, and the folder the
+	 * value lies in is what says which type it is.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/78">#78</a>
+	 */
+	@Test
+	void testChangeValue_reachesAValueThatIsOnDiskOnly() {
+		SingleStringValue value = newStringValue("parameter", "old");
+		String key = value.getOwnKey();
+		ProductRuntime.flushDeltas();
+		_svs.removeFromCache(key);
+		_recorder.clear();
+
+		assertThat(_svs.changeValue(key, "new", Type.SEND), is(true));
+
+		ValueChangeEvent data = _recorder.onlyDataOf(SingleValueEventConstants.VALUE_CHANGE, ValueChangeEvent.class);
+		assertThat("the type comes out of the folder it was found in", data._type(),
+				is(SingleValueType.SINGLE_STRING));
+		assertThat(data._oldValue(), is("old"));
+		assertThat(_svs.resolveKey(STRING_PATH, key, SingleStringValue.class).get().getValue(), is("new"));
+	}
+
+	/** and a key nothing backs is a no-op rather than a failure of the service */
+	@Test
+	void testChangeValue_aKeyWithoutAValueIsSilent() {
+		_recorder.clear();
+
+		assertThat(_svs.changeValue("no-such-key", "new", Type.SEND), is(false));
+		assertThat(_svs.changeValue(null, "new", Type.SEND), is(false));
+
+		assertThat(_recorder.events(), hasSize(0));
+	}
+
+	/** {@code markSingleValueAsDelete} read the cache the same way - @see #78 */
+	@Test
+	void testMarkSingleValueAsDelete_reachesAValueThatIsOnDiskOnly() {
+		SingleStringValue value = newStringValue("parameter", "content");
+		String key = value.getOwnKey();
+		ProductRuntime.flushDeltas();
+		_svs.removeFromCache(key);
+		_recorder.clear();
+
+		_svs.markSingleValueAsDelete(key, Type.SEND);
+
+		SingleValueDeleteEvent data = _recorder.onlyDataOf(SingleValueEventConstants.DELETE,
+				SingleValueDeleteEvent.class);
+		assertThat(data._key(), is(key));
+		assertThat(data._type(), is(SingleValueType.SINGLE_STRING));
+		assertThat("the owner it was stored with", data._ownerKeys(), contains(_owner.getOwnKey()));
+	}
+
+	@Test
+	void testMarkSingleValueAsDelete_aKeyWithoutAValueIsSilent() {
+		_recorder.clear();
+
+		_svs.markSingleValueAsDelete("no-such-key", Type.SEND);
+
 		assertThat(_recorder.events(), hasSize(0));
 	}
 

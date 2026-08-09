@@ -381,6 +381,28 @@ public class ChangePropagationSystemTest {
 		assertThat(target.getReferencingValueKeys(), hasSize(0));
 	}
 
+	/**
+	 * The set on the target is the only way to the relation, and it holds a key -
+	 * so the value behind it has to be reachable even when nothing in this session
+	 * has touched it. That is the state every relation is in after a restart.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/78">#78</a>
+	 */
+	@Test
+	void testDeletedInstanz_reachesARelationThatIsOnDiskOnly() {
+		IInstanz owner = newInstanz();
+		IInstanz target = newInstanz();
+		String relationKey = _svs.createNew(SingleInstanzValue.class, owner.getOwnKey(), "points at",
+				target.getOwnKey(), Type.SEND).getOwnKey();
+		ProductRuntime.flushDeltas();
+		_svs.removeFromCache(relationKey);
+
+		_inse.removeSubtreeInstanz(target.getOwnKey(), Type.SEND);
+
+		assertThat(_svs.resolveKey(SingleValueType.SINGLE_INSTANZ.getPath(), relationKey, SingleInstanzValue.class)
+				.map(SingleInstanzValue::getValue), is(java.util.Optional.of("")));
+	}
+
 	/** a whole branch: every instanz below the deleted one is a target too */
 	@Test
 	void testDeletedInstanz_reachesTheRelationsPointingIntoItsSubtree() {

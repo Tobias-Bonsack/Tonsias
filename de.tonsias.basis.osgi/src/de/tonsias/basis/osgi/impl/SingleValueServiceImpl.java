@@ -71,9 +71,47 @@ public class SingleValueServiceImpl implements ISingleValueService {
 		if (path == null || path.isBlank()) {
 			return Optional.empty();
 		}
+
 		E singleValue = _loadService.loadFromGson(path + key, clazz);
+		if (singleValue == null) {
+			// no file is no answer, and it is no answer worth remembering either: a null
+			// left in the cache counts as "asked and answered" from then on, so the key
+			// would never resolve again in this session - not even once its file is
+			// there, and not even when the next caller looks in the right folder. See
+			// https://github.com/Tobias-Bonsack/Tonsias/issues/79
+			return Optional.empty();
+		}
+
 		_cache.put(key, singleValue);
-		return Optional.ofNullable(singleValue);
+		return Optional.of(singleValue);
+	}
+
+	/**
+	 * The value behind a key, whatever its type. The cache answers first; a value
+	 * that has not been touched in this session is looked for in one type folder
+	 * after the other, the same way {@link #deleteFile} finds the file it has to
+	 * remove. A key alone does not say which type it belongs to - only the folder
+	 * it lies in does.
+	 *
+	 * @return the value, or empty for a key no folder holds a file for
+	 */
+	private Optional<ISingleValue<?>> resolveAnyKey(String key) {
+		if (key == null || key.isBlank()) {
+			return Optional.empty();
+		}
+
+		ISingleValue<?> cached = _cache.get(key);
+		if (cached != null) {
+			return Optional.of(cached);
+		}
+
+		for (SingleValueType type : SingleValueType.values()) {
+			Optional<? extends ISingleValue<?>> loaded = resolveKey(type.getPath(), key, type.getClazz());
+			if (loaded.isPresent()) {
+				return Optional.of(loaded.get());
+			}
+		}
+		return Optional.empty();
 	}
 
 	@Override
@@ -153,7 +191,16 @@ public class SingleValueServiceImpl implements ISingleValueService {
 
 	@Override
 	public boolean changeValue(String ownKey, Object newValue, IEventBrokerBridge.Type eventType) {
-		ISingleValue<?> value = _cache.get(ownKey);
+		// off the cache alone this used to throw a NullPointerException for every value
+		// that had not been touched in this session - which after a restart is every
+		// value there is, see
+		// https://github.com/Tobias-Bonsack/Tonsias/issues/78
+		Optional<ISingleValue<?>> resolved = resolveAnyKey(ownKey);
+		if (resolved.isEmpty()) {
+			return false;
+		}
+
+		ISingleValue<?> value = resolved.get();
 		Object oldValue = value.getValue();
 		boolean isChanged = value.tryToSetValue(newValue);
 		if (isChanged) {
@@ -174,7 +221,14 @@ public class SingleValueServiceImpl implements ISingleValueService {
 
 	@Override
 	public void markSingleValueAsDelete(String singleValueKeyToMark, Type eventType) {
-		var value = _cache.get(singleValueKeyToMark);
+		// the same cache assumption changeValue made, and the same fix, see
+		// https://github.com/Tobias-Bonsack/Tonsias/issues/78
+		Optional<ISingleValue<?>> resolved = resolveAnyKey(singleValueKeyToMark);
+		if (resolved.isEmpty()) {
+			return;
+		}
+
+		ISingleValue<?> value = resolved.get();
 		Optional<SingleValueType> optional = SingleValueType.getByClass(value.getClass());
 		optional.ifPresent(type -> {
 			// a live view of the connections, so it has to be copied before they are cut -
