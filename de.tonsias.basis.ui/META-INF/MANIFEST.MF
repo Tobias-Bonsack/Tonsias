@@ -5,7 +5,8 @@ Bundle-SymbolicName: de.tonsias.basis.ui;singleton:=true
 Bundle-Version: 0.2.0.qualifier
 Export-Package: de.tonsias.basis.ui.dialog;x-friends:="de.tonsias.basis
  .ui.test",
- de.tonsias.basis.ui.util;x-friends:="de.tonsias.basis.ui.test"
+ de.tonsias.basis.ui.util;x-friends:="de.tonsias.basis.ui.test",
+ de.tonsias.basis.ui.widget;x-friends:="de.tonsias.basis.ui.test"
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0",
  org.eclipse.jface;bundle-version="3.33.0",
  org.eclipse.e4.core.di;bundle-version="1.9.300",

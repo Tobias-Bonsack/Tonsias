@@ -55,7 +55,7 @@ public class TreeLabelProvider implements ILabelProvider {
 
 	/**
 	 * Values read as themselves; an instanz reads by the rule in
-	 * {@link InstanzChoices#labelOf(IInstanz)}, which the combo box of a relation is
+	 * {@link InstanzChoices#labelOf(IInstanz)}, which the chooser of a relation is
 	 * filled from as well - the same instanz has to read the same in both places.
 	 */
 	@Override

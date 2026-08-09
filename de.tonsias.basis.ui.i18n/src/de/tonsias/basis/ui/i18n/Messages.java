@@ -4,10 +4,12 @@ public class Messages {
 	public String constant_add;
 	public String constant_cancel;
 	public String constant_children;
+	public String constant_filter;
 	public String constant_instanz;
 	public String constant_key;
 	public String constant_name;
 	public String constant_no;
+	public String constant_noInstanz;
 	public String constant_parameterName;
 	public String constant_parent;
 	public String constant_remove;
@@ -30,6 +32,8 @@ public class Messages {
 
 	public String dialog_save_text;
 	public String dialog_save_title;
+
+	public String dialog_selectInstanz_title;
 
 	public String dialog_value_instanzSide;
 	public String dialog_value_usedName;

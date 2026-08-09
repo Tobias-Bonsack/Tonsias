@@ -2,6 +2,7 @@ package de.tonsias.basis.logic.test.system;
 
 import static de.tonsias.basis.osgi.test.ProductRuntime.ROOT;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 
@@ -27,8 +28,13 @@ import de.tonsias.basis.osgi.test.ProductRuntime;
  * <p>
  * The runtime is shared by the whole bundle, so the tree already holds whatever
  * the other tests left below the root. Every assertion here is therefore about
- * the subtree this test built - what else is in the list is none of its
+ * the subtree this test built - what else is in the model is none of its
  * business.
+ * </p>
+ * <p>
+ * The shape is a tree, not a flat list: the widget filters it and draws it as
+ * one, which is what makes a large model selectable at all, see
+ * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/76">#76</a>.
  * </p>
  */
 public class InstanzChoicesSystemTest {
@@ -64,42 +70,87 @@ public class InstanzChoicesSystemTest {
 		ProductRuntime.flushDeltas();
 	}
 
+	private List<String> flatKeys() {
+		return _choices.tree().flatten().stream().map(Choice::_key).toList();
+	}
+
 	@Test
-	void testChoices_startAtTheRoot() {
-		assertThat(_choices.choices().get(0)._key(), is(ROOT));
+	void testTree_startsAtTheRoot() {
+		assertThat(_choices.tree()._key(), is(ROOT));
 	}
 
 	/** a whole branch, so the walk has to go past the first level */
 	@Test
-	void testChoices_containTheWholeSubtree() {
+	void testTree_containsTheWholeSubtree() {
 		IInstanz child = _inse.createInstanz(ROOT, Type.SEND);
 		IInstanz grandChild = _inse.createInstanz(child.getOwnKey(), Type.SEND);
 
-		List<String> keys = _choices.choices().stream().map(Choice::_key).toList();
+		assertThat(flatKeys(), hasItem(child.getOwnKey()));
+		assertThat(flatKeys(), hasItem(grandChild.getOwnKey()));
+	}
 
-		assertThat(keys, hasItem(child.getOwnKey()));
-		assertThat(keys, hasItem(grandChild.getOwnKey()));
+	/**
+	 * The nesting itself, which is the whole reason this is a tree: a child hangs
+	 * below its parent rather than next to it.
+	 */
+	@Test
+	void testTree_hangsEveryChildBelowItsParent() {
+		IInstanz child = _inse.createInstanz(ROOT, Type.SEND);
+		IInstanz grandChild = _inse.createInstanz(child.getOwnKey(), Type.SEND);
+
+		Choice childChoice = _choices.tree().find(child.getOwnKey()).orElseThrow();
+
+		assertThat(childChoice._children().stream().map(Choice::_key).toList(), contains(grandChild.getOwnKey()));
+		assertThat("the root holds it, not the grandchild's grandparent",
+				_choices.tree()._children().stream().map(Choice::_key).toList(), hasItem(child.getOwnKey()));
 	}
 
 	/** depth first, the way the Model View draws it: a child before its sibling */
 	@Test
-	void testChoices_areInTreeOrder() {
+	void testFlatten_isInTreeOrder() {
 		IInstanz child = _inse.createInstanz(ROOT, Type.SEND);
 		IInstanz grandChild = _inse.createInstanz(child.getOwnKey(), Type.SEND);
 
-		List<String> keys = _choices.choices().stream().map(Choice::_key).toList();
+		List<String> keys = flatKeys();
 
 		assertThat(keys.indexOf(grandChild.getOwnKey()), is(keys.indexOf(child.getOwnKey()) + 1));
 	}
 
 	/** every instanz is offered once, however often the walk meets it */
 	@Test
-	void testChoices_holdNoKeyTwice() {
+	void testFlatten_holdsNoKeyTwice() {
 		_inse.createInstanz(ROOT, Type.SEND);
 
-		List<String> keys = _choices.choices().stream().map(Choice::_key).toList();
+		List<String> keys = flatKeys();
 
 		assertThat(keys, is(keys.stream().distinct().toList()));
+	}
+
+	// ---------- finding one again ----------
+
+	/**
+	 * What a stored relation is shown with: it holds a key, and the tree is the one
+	 * place that says how that key reads.
+	 */
+	@Test
+	void testFind_locatesAnInstanzAnywhereInTheTree() {
+		IInstanz child = _inse.createInstanz(ROOT, Type.SEND);
+		IInstanz grandChild = _inse.createInstanz(child.getOwnKey(), Type.SEND);
+
+		assertThat(_choices.tree().find(grandChild.getOwnKey()).orElseThrow()._key(), is(grandChild.getOwnKey()));
+		assertThat(_choices.labelOf(grandChild.getOwnKey()), is(Optional.of(_choices.labelOf(grandChild))));
+	}
+
+	/**
+	 * A relation pointing nowhere holds the empty string, and one whose target was
+	 * deleted holds a key the tree no longer has. Neither is an error - both simply
+	 * name no instanz.
+	 */
+	@Test
+	void testFind_aKeyTheTreeDoesNotHoldIsEmpty() {
+		assertThat(_choices.tree().find(""), is(Optional.empty()));
+		assertThat(_choices.tree().find("no-such-key"), is(Optional.empty()));
+		assertThat(_choices.labelOf("no-such-key"), is(Optional.empty()));
 	}
 
 	// ---------- how an instanz reads ----------
@@ -107,7 +158,7 @@ public class InstanzChoicesSystemTest {
 	/**
 	 * The preference names a parameter; the instanz carrying a string value under
 	 * that name reads as its content. This is the rule the Model View labels its
-	 * nodes by, and the combo box of a relation has to agree with it.
+	 * nodes by, and the chooser of a relation has to agree with it.
 	 */
 	@Test
 	void testLabelOf_takesTheValueThePreferenceNames() throws Exception {
@@ -116,7 +167,7 @@ public class InstanzChoicesSystemTest {
 		_svs.createNew(SingleStringValue.class, named.getOwnKey(), PARAMETER, "Kundennummer", Type.SEND);
 
 		assertThat(_choices.labelOf(named), is("Kundennummer"));
-		assertThat(_choices.choices(), hasItem(new Choice(named.getOwnKey(), "Kundennummer")));
+		assertThat(_choices.tree().find(named.getOwnKey()).orElseThrow()._label(), is("Kundennummer"));
 	}
 
 	/** an instanz without that parameter falls back on what it says about itself */
@@ -140,12 +191,10 @@ public class InstanzChoicesSystemTest {
 
 	/** the label a choice carries is the one labelOf gives - one rule, not two */
 	@Test
-	void testChoices_labelEveryEntryTheWayLabelOfDoes() {
+	void testTree_labelsEveryEntryTheWayLabelOfDoes() {
 		IInstanz child = _inse.createInstanz(ROOT, Type.SEND);
 
-		Choice choice = _choices.choices().stream()//
-				.filter(c -> c._key().equals(child.getOwnKey()))//
-				.findFirst().orElseThrow();
+		Choice choice = _choices.tree().find(child.getOwnKey()).orElseThrow();
 
 		assertThat(choice._label(), is(_choices.labelOf(child)));
 	}
@@ -156,9 +205,9 @@ public class InstanzChoicesSystemTest {
 	 * reason to keep the user from expressing one.
 	 */
 	@Test
-	void testChoices_containTheInstanzItself() {
+	void testTree_containsTheInstanzItself() {
 		IInstanz self = _inse.createInstanz(ROOT, Type.SEND);
 
-		assertThat(_choices.choices().stream().map(Choice::_key).toList(), hasItem(self.getOwnKey()));
+		assertThat(flatKeys(), hasItem(self.getOwnKey()));
 	}
 }

@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +16,9 @@ import java.util.Set;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -25,6 +26,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.TreeItem;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -33,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import de.tonsias.basis.logic.part.InstanzChoices.Choice;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleBooleanValue;
 import de.tonsias.basis.model.impl.value.SingleFloatValue;
@@ -49,6 +52,7 @@ import de.tonsias.basis.ui.dialog.InstanzValueDialog;
 import de.tonsias.basis.ui.dialog.IntegerValueDialog;
 import de.tonsias.basis.ui.dialog.StringValueDialog;
 import de.tonsias.basis.ui.i18n.Messages;
+import de.tonsias.basis.ui.widget.InstanzChooser;
 
 /**
  * The value dialogs on a real {@link Display}, built the way JFace builds them:
@@ -397,14 +401,14 @@ public class ValueDialogSystemTest {
 
 	/**
 	 * A new relation opens on no selection, which is the one thing
-	 * {@link SingleInstanzValue#tryToSetValue} refuses - so OK may not be on offer
-	 * for it, the same rule the empty number field is held to.
+	 * {@link SingleInstanzValue#accepts} refuses - so OK may not be on offer for
+	 * it, the same rule the empty number field is held to.
 	 */
 	@Test
 	void testCreate_newInstanzValue_okIsDisabledWithoutASelection() {
 		InstanzValueDialog dialog = built(new InstanzValueDialog(_shell, _instanz, _messages));
 
-		assertThat(combo(dialog).getSelectionIndex(), is(-1));
+		assertThat(chooser(dialog).getSelectedKey(), is(""));
 		assertThat(okButton(dialog).isEnabled(), is(false));
 	}
 
@@ -413,20 +417,63 @@ public class ValueDialogSystemTest {
 	void testValueControl_choosingAnInstanzEnablesOk() {
 		InstanzValueDialog dialog = built(new InstanzValueDialog(_shell, _instanz, _messages));
 
-		choose(combo(dialog), _instanz);
+		choose(chooser(dialog), _instanz);
 
 		assertThat(okButton(dialog).isEnabled(), is(true));
 	}
 
-	/** every instanz of the model is on offer, the root included */
+	/**
+	 * Every instanz of the model is on offer, and it is offered where it sits: the
+	 * chooser draws the tree rather than a flat list of everything, which is what
+	 * keeps it usable once a model grows.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/76">#76</a>
+	 */
 	@Test
-	void testCreate_newInstanzValue_offersTheInstanzenOfTheModel() {
+	void testCreate_newInstanzValue_offersTheModelAsATree() {
+		IInstanz child = ProductRuntime.instanzService().createInstanz(_instanz.getOwnKey(), Type.SEND);
 		InstanzValueDialog dialog = built(new InstanzValueDialog(_shell, _instanz, _messages));
 
-		List<String> items = List.of(combo(dialog).getItems());
+		Choice root = chooser(dialog).root();
 
-		assertThat(items, hasItem(_instanz.toString()));
-		assertThat("the root walks first", items.isEmpty(), is(false));
+		assertThat("the walk starts at the root", root._key(), is(ProductRuntime.ROOT));
+		assertThat(root.find(_instanz.getOwnKey()).orElseThrow()._children().stream().map(Choice::_key).toList(),
+				contains(child.getOwnKey()));
+	}
+
+	/**
+	 * The filter is the other half of the answer to a large model: typing narrows
+	 * the tree to what is named, and keeps the branch above a match so the match is
+	 * not hidden with its parent.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/76">#76</a>
+	 */
+	@Test
+	void testValueControl_theFilterNarrowsTheTreeAndKeepsThePathToAMatch() {
+		IInstanz child = ProductRuntime.instanzService().createInstanz(_instanz.getOwnKey(), Type.SEND);
+		IInstanz stranger = ProductRuntime.instanzService().createInstanz(ProductRuntime.ROOT, Type.SEND);
+		InstanzValueDialog dialog = built(new InstanzValueDialog(_shell, _instanz, _messages));
+		InstanzChooser chooser = chooser(dialog);
+
+		chooser.getFilterText().setText(child.getOwnKey());
+
+		List<String> shown = visibleKeys(chooser);
+		assertThat("the match itself", shown, hasItem(child.getOwnKey()));
+		assertThat("and the branch leading to it", shown, hasItem(_instanz.getOwnKey()));
+		assertThat("but nothing else", shown, not(hasItem(stranger.getOwnKey())));
+	}
+
+	/** an empty filter is no filter - everything is back */
+	@Test
+	void testValueControl_clearingTheFilterShowsTheWholeTreeAgain() {
+		IInstanz stranger = ProductRuntime.instanzService().createInstanz(ProductRuntime.ROOT, Type.SEND);
+		InstanzValueDialog dialog = built(new InstanzValueDialog(_shell, _instanz, _messages));
+		InstanzChooser chooser = chooser(dialog);
+
+		chooser.getFilterText().setText(_instanz.getOwnKey());
+		chooser.getFilterText().setText("");
+
+		assertThat(visibleKeys(chooser), hasItem(stranger.getOwnKey()));
 	}
 
 	/**
@@ -441,7 +488,8 @@ public class ValueDialogSystemTest {
 
 		InstanzValueDialog dialog = built(new InstanzValueDialog(_shell, value, _instanz, _messages));
 
-		assertThat(combo(dialog).getText(), is(target.toString()));
+		assertThat(chooser(dialog).getSelectedKey(), is(target.getOwnKey()));
+		assertThat(chooser(dialog).getSelectedLabel(), is(target.toString()));
 		assertThat(okButton(dialog).isEnabled(), is(true));
 	}
 
@@ -454,7 +502,7 @@ public class ValueDialogSystemTest {
 				_instanz.getOwnKey(), "stored reference", first.getOwnKey(), Type.SEND);
 
 		InstanzValueDialog dialog = built(new InstanzValueDialog(_shell, value, _instanz, _messages));
-		choose(combo(dialog), second);
+		choose(chooser(dialog), second);
 		press(okButton(dialog));
 
 		assertThat(value.getValue(), is(second.getOwnKey()));
@@ -468,11 +516,13 @@ public class ValueDialogSystemTest {
 		InstanzValueDialog dialog = built(new InstanzValueDialog(_shell, _instanz, _messages));
 
 		nameText(dialog).setText("points at");
-		choose(combo(dialog), target);
+		choose(chooser(dialog), target);
 		press(okButton(dialog));
 
 		assertThat(dialog.getSingleValue().getValue(), is(target.getOwnKey()));
 		assertThat(dialog.getSingleValue().getConnectedInstanzKeys(), contains(_instanz.getOwnKey()));
+		assertThat("and the target records the other end",
+				target.getReferencingValueKeys(), hasItem(dialog.getSingleValue().getOwnKey()));
 	}
 
 	// ---------- what the model would do ----------
@@ -541,25 +591,44 @@ public class ValueDialogSystemTest {
 		return texts(dialog).get(1);
 	}
 
-	/** the combo box an {@link InstanzValueDialog} chooses its value in */
-	private Combo combo(Dialog dialog) {
+	/** the tree an {@link InstanzValueDialog} chooses its value in */
+	private InstanzChooser chooser(Dialog dialog) {
 		return controls(dialog.getShell()).stream()//
-				.filter(Combo.class::isInstance).map(Combo.class::cast)//
+				.filter(InstanzChooser.class::isInstance).map(InstanzChooser.class::cast)//
 				.findFirst()//
-				.orElseThrow(() -> new AssertionError("no combo in " + dialog.getClass().getSimpleName()));
+				.orElseThrow(() -> new AssertionError("no chooser in " + dialog.getClass().getSimpleName()));
 	}
 
 	/**
-	 * Chooses an instanz the way a click does. {@code Combo.select} moves the
-	 * selection but fires nothing, so the listener that judges the OK button would
-	 * never run.
+	 * Chooses an instanz the way a click does: JFace turns a click into a selection
+	 * on the viewer, and it is the viewer that tells the listener judging the OK
+	 * button. Selecting the tree item alone would move the highlight and say
+	 * nothing.
 	 */
-	private void choose(Combo combo, IInstanz instanz) {
-		// no MODEL_VIEW_TEXT value on these instanzen, so they read as themselves
-		int index = List.of(combo.getItems()).indexOf(instanz.toString());
-		assertThat("'" + instanz + "' among " + List.of(combo.getItems()), index, greaterThanOrEqualTo(0));
-		combo.select(index);
-		combo.notifyListeners(SWT.Selection, new Event());
+	private void choose(InstanzChooser chooser, IInstanz instanz) {
+		Choice choice = chooser.root().find(instanz.getOwnKey())//
+				.orElseThrow(() -> new AssertionError("'" + instanz + "' is not in the tree"));
+		chooser.getViewer().setSelection(new StructuredSelection(choice), true);
+	}
+
+	/**
+	 * The keys the tree is showing right now - what the filter left of it. Read off
+	 * the SWT items rather than off the model, because that is where the filter has
+	 * had its say.
+	 */
+	private List<String> visibleKeys(InstanzChooser chooser) {
+		List<String> keys = new ArrayList<>();
+		collectKeys(chooser.getViewer().getTree().getItems(), keys);
+		return keys;
+	}
+
+	private void collectKeys(TreeItem[] items, List<String> keys) {
+		for (TreeItem item : items) {
+			if (item.getData() instanceof Choice choice) {
+				keys.add(choice._key());
+			}
+			collectKeys(item.getItems(), keys);
+		}
 	}
 
 	/**
@@ -623,6 +692,7 @@ public class ValueDialogSystemTest {
 	private Messages messages() {
 		Messages messages = new Messages();
 		messages.constant_cancel = "Cancel";
+		messages.constant_filter = "Filter";
 		messages.constant_key = "Key";
 		messages.constant_name = "Name";
 		messages.constant_singleValue = "Value";
