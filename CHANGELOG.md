@@ -22,6 +22,15 @@ Development towards 0.2.0. The reactor is at `0.2.0-SNAPSHOT`.
   notation is accepted — `NaN`, `Infinity`, `1e5` and the German `3,14` are rejected
   instead of turning into a number nobody typed, and the dialog greys out its OK button
   on exactly that rule.
+- `SingleInstanzValue`, a fifth attribute type, and the first that is a *relation*: it
+  points at another instanz. What it stores is the target's key — the model references
+  everything by key, and resolving one needs a service the model bundle deliberately
+  cannot reach — so it is persisted by the same Gson as every other value, under
+  `single_value/instanz/`, and no new event topic was needed. It is created from the
+  model view and edited in the instanz view by choosing from a list of the model's
+  instanzen rather than by typing, and `IInstanzService.resolveInstanzValue` follows it
+  back to the instanz. A reference whose target has been deleted keeps its key and
+  resolves to nothing ([#74](https://github.com/Tobias-Bonsack/Tonsias/issues/74)).
 
 ### Changed — tests
 
