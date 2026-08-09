@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
@@ -297,6 +298,133 @@ public class ChangePropagationSystemTest {
 				SingleValueType.SINGLE_STRING, LinkedInstanzChangeEvent.ChangeType.REMOVE, List.of(owner.getOwnKey())));
 
 		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey("fabricated-remove"), is(true));
+	}
+
+	// ---------- the relation, which is held at both ends too ----------
+
+	/**
+	 * A relation is created pointing somewhere already, so there is no later change
+	 * for the target to learn from - the new event is where it is told.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/74">#74</a>
+	 */
+	@Test
+	void testNewRelation_isRecordedOnTheInstanzItPointsAt() {
+		IInstanz owner = newInstanz();
+		IInstanz target = newInstanz();
+
+		SingleInstanzValue relation = _svs.createNew(SingleInstanzValue.class, owner.getOwnKey(), "points at",
+				target.getOwnKey(), Type.SEND);
+
+		assertThat(target.getReferencingValueKeys(), contains(relation.getOwnKey()));
+	}
+
+	/** and a value of any other type leaves every reference set alone */
+	@Test
+	void testNewStringValue_isNoRelationAndRecordsNothing() {
+		IInstanz owner = newInstanz();
+		IInstanz other = newInstanz();
+
+		_svs.createNew(SingleStringValue.class, owner.getOwnKey(), "parameter", other.getOwnKey(), Type.SEND);
+
+		assertThat(other.getReferencingValueKeys(), hasSize(0));
+	}
+
+	/** repointing a relation is two changes, and both ends have to follow */
+	@Test
+	void testChangedRelation_movesTheRecordToTheNewTarget() {
+		IInstanz owner = newInstanz();
+		IInstanz first = newInstanz();
+		IInstanz second = newInstanz();
+		SingleInstanzValue relation = _svs.createNew(SingleInstanzValue.class, owner.getOwnKey(), "points at",
+				first.getOwnKey(), Type.SEND);
+
+		_svs.changeValue(relation.getOwnKey(), second.getOwnKey(), Type.SEND);
+
+		assertThat(first.getReferencingValueKeys(), hasSize(0));
+		assertThat(second.getReferencingValueKeys(), contains(relation.getOwnKey()));
+	}
+
+	@Test
+	void testDeletedRelation_isTakenOffTheTarget() {
+		IInstanz owner = newInstanz();
+		IInstanz target = newInstanz();
+		SingleInstanzValue relation = _svs.createNew(SingleInstanzValue.class, owner.getOwnKey(), "points at",
+				target.getOwnKey(), Type.SEND);
+
+		_svs.removeValue(relation, Type.SEND);
+
+		assertThat(target.getReferencingValueKeys(), hasSize(0));
+	}
+
+	/**
+	 * The whole point of the backward end: the target is gone, so every relation
+	 * that named it is put back to pointing nowhere. The value itself stays - it is
+	 * an attribute of its owner, under a name that owner gave it, and deleting a
+	 * target is no reason to take an attribute off somebody else.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/74">#74</a>
+	 */
+	@Test
+	void testDeletedInstanz_emptiesEveryRelationPointingAtIt() {
+		IInstanz owner = newInstanz();
+		IInstanz target = newInstanz();
+		SingleInstanzValue relation = _svs.createNew(SingleInstanzValue.class, owner.getOwnKey(), "points at",
+				target.getOwnKey(), Type.SEND);
+
+		_inse.removeSubtreeInstanz(target.getOwnKey(), Type.SEND);
+
+		assertThat(relation.getValue(), is(""));
+		assertThat(_inse.resolveInstanzValue(relation), is(java.util.Optional.empty()));
+		assertThat("the attribute itself is untouched",
+				owner.getSingleValues(SingleValueType.SINGLE_INSTANZ).get(relation.getOwnKey()), is("points at"));
+		assertThat(target.getReferencingValueKeys(), hasSize(0));
+	}
+
+	/** a whole branch: every instanz below the deleted one is a target too */
+	@Test
+	void testDeletedInstanz_reachesTheRelationsPointingIntoItsSubtree() {
+		IInstanz owner = newInstanz();
+		IInstanz branch = newInstanz();
+		IInstanz leaf = _inse.createInstanz(branch.getOwnKey(), Type.SEND);
+		SingleInstanzValue relation = _svs.createNew(SingleInstanzValue.class, owner.getOwnKey(), "points deep",
+				leaf.getOwnKey(), Type.SEND);
+
+		_inse.removeSubtreeInstanz(branch.getOwnKey(), Type.SEND);
+
+		assertThat(relation.getValue(), is(""));
+	}
+
+	/**
+	 * Two relations on the same target, and the second one must not be skipped: the
+	 * set is walked over a copy, because emptying a value comes straight back round
+	 * and takes its key out of exactly that set.
+	 */
+	@Test
+	void testDeletedInstanz_emptiesEveryOneOfThem() {
+		IInstanz owner = newInstanz();
+		IInstanz target = newInstanz();
+		SingleInstanzValue first = _svs.createNew(SingleInstanzValue.class, owner.getOwnKey(), "first", target.getOwnKey(),
+				Type.SEND);
+		SingleInstanzValue second = _svs.createNew(SingleInstanzValue.class, owner.getOwnKey(), "second",
+				target.getOwnKey(), Type.SEND);
+
+		_inse.removeSubtreeInstanz(target.getOwnKey(), Type.SEND);
+
+		assertThat(first.getValue(), is(""));
+		assertThat(second.getValue(), is(""));
+	}
+
+	/** an instanz pointing at itself is allowed, and deleting it has to terminate */
+	@Test
+	void testDeletedInstanz_aRelationOntoItselfIsEmptiedToo() {
+		IInstanz self = newInstanz();
+		SingleInstanzValue relation = _svs.createNew(SingleInstanzValue.class, self.getOwnKey(), "points at itself",
+				self.getOwnKey(), Type.SEND);
+
+		_inse.removeSubtreeInstanz(self.getOwnKey(), Type.SEND);
+
+		assertThat(relation.getValue(), is(""));
 	}
 
 	// ---------- malformed payloads ----------

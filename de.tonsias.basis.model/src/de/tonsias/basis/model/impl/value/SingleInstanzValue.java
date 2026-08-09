@@ -52,9 +52,16 @@ public class SingleInstanzValue extends ASingleValue<String> {
 		return KEY.matcher(value).matches();
 	}
 
+	/**
+	 * Takes a key, and takes the empty string back as well. Pointing nowhere is a
+	 * state this value has - it is the one a fresh one starts in - and it is where
+	 * a reference is put back to when its target is deleted, so the way in has to
+	 * exist. {@link #accepts} is the narrower question, and the dialog asks that
+	 * one: nothing chosen must not become a value.
+	 */
 	@Override
 	public boolean tryToSetValue(Object value) {
-		return value instanceof String s && accepts(s) && setValue(s);
+		return value instanceof String s && (s.isEmpty() || accepts(s)) && setValue(s);
 	}
 
 	@Override

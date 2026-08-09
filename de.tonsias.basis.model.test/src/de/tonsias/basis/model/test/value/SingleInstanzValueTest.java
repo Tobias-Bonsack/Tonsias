@@ -71,12 +71,35 @@ public class SingleInstanzValueTest {
 		assertThat(new SingleInstanzValue("k", "seed", Set.of()).tryToSetValue(input), is(true));
 	}
 
-	/** @see #testAccepts_agreesWithTryToSetValue_onWhatItTakes(String) */
+	/**
+	 * @see #testAccepts_agreesWithTryToSetValue_onWhatItTakes(String)
+	 * @see #testTryToSetValue_theEmptyStringPointsNowhereAndIsTheOneDisagreement()
+	 *      for the single input the two answer differently
+	 */
 	@ParameterizedTest
-	@ValueSource(strings = { "", " ", "A", "1A", "-1", "1 2", "1.2", "a b", " 3" })
+	@ValueSource(strings = { " ", "A", "1A", "-1", "1 2", "1.2", "a b", " 3" })
 	void testAccepts_agreesWithTryToSetValue_onWhatItRejects(String input) {
 		assertThat(SingleInstanzValue.accepts(input), is(false));
 		assertThat(new SingleInstanzValue("k", "seed", Set.of()).tryToSetValue(input), is(false));
+	}
+
+	/**
+	 * The two questions come apart on exactly one input. Pointing nowhere is a
+	 * state this value has - the one a fresh one starts in - and a relation is put
+	 * back into it when its target is deleted, so {@code tryToSetValue} has to take
+	 * the empty string. {@code accepts} still refuses it, because that is what the
+	 * dialog asks: nothing chosen must not become a value.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/74">#74</a>
+	 */
+	@Test
+	void testTryToSetValue_theEmptyStringPointsNowhereAndIsTheOneDisagreement() {
+		SingleInstanzValue value = new SingleInstanzValue("k", "seed", Set.of());
+
+		assertThat(value.tryToSetValue(""), is(true));
+		assertThat(value.getValue(), is(""));
+		assertThat("but never on offer in the dialog", SingleInstanzValue.accepts(""), is(false));
+		assertThat("and no change when it already points nowhere", value.tryToSetValue(""), is(false));
 	}
 
 	@Test

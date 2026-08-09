@@ -155,6 +155,12 @@ public class DeltaServiceImpl implements IDeltaService {
 			var value3 = LinkedValueChangeEvent.class.cast(property);
 			instanzKeysToSave.add(value3._key());
 			break;
+		case InstanzEventConstants.REFERENCE_LIST_CHANGE:
+			// the set of values pointing at an instanz is stored on the instanz, so the
+			// target is what has to be written - the value itself did not change here
+			var value7 = LinkedReferenceChangeEvent.class.cast(property);
+			instanzKeysToSave.add(value7._key());
+			break;
 		case InstanzEventConstants.DELETE:
 			var value4 = InstanzEvent.class.cast(property);
 			instanzKeysToDelete.add(value4._key());

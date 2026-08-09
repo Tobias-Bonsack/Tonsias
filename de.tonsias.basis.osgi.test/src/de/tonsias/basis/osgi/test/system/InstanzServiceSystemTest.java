@@ -35,6 +35,7 @@ import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ChangeType;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedReferenceChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedValueChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ParentChange;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ValueRenameEvent;
@@ -437,6 +438,84 @@ public class InstanzServiceSystemTest {
 		assertThat(_recorder.dataOf(InstanzEventConstants.VALUE_LIST_CHANGE, LinkedValueChangeEvent.class).stream()
 				.map(LinkedValueChangeEvent::_key).toList(),
 				containsInAnyOrder(one.getOwnKey(), other.getOwnKey()));
+	}
+
+	// ---------- the backward end of a relation ----------
+
+	/**
+	 * A relation is stored on the value, which carries the key of its target. The
+	 * target keeps the other end, and this is the pair of calls that writes it -
+	 * without them nothing could answer which values point at a given instanz.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/74">#74</a>
+	 */
+	@Test
+	void testPutReferencingValue_recordsTheRelationOnTheTargetAndFires() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		_recorder.clear();
+
+		assertThat(_inse.putReferencingValue(target.getOwnKey(), "vKey", Type.SEND), is(true));
+
+		assertThat(target.getReferencingValueKeys(), contains("vKey"));
+		LinkedReferenceChangeEvent data = _recorder.onlyDataOf(InstanzEventConstants.REFERENCE_LIST_CHANGE,
+				LinkedReferenceChangeEvent.class);
+		assertThat(data._key(), is(target.getOwnKey()));
+		assertThat(data._changeType(), is(ChangeType.ADD));
+		assertThat(data._valueKeys(), contains("vKey"));
+	}
+
+	/** the guard that ends a chain: already recorded is nothing to report */
+	@Test
+	void testPutReferencingValue_aSecondTimeIsRejectedAndSilent() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		_inse.putReferencingValue(target.getOwnKey(), "vKey", Type.SEND);
+		_recorder.clear();
+
+		assertThat(_inse.putReferencingValue(target.getOwnKey(), "vKey", Type.SEND), is(false));
+
+		assertThat(_recorder.events(), hasSize(0));
+	}
+
+	@Test
+	void testRemoveReferencingValue_takesItBackOutAndFires() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		_inse.putReferencingValue(target.getOwnKey(), "vKey", Type.SEND);
+		_recorder.clear();
+
+		assertThat(_inse.removeReferencingValue(target.getOwnKey(), "vKey", Type.SEND), is(true));
+
+		assertThat(target.getReferencingValueKeys(), hasSize(0));
+		LinkedReferenceChangeEvent data = _recorder.onlyDataOf(InstanzEventConstants.REFERENCE_LIST_CHANGE,
+				LinkedReferenceChangeEvent.class);
+		assertThat(data._changeType(), is(ChangeType.REMOVE));
+	}
+
+	@Test
+	void testRemoveReferencingValue_oneThatWasNeverThereIsRejectedAndSilent() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		_recorder.clear();
+
+		assertThat(_inse.removeReferencingValue(target.getOwnKey(), "vKey", Type.SEND), is(false));
+
+		assertThat(_recorder.events(), hasSize(0));
+	}
+
+	/**
+	 * A relation pointing nowhere holds the empty string, and the propagation hands
+	 * that on as the target key. It is no key to look a file up with, so it has to
+	 * be turned away before the resolve rather than after it.
+	 */
+	@Test
+	void testPutReferencingValue_neitherEndMayBeBlank() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		_recorder.clear();
+
+		assertThat("no target", _inse.putReferencingValue("", "vKey", Type.SEND), is(false));
+		assertThat("no value", _inse.putReferencingValue(target.getOwnKey(), "", Type.SEND), is(false));
+		assertThat("no target", _inse.removeReferencingValue(null, "vKey", Type.SEND), is(false));
+		assertThat("an unresolvable target", _inse.putReferencingValue("no-such-key", "vKey", Type.SEND), is(false));
+
+		assertThat(_recorder.events(), hasSize(0));
 	}
 
 	// ---------- delete ----------

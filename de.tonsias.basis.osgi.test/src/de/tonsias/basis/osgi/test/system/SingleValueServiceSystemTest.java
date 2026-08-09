@@ -213,11 +213,10 @@ public class SingleValueServiceSystemTest {
 	}
 
 	/**
-	 * A reference that points nowhere comes back empty rather than throwing: a fresh
-	 * one holds the empty string, and a stored one keeps its key after the target
-	 * has been deleted, because nothing records who points at an instanz.
-	 *
-	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/74">#74</a>
+	 * A reference that points nowhere comes back empty rather than throwing. That
+	 * is the state a fresh one is in, and the one a stored one is put back into
+	 * when its target is deleted; a key that resolves to nothing is what a
+	 * hand-edited file can still hold.
 	 */
 	@Test
 	void testResolveInstanzValue_pointingNowhereIsEmpty() {
@@ -229,6 +228,42 @@ public class SingleValueServiceSystemTest {
 		assertThat("no value at all", _inse.resolveInstanzValue(null), is(Optional.empty()));
 		assertThat("the empty string a fresh one holds",
 				_inse.resolveInstanzValue(new SingleInstanzValue("unsaved")), is(Optional.empty()));
+	}
+
+	/**
+	 * The backward end of the relation is stored on the target, so it has to travel
+	 * to disk with it - a set rebuilt only in memory would leave every relation
+	 * dangling again after a restart.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/74">#74</a>
+	 */
+	@Test
+	void testSaveAll_theTargetCarriesTheRelationBackThroughItsOwnFile() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		SingleInstanzValue relation = _svs.createNew(SingleInstanzValue.class, _owner.getOwnKey(), "points at",
+				target.getOwnKey(), Type.SEND);
+
+		assertThat(_inse.saveAll(Set.of(target.getOwnKey())), is(true));
+
+		assertThat(ProductRuntime.reloadInstanz(target.getOwnKey()).getReferencingValueKeys(),
+				contains(relation.getOwnKey()));
+	}
+
+	/**
+	 * An instanz written before the type existed names no set at all. Gson leaves
+	 * the field at {@code null} then, and the getter is the one place that makes
+	 * one - reading such a file must not blow up on the first relation pointing at
+	 * it.
+	 */
+	@Test
+	void testReferencingValueKeys_anInstanzWithoutTheFieldStartsEmpty() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		_inse.saveAll(Set.of(target.getOwnKey()));
+
+		IInstanz reloaded = ProductRuntime.reloadInstanz(target.getOwnKey());
+
+		assertThat(reloaded.getReferencingValueKeys(), hasSize(0));
+		assertThat(reloaded.addReferencingValueKey("vKey"), is(true));
 	}
 
 	@Test

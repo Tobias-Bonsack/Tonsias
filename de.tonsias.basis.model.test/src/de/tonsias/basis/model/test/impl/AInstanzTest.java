@@ -157,4 +157,47 @@ public class AInstanzTest {
 		assertThat(children, contains("a"));
 		assertThat(children, is(not(empty())));
 	}
+
+	// ---------- the backward end of a relation ----------
+
+	/**
+	 * Created on demand like the value maps, and for the same reason: Gson skips
+	 * field initializers, and an instanz stored before this field existed names it
+	 * nowhere at all.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/74">#74</a>
+	 */
+	@Test
+	void testGetReferencingValueKeys_isEmptyNotNullOnANewInstanz() {
+		assertThat(_instanz.getReferencingValueKeys(), is(empty()));
+		assertThat(_instanz.getReferencingValueKeys(), is(sameInstance(_instanz.getReferencingValueKeys())));
+	}
+
+	@Test
+	void testAddReferencingValueKey_reportsWhetherItWasNew() {
+		assertThat(_instanz.addReferencingValueKey("v1"), is(true));
+		assertThat(_instanz.addReferencingValueKey("v1"), is(false));
+		assertThat(_instanz.addReferencingValueKey("v2"), is(true));
+
+		assertThat(_instanz.getReferencingValueKeys(), containsInAnyOrder("v1", "v2"));
+	}
+
+	@Test
+	void testRemoveReferencingValueKey_reportsWhetherItWasThere() {
+		_instanz.addReferencingValueKey("v1");
+
+		assertThat(_instanz.removeReferencingValueKey("v1"), is(true));
+		assertThat(_instanz.removeReferencingValueKey("v1"), is(false));
+		assertThat(_instanz.getReferencingValueKeys(), is(empty()));
+	}
+
+	/** nothing is no value key - a relation pointing nowhere records nobody */
+	@Test
+	void testAddReferencingValueKey_blankIsRejected() {
+		assertThat(_instanz.addReferencingValueKey(null), is(false));
+		assertThat(_instanz.addReferencingValueKey(""), is(false));
+		assertThat(_instanz.addReferencingValueKey(" "), is(false));
+
+		assertThat(_instanz.getReferencingValueKeys(), is(empty()));
+	}
 }

@@ -47,6 +47,12 @@ public abstract class AInstanz implements IInstanz {
 
 	private BiMap<String, String> _singleInstanzKeyValueMap;
 
+	// the backward direction of a SINGLE_INSTANZ relation - see
+	// IInstanz.getReferencingValueKeys. No field initializer for the same reason as
+	// the maps above: Gson leaves what the json does not name at null, and an
+	// instanz written before this field existed names it nowhere
+	private Set<String> _referencingValueKeys;
+
 	// the only constructor, and it takes the key alone: a parent set here would be
 	// set past IInstanzService, so neither would ChangePropagationListener pull the
 	// other side along nor would a delta be written. Use
@@ -140,5 +146,26 @@ public abstract class AInstanz implements IInstanz {
 	@Override
 	public Collection<String> getChildren() {
 		return _childKeys;
+	}
+
+	@Override
+	public Collection<String> getReferencingValueKeys() {
+		if (_referencingValueKeys == null) {
+			_referencingValueKeys = Collections.synchronizedSet(new HashSet<String>());
+		}
+		return _referencingValueKeys;
+	}
+
+	@Override
+	public boolean addReferencingValueKey(String valueKey) {
+		if (valueKey == null || valueKey.isBlank()) {
+			return false;
+		}
+		return getReferencingValueKeys().add(valueKey);
+	}
+
+	@Override
+	public boolean removeReferencingValueKey(String valueKey) {
+		return getReferencingValueKeys().remove(valueKey);
 	}
 }

@@ -46,12 +46,36 @@ public interface IInstanzService {
 	 * dependency to reach a service with.
 	 *
 	 * @param value the reference to follow, may be {@code null}
-	 * @return the target, or empty when the value points nowhere - which a stored
-	 *         reference does once its target has been deleted, because nothing
-	 *         records who points at an instanz, see
-	 *         <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/74">#74</a>
+	 * @return the target, or empty when the value points nowhere - the state a
+	 *         fresh reference is in, and the one it is put back into when its
+	 *         target is deleted
 	 */
 	Optional<IInstanz> resolveInstanzValue(SingleInstanzValue value);
+
+	/**
+	 * Records that a {@code SingleInstanzValue} points at this instanz - the
+	 * backward direction of the relation, which the value itself does not carry.
+	 * The forward direction is the value's own content and stays
+	 * {@code ISingleValueService.changeValue}'s;
+	 * {@link ChangePropagationListener} is what calls both.
+	 *
+	 * @param instanzKey of the target being pointed at
+	 * @param valueKey   of the relation doing the pointing
+	 * @return true if it was newly recorded - false, and no event, when it was
+	 *         already there, so the propagation cannot re-enter itself
+	 */
+	boolean putReferencingValue(String instanzKey, String valueKey, IEventBrokerBridge.Type eventType);
+
+	/**
+	 * Takes a relation back out of the target's set, for a relation that was moved
+	 * elsewhere or deleted.
+	 *
+	 * @param instanzKey of the target no longer pointed at
+	 * @param valueKey   of the relation that pointed at it
+	 * @return true if it was recorded before
+	 * @see #putReferencingValue(String, String, IEventBrokerBridge.Type)
+	 */
+	boolean removeReferencingValue(String instanzKey, String valueKey, IEventBrokerBridge.Type eventType);
 
 	/**
 	 * Creates a new {@link IInstanz}, but does not save it
