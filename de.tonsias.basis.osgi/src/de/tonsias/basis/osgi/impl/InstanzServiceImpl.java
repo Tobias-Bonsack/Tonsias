@@ -22,6 +22,7 @@ import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.Instanz;
+import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
@@ -31,6 +32,7 @@ import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ChangeType;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
+import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedReferenceChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedValueChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ParentChange;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ValueRenameEvent;
@@ -100,6 +102,56 @@ public class InstanzServiceImpl implements IInstanzService {
 		}
 
 		return Optional.empty();
+	}
+
+	@Override
+	public Optional<IInstanz> resolveInstanzValue(SingleInstanzValue value) {
+		if (value == null) {
+			return Optional.empty();
+		}
+		String targetKey = value.getValue();
+		// a fresh reference holds the empty string, which resolveKey would look for a
+		// file named "instanz/.json" with
+		if (targetKey == null || targetKey.isBlank()) {
+			return Optional.empty();
+		}
+		return resolveKey(targetKey);
+	}
+
+	@Override
+	public boolean putReferencingValue(String instanzKey, String valueKey, Type eventType) {
+		Optional<IInstanz> instanz = resolvableTarget(instanzKey, valueKey);
+		if (instanz.isEmpty() || !instanz.get().addReferencingValueKey(valueKey)) {
+			return false;
+		}
+
+		var data = new LinkedReferenceChangeEvent(instanzKey, ChangeType.ADD, List.of(valueKey));
+		fireEvent(eventType, InstanzEventConstants.REFERENCE_LIST_CHANGE, data);
+		return true;
+	}
+
+	@Override
+	public boolean removeReferencingValue(String instanzKey, String valueKey, Type eventType) {
+		Optional<IInstanz> instanz = resolvableTarget(instanzKey, valueKey);
+		if (instanz.isEmpty() || !instanz.get().removeReferencingValueKey(valueKey)) {
+			return false;
+		}
+
+		var data = new LinkedReferenceChangeEvent(instanzKey, ChangeType.REMOVE, List.of(valueKey));
+		fireEvent(eventType, InstanzEventConstants.REFERENCE_LIST_CHANGE, data);
+		return true;
+	}
+
+	/**
+	 * The instanz both reference methods work on. A reference pointing nowhere
+	 * holds the empty string, and that is no key to look a file up with - it has to
+	 * be turned away before {@link #resolveKey} goes looking for {@code instanz/}.
+	 */
+	private Optional<IInstanz> resolvableTarget(String instanzKey, String valueKey) {
+		if (instanzKey == null || instanzKey.isBlank() || valueKey == null || valueKey.isBlank()) {
+			return Optional.empty();
+		}
+		return resolveKey(instanzKey);
 	}
 
 	@Override

@@ -14,6 +14,7 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.widgets.ButtonFactory;
 import org.eclipse.jface.widgets.LabelFactory;
 import org.eclipse.jface.widgets.TextFactory;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
@@ -33,17 +34,21 @@ import org.eclipse.swt.widgets.Text;
 
 import com.google.common.collect.BiMap;
 
+import de.tonsias.basis.logic.part.InstanzChoices;
 import de.tonsias.basis.logic.part.InstanzViewLogic;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
+import de.tonsias.basis.osgi.util.OsgiUtil;
 import de.tonsias.basis.ui.i18n.Messages;
 import de.tonsias.basis.ui.util.MessagesUtil;
+import de.tonsias.basis.ui.widget.InstanzSelectionDialog;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 
@@ -213,8 +218,20 @@ public class InstanzView {
 					.create(typeGroup);
 			check.setSelection(Boolean.TRUE.equals(singleValue.getValue()));
 			check.addSelectionListener(SelectionListener
-					.widgetSelectedAdapter(event -> onSingleValueSelect(singleValue, check)));
+					.widgetSelectedAdapter(event -> onSingleValueSelect(singleValue, check.getSelection(), check)));
 			control = check;
+			break;
+		case SINGLE_INSTANZ:
+			// a relation is chosen, not typed. The view has one line per attribute, which
+			// is no room for a tree, so the button says where the relation points and
+			// opens the chooser
+			Button choose = ButtonFactory.newButton(SWT.PUSH)//
+					.text(targetLabel(String.valueOf(singleValue.getValue())))//
+					.layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
+					.create(typeGroup);
+			choose.addSelectionListener(
+					SelectionListener.widgetSelectedAdapter(event -> chooseTarget(singleValue, choose)));
+			control = choose;
 			break;
 		default:
 			// without a widget the listener below would fail on null - a new type has to
@@ -276,18 +293,55 @@ public class InstanzView {
 	}
 
 	/**
-	 * The check box counterpart of {@link #onSingleValueModify} - a selection
-	 * carries its state on the widget instead of in the event, and the value goes
-	 * to the job as a {@link Boolean} rather than as text.
+	 * The counterpart of {@link #onSingleValueModify} for the controls a value is
+	 * chosen in rather than typed into: the check box and the combo box of a
+	 * relation. What they hold sits on the widget instead of in the event, so the
+	 * caller reads it out and hands it on - a {@link Boolean} for the one, the key
+	 * of the chosen instanz for the other.
 	 */
-	private void onSingleValueSelect(ISingleValue<?> singleValue, Button check) {
+	private void onSingleValueSelect(ISingleValue<?> singleValue, Object newValue, Control control) {
 		if (_logic.isInDelete(singleValue)) {
 			return;
 		}
 
-		check.setBackground(check.getDisplay().getSystemColor(SWT.COLOR_GREEN));
-		_logic.createModifySvJob(singleValue.getOwnKey(), check.getSelection());
+		control.setBackground(control.getDisplay().getSystemColor(SWT.COLOR_GREEN));
+		_logic.createModifySvJob(singleValue.getOwnKey(), newValue);
 		_part.setDirty(true);
+	}
+
+	/**
+	 * Opens the chooser on the tree as it is right now and hands the chosen key on
+	 * the way the check box hands on its state. Cancelling leaves the relation
+	 * where it points - the button is not a change in itself.
+	 */
+	private void chooseTarget(ISingleValue<?> singleValue, Button button) {
+		InstanzSelectionDialog dialog = new InstanzSelectionDialog(button.getShell(), instanzChoices().tree(),
+				_messages, String.valueOf(singleValue.getValue()));
+		if (dialog.open() != Window.OK) {
+			return;
+		}
+
+		button.setText(dialog.getSelectedLabel());
+		onSingleValueSelect(singleValue, dialog.getSelectedKey(), button);
+	}
+
+	/**
+	 * How the instanz a relation points at reads. A relation pointing nowhere says
+	 * so in so many words rather than sitting there as an empty button - and so
+	 * does one whose target the walk did not reach.
+	 */
+	private String targetLabel(String targetKey) {
+		return instanzChoices().labelOf(targetKey).orElse(_messages.constant_noInstanz);
+	}
+
+	/**
+	 * The instanzen a relation can point at. Built per call rather than kept: the
+	 * model changes under the view, and a stale tree would offer instanzen that are
+	 * gone and hide the ones just made.
+	 */
+	private InstanzChoices instanzChoices() {
+		return new InstanzChoices(_instanzService, _singleService,
+				OsgiUtil.getService(IBasicPreferenceService.class));
 	}
 
 	private void createSingleValueNameText(Group parent, ISingleValue<?> singleValue, String parameterName,

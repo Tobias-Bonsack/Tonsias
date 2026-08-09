@@ -25,6 +25,8 @@ public class MessagesUtil {
 			return messages.constant_type_boolean;
 		case SINGLE_FLOAT:
 			return messages.constant_type_float;
+		case SINGLE_INSTANZ:
+			return messages.constant_type_instanz;
 		default:
 			return type.name();
 		}

@@ -46,12 +46,21 @@ public interface InstanzEventConstants {
 	final String VALUE_LIST_CHANGE = INSTANZ + "/delta/valueChange";
 
 	/**
+	 * The instanz is the <em>target</em> of a relation, not its owner: a
+	 * {@code SingleInstanzValue} started or stopped pointing at it.
+	 * <p>
+	 * {@link IEventBroker#DATA} maps to {@link LinkedReferenceChangeEvent}
+	 * </p>
+	 */
+	final String REFERENCE_LIST_CHANGE = INSTANZ + "/delta/referenceChange";
+
+	/**
 	 * {@link IEventBroker#DATA} maps to {@link InstanzEvent}
 	 */
 	final String DELETE = INSTANZ + "/delta/delete";
 
 	final List<String> KNOWN_DELTA = List.of(NEW, NAME_CHANGE, VALUE_LIST_CHANGE, CHILD_LIST_CHANGE, DELETE,
-			PARENT_CHANGE);
+			PARENT_CHANGE, REFERENCE_LIST_CHANGE);
 
 	// data and the keys
 
@@ -103,6 +112,25 @@ public interface InstanzEventConstants {
 
 	static record LinkedValueChangeEvent(String _key, SingleValueType _singleValuetype, ChangeType _changeType,
 			Collection<String> _valueKeys) implements KeyEvent {
+
+		@Override
+		public String getKey() {
+			return _key;
+		}
+
+	}
+
+	/**
+	 * The counterpart of {@link LinkedValueChangeEvent} for the relation: there the
+	 * instanz owns the values, here it is what they point at. No
+	 * {@link SingleValueType} field, because there is only one type a relation can
+	 * be.
+	 *
+	 * @param _key        of the instanz being pointed at
+	 * @param _valueKeys  of the {@code SingleInstanzValue}s doing the pointing
+	 */
+	static record LinkedReferenceChangeEvent(String _key, ChangeType _changeType, Collection<String> _valueKeys)
+			implements KeyEvent {
 
 		@Override
 		public String getKey() {

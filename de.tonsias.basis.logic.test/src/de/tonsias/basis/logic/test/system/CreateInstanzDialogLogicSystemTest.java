@@ -19,6 +19,7 @@ import org.osgi.service.prefs.BackingStoreException;
 import de.tonsias.basis.logic.dialog.CreateInstanzDialogLogic;
 import de.tonsias.basis.logic.dialog.CreateInstanzDialogLogic.TableRecord;
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
@@ -149,6 +150,117 @@ public class CreateInstanzDialogLogicSystemTest {
 		logic.addNewEntry();
 
 		assertThat(input, hasSize(2));
+	}
+
+	// ---------- a row that is a relation ----------
+
+	/**
+	 * The value column is the same column for every type, and its editor is not:
+	 * for a relation it opens the tree the value dialog offers, so what the row
+	 * holds is a key rather than text somebody typed.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/75">#75</a>
+	 */
+	@Test
+	void testSetType_switchingToARelationDropsTheTypedText() {
+		var logic = newLogic();
+		TableRecord row = logic.getInput().iterator().next();
+		row.value = "typed text";
+
+		logic.setType(row, SingleValueType.SINGLE_INSTANZ);
+
+		assertThat(row.type, is(SingleValueType.SINGLE_INSTANZ));
+		assertThat(row.value, is(""));
+	}
+
+	/** and back the other way: an instanz key is no text anybody meant to write */
+	@Test
+	void testSetType_switchingAwayFromARelationDropsTheKey() {
+		var logic = newLogic();
+		TableRecord row = logic.getInput().iterator().next();
+		logic.setType(row, SingleValueType.SINGLE_INSTANZ);
+		row.value = _inse.createInstanz(ROOT, Type.SEND).getOwnKey();
+
+		logic.setType(row, SingleValueType.SINGLE_STRING);
+
+		assertThat(row.value, is(""));
+	}
+
+	/** a switch between two typed types leaves what is in the cell alone */
+	@Test
+	void testSetType_betweenTwoTypedTypesKeepsTheValue() {
+		var logic = newLogic();
+		TableRecord row = logic.getInput().iterator().next();
+		row.value = "42";
+
+		logic.setType(row, SingleValueType.SINGLE_INTEGER);
+
+		assertThat(row.value, is("42"));
+	}
+
+	/**
+	 * What the column shows. A relation stores a key, and a key is not what the
+	 * user chose - the instanz is, and it reads here as it does in the tree.
+	 */
+	@Test
+	void testValueLabel_aRelationReadsAsItsTarget() {
+		var logic = newLogic();
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		TableRecord row = logic.getInput().iterator().next();
+		logic.setType(row, SingleValueType.SINGLE_INSTANZ);
+		row.value = target.getOwnKey();
+
+		assertThat(logic.valueLabel(row), is(logic.instanzChoices().labelOf(target)));
+	}
+
+	@Test
+	void testValueLabel_aRelationPointingNowhereShowsNothing() {
+		var logic = newLogic();
+		TableRecord row = logic.getInput().iterator().next();
+		logic.setType(row, SingleValueType.SINGLE_INSTANZ);
+
+		assertThat("nothing chosen yet", logic.valueLabel(row), is(""));
+
+		row.value = "no-such-key";
+		assertThat("a target that is gone", logic.valueLabel(row), is(""));
+	}
+
+	@Test
+	void testValueLabel_everyOtherTypeReadsAsWhatIsInTheCell() {
+		var logic = newLogic();
+		TableRecord row = logic.getInput().iterator().next();
+		row.value = "content";
+
+		assertThat(logic.valueLabel(row), is("content"));
+	}
+
+	/**
+	 * The row travels into {@code createNew} unchanged, so a relation created here
+	 * has to end up pointing where the tree said - and be followable afterwards.
+	 */
+	@Test
+	void testOkPressed_createsARelationPointingAtTheChosenInstanz() {
+		var logic = newLogic();
+		IInstanz parent = _inse.createInstanz(ROOT, Type.SEND);
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		logic.setInstanzParent(parent);
+		TableRecord row = logic.getInput().iterator().next();
+		row.parameterName = "points at";
+		logic.setType(row, SingleValueType.SINGLE_INSTANZ);
+		row.value = target.getOwnKey();
+		_recorder.clear();
+
+		logic.okPressed(_broker);
+		_recorder.awaitTopic(EventConstants.CLOSE_OPERATION);
+
+		IInstanz created = _inse.resolveKey(parent.getChildren().iterator().next()).orElseThrow();
+		String valueKey = created.getSingleValues(SingleValueType.SINGLE_INSTANZ).keySet().iterator().next();
+		SingleInstanzValue relation = _svs
+				.resolveKey(SingleValueType.SINGLE_INSTANZ.getPath(), valueKey, SingleInstanzValue.class).orElseThrow();
+
+		assertThat(relation.getValue(), is(target.getOwnKey()));
+		assertThat(_inse.resolveInstanzValue(relation), is(java.util.Optional.of(target)));
+		assertThat("and the target knows about it", target.getReferencingValueKeys(), hasItem(valueKey));
 	}
 
 	// ---------- creating the instanz ----------

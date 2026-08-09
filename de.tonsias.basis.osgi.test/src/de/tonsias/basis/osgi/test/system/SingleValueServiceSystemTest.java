@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleBooleanValue;
 import de.tonsias.basis.model.impl.value.SingleFloatValue;
+import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
@@ -161,6 +162,110 @@ public class SingleValueServiceSystemTest {
 		assertThat(reloaded.getConnectedInstanzKeys(), contains(_owner.getOwnKey()));
 	}
 
+	// ---------- the relation ----------
+
+	/**
+	 * A relation is a value like any other on the way in: it lands in the map of its
+	 * own type, and what it stores is the key of the instanz it points at.
+	 */
+	@Test
+	void testCreateNew_instanzValueStoresTheTargetKey() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		_recorder.clear();
+
+		SingleInstanzValue created = _svs.createNew(SingleInstanzValue.class, _owner.getOwnKey(), "points at",
+				target.getOwnKey(), Type.SEND);
+
+		assertThat(created.getValue(), is(target.getOwnKey()));
+		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_INSTANZ).get(created.getOwnKey()), is("points at"));
+		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey(created.getOwnKey()), is(false));
+		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
+				is(SingleValueType.SINGLE_INSTANZ));
+	}
+
+	/**
+	 * The relation has a folder of its own below {@code single_value/}, so it never
+	 * meets the {@code instanz/} folder the target itself is written into.
+	 */
+	@Test
+	void testSaveAll_anInstanzValueSurvivesTheRoundTripThroughItsOwnFolder() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		SingleInstanzValue created = _svs.createNew(SingleInstanzValue.class, _owner.getOwnKey(), "points at",
+				target.getOwnKey(), Type.SEND);
+
+		assertThat(_svs.saveAll(Set.of(created.getOwnKey())), is(true));
+
+		assertThat(ProductRuntime.valueFileExists(SingleValueType.SINGLE_INSTANZ, created.getOwnKey()), is(true));
+		SingleInstanzValue reloaded = ProductRuntime.reloadValue(SingleValueType.SINGLE_INSTANZ, created.getOwnKey(),
+				SingleInstanzValue.class);
+		assertThat(reloaded.getValue(), is(target.getOwnKey()));
+		assertThat(reloaded.getConnectedInstanzKeys(), contains(_owner.getOwnKey()));
+	}
+
+	/** the relation followed, which is the whole point of the type */
+	@Test
+	void testResolveInstanzValue_findsTheTarget() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		SingleInstanzValue created = _svs.createNew(SingleInstanzValue.class, _owner.getOwnKey(), "points at",
+				target.getOwnKey(), Type.SEND);
+
+		assertThat(_inse.resolveInstanzValue(created), is(Optional.of(target)));
+	}
+
+	/**
+	 * A reference that points nowhere comes back empty rather than throwing. That
+	 * is the state a fresh one is in, and the one a stored one is put back into
+	 * when its target is deleted; a key that resolves to nothing is what a
+	 * hand-edited file can still hold.
+	 */
+	@Test
+	void testResolveInstanzValue_pointingNowhereIsEmpty() {
+		SingleInstanzValue fresh = _svs.createNew(SingleInstanzValue.class, _owner.getOwnKey(), "unset",
+				_owner.getOwnKey(), Type.SEND);
+		fresh.tryToSetValue("zzzzzz");
+
+		assertThat("a key no instanz carries", _inse.resolveInstanzValue(fresh), is(Optional.empty()));
+		assertThat("no value at all", _inse.resolveInstanzValue(null), is(Optional.empty()));
+		assertThat("the empty string a fresh one holds",
+				_inse.resolveInstanzValue(new SingleInstanzValue("unsaved")), is(Optional.empty()));
+	}
+
+	/**
+	 * The backward end of the relation is stored on the target, so it has to travel
+	 * to disk with it - a set rebuilt only in memory would leave every relation
+	 * dangling again after a restart.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/74">#74</a>
+	 */
+	@Test
+	void testSaveAll_theTargetCarriesTheRelationBackThroughItsOwnFile() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		SingleInstanzValue relation = _svs.createNew(SingleInstanzValue.class, _owner.getOwnKey(), "points at",
+				target.getOwnKey(), Type.SEND);
+
+		assertThat(_inse.saveAll(Set.of(target.getOwnKey())), is(true));
+
+		assertThat(ProductRuntime.reloadInstanz(target.getOwnKey()).getReferencingValueKeys(),
+				contains(relation.getOwnKey()));
+	}
+
+	/**
+	 * An instanz written before the type existed names no set at all. Gson leaves
+	 * the field at {@code null} then, and the getter is the one place that makes
+	 * one - reading such a file must not blow up on the first relation pointing at
+	 * it.
+	 */
+	@Test
+	void testReferencingValueKeys_anInstanzWithoutTheFieldStartsEmpty() {
+		IInstanz target = _inse.createInstanz(ROOT, Type.SEND);
+		_inse.saveAll(Set.of(target.getOwnKey()));
+
+		IInstanz reloaded = ProductRuntime.reloadInstanz(target.getOwnKey());
+
+		assertThat(reloaded.getReferencingValueKeys(), hasSize(0));
+		assertThat(reloaded.addReferencingValueKey("vKey"), is(true));
+	}
+
 	@Test
 	void testCreateNew_nullArgumentsAreRejected() {
 		assertThrows(NullPointerException.class,
@@ -224,6 +329,31 @@ public class SingleValueServiceSystemTest {
 				SingleIntegerValue.class), is(Optional.empty()));
 	}
 
+	/**
+	 * A folder without the file is no answer, and the service may not remember it
+	 * as one. It used to put the {@code null} into the cache, and from then on the
+	 * key counted as asked and answered: the very next call, in the right folder,
+	 * got the same nothing back. Looking in one folder after another is what the
+	 * service itself does when a key does not say its type, so the first look is
+	 * regularly the wrong one.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/79">#79</a>
+	 */
+	@Test
+	void testResolveKey_aMissTheWrongFolderGivesIsNotRemembered() {
+		SingleStringValue created = newStringValue("parameter", "content");
+		String key = created.getOwnKey();
+		ProductRuntime.flushDeltas();
+		_svs.removeFromCache(key);
+
+		assertThat("no string value lies in the float folder",
+				_svs.resolveKey(SingleValueType.SINGLE_FLOAT.getPath(), key, SingleFloatValue.class),
+				is(Optional.empty()));
+
+		assertThat("and the right folder still answers", _svs.resolveKey(STRING_PATH, key, SingleStringValue.class)
+				.map(SingleStringValue::getValue), is(Optional.of("content")));
+	}
+
 	@Test
 	void testResolveKeys_skipsWhatCannotBeResolved() {
 		SingleStringValue known = newStringValue("parameter", "content");
@@ -271,6 +401,69 @@ public class SingleValueServiceSystemTest {
 		assertThat(_svs.changeValue(value.getOwnKey(), 42, Type.SEND), is(false));
 
 		assertThat(value.getValue(), is("text"));
+		assertThat(_recorder.events(), hasSize(0));
+	}
+
+	/**
+	 * A value that has not been touched in this session is not in the cache - after
+	 * a restart no value is. Reading the cache and nothing else made every one of
+	 * them a {@code NullPointerException} out of the service, and the folder the
+	 * value lies in is what says which type it is.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/78">#78</a>
+	 */
+	@Test
+	void testChangeValue_reachesAValueThatIsOnDiskOnly() {
+		SingleStringValue value = newStringValue("parameter", "old");
+		String key = value.getOwnKey();
+		ProductRuntime.flushDeltas();
+		_svs.removeFromCache(key);
+		_recorder.clear();
+
+		assertThat(_svs.changeValue(key, "new", Type.SEND), is(true));
+
+		ValueChangeEvent data = _recorder.onlyDataOf(SingleValueEventConstants.VALUE_CHANGE, ValueChangeEvent.class);
+		assertThat("the type comes out of the folder it was found in", data._type(),
+				is(SingleValueType.SINGLE_STRING));
+		assertThat(data._oldValue(), is("old"));
+		assertThat(_svs.resolveKey(STRING_PATH, key, SingleStringValue.class).get().getValue(), is("new"));
+	}
+
+	/** and a key nothing backs is a no-op rather than a failure of the service */
+	@Test
+	void testChangeValue_aKeyWithoutAValueIsSilent() {
+		_recorder.clear();
+
+		assertThat(_svs.changeValue("no-such-key", "new", Type.SEND), is(false));
+		assertThat(_svs.changeValue(null, "new", Type.SEND), is(false));
+
+		assertThat(_recorder.events(), hasSize(0));
+	}
+
+	/** {@code markSingleValueAsDelete} read the cache the same way - @see #78 */
+	@Test
+	void testMarkSingleValueAsDelete_reachesAValueThatIsOnDiskOnly() {
+		SingleStringValue value = newStringValue("parameter", "content");
+		String key = value.getOwnKey();
+		ProductRuntime.flushDeltas();
+		_svs.removeFromCache(key);
+		_recorder.clear();
+
+		_svs.markSingleValueAsDelete(key, Type.SEND);
+
+		SingleValueDeleteEvent data = _recorder.onlyDataOf(SingleValueEventConstants.DELETE,
+				SingleValueDeleteEvent.class);
+		assertThat(data._key(), is(key));
+		assertThat(data._type(), is(SingleValueType.SINGLE_STRING));
+		assertThat("the owner it was stored with", data._ownerKeys(), contains(_owner.getOwnKey()));
+	}
+
+	@Test
+	void testMarkSingleValueAsDelete_aKeyWithoutAValueIsSilent() {
+		_recorder.clear();
+
+		_svs.markSingleValueAsDelete("no-such-key", Type.SEND);
+
 		assertThat(_recorder.events(), hasSize(0));
 	}
 

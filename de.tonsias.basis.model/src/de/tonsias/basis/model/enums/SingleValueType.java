@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import de.tonsias.basis.model.impl.value.SingleBooleanValue;
 import de.tonsias.basis.model.impl.value.SingleFloatValue;
+import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.ISingleValue;
@@ -16,7 +17,11 @@ public enum SingleValueType {
 	SINGLE_STRING(SingleStringValue.class, "single_value/string/"),
 	SINGLE_INTEGER(SingleIntegerValue.class, "single_value/integer/"),
 	SINGLE_BOOLEAN(SingleBooleanValue.class, "single_value/boolean/"),
-	SINGLE_FLOAT(SingleFloatValue.class, "single_value/float/");
+	SINGLE_FLOAT(SingleFloatValue.class, "single_value/float/"),
+	// a relation rather than a literal: the value is the key of another instanz.
+	// The folder sits below single_value/, so it does not meet the instanz/ one
+	// InstanzServiceImpl writes into
+	SINGLE_INSTANZ(SingleInstanzValue.class, "single_value/instanz/");
 
 	private final Class<? extends ISingleValue<?>> _clazz;
 
