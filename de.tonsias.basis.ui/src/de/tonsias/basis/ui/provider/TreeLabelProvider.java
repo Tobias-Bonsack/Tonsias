@@ -1,13 +1,10 @@
 package de.tonsias.basis.ui.provider;
 
-import java.util.Optional;
-
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.swt.graphics.Image;
 
-import de.tonsias.basis.model.enums.SingleValueType;
-import de.tonsias.basis.model.impl.value.SingleStringValue;
+import de.tonsias.basis.logic.part.InstanzChoices;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.IObject;
 import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
@@ -23,6 +20,8 @@ public class TreeLabelProvider implements ILabelProvider {
 	IInstanzService _instanzService = OsgiUtil.getService(IInstanzService.class);
 
 	ISingleValueService _singleServise = OsgiUtil.getService(ISingleValueService.class);
+
+	InstanzChoices _choices = new InstanzChoices(_instanzService, _singleServise, _prefService);
 
 	@Override
 	public void addListener(ILabelProviderListener listener) {
@@ -54,21 +53,19 @@ public class TreeLabelProvider implements ILabelProvider {
 		return null;
 	}
 
+	/**
+	 * Values read as themselves; an instanz reads by the rule in
+	 * {@link InstanzChoices#labelOf(IInstanz)}, which the combo box of a relation is
+	 * filled from as well - the same instanz has to read the same in both places.
+	 */
 	@Override
 	public String getText(Object element) {
 		TreeNodeWrapper treeNodeWrapper = (TreeNodeWrapper) element;
 		IObject object = treeNodeWrapper.getObject();
-		Optional<String> textValue = _prefService.getValue(IBasicPreferenceService.Key.MODEL_VIEW_TEXT.getKey(),
-				String.class);
-		if (!(object instanceof IInstanz) || textValue.isEmpty()) {
+		if (!(object instanceof IInstanz instanz)) {
 			return treeNodeWrapper.toString();
 		}
-
-		String nameKey = ((IInstanz) object).getSingleValues(SingleValueType.SINGLE_STRING).inverse()
-				.get(textValue.get());
-		Optional<SingleStringValue> nameValue = _singleServise.resolveKey(SingleValueType.SINGLE_STRING.getPath(),
-				nameKey, SingleStringValue.class);
-		return nameValue.isEmpty() ? treeNodeWrapper.toString() : nameValue.get().getValue();
+		return _choices.labelOf(instanz);
 	}
 
 }

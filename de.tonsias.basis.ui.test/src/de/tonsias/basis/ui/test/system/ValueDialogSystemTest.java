@@ -2,18 +2,22 @@ package de.tonsias.basis.ui.test.system;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -32,6 +36,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.SingleBooleanValue;
 import de.tonsias.basis.model.impl.value.SingleFloatValue;
+import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
@@ -40,6 +45,7 @@ import de.tonsias.basis.osgi.test.ProductRuntime;
 import de.tonsias.basis.ui.dialog.AValueDialog;
 import de.tonsias.basis.ui.dialog.BooleanValueDialog;
 import de.tonsias.basis.ui.dialog.FloatValueDialog;
+import de.tonsias.basis.ui.dialog.InstanzValueDialog;
 import de.tonsias.basis.ui.dialog.IntegerValueDialog;
 import de.tonsias.basis.ui.dialog.StringValueDialog;
 import de.tonsias.basis.ui.i18n.Messages;
@@ -387,6 +393,88 @@ public class ValueDialogSystemTest {
 		assertThat(dialog.getSingleValue().getConnectedInstanzKeys(), contains(_instanz.getOwnKey()));
 	}
 
+	// ---------- the relation, which is chosen rather than typed ----------
+
+	/**
+	 * A new relation opens on no selection, which is the one thing
+	 * {@link SingleInstanzValue#tryToSetValue} refuses - so OK may not be on offer
+	 * for it, the same rule the empty number field is held to.
+	 */
+	@Test
+	void testCreate_newInstanzValue_okIsDisabledWithoutASelection() {
+		InstanzValueDialog dialog = built(new InstanzValueDialog(_shell, _instanz, _messages));
+
+		assertThat(combo(dialog).getSelectionIndex(), is(-1));
+		assertThat(okButton(dialog).isEnabled(), is(false));
+	}
+
+	/** and is on offer as soon as one is chosen */
+	@Test
+	void testValueControl_choosingAnInstanzEnablesOk() {
+		InstanzValueDialog dialog = built(new InstanzValueDialog(_shell, _instanz, _messages));
+
+		choose(combo(dialog), _instanz);
+
+		assertThat(okButton(dialog).isEnabled(), is(true));
+	}
+
+	/** every instanz of the model is on offer, the root included */
+	@Test
+	void testCreate_newInstanzValue_offersTheInstanzenOfTheModel() {
+		InstanzValueDialog dialog = built(new InstanzValueDialog(_shell, _instanz, _messages));
+
+		List<String> items = List.of(combo(dialog).getItems());
+
+		assertThat(items, hasItem(_instanz.toString()));
+		assertThat("the root walks first", items.isEmpty(), is(false));
+	}
+
+	/**
+	 * A dialog opened on a stored relation shows where it points, so the user is
+	 * not asked to choose again to keep what is already there.
+	 */
+	@Test
+	void testCreate_existingInstanzValue_preselectsTheTarget() {
+		IInstanz target = ProductRuntime.instanzService().createInstanz(ProductRuntime.ROOT, Type.SEND);
+		SingleInstanzValue value = ProductRuntime.singleValueService().createNew(SingleInstanzValue.class,
+				_instanz.getOwnKey(), "stored reference", target.getOwnKey(), Type.SEND);
+
+		InstanzValueDialog dialog = built(new InstanzValueDialog(_shell, value, _instanz, _messages));
+
+		assertThat(combo(dialog).getText(), is(target.toString()));
+		assertThat(okButton(dialog).isEnabled(), is(true));
+	}
+
+	/** what OK leaves behind is the key of the chosen instanz, not its label */
+	@Test
+	void testOkPressed_existingInstanzValue_writesTheChosenKeyBack() {
+		IInstanz first = ProductRuntime.instanzService().createInstanz(ProductRuntime.ROOT, Type.SEND);
+		IInstanz second = ProductRuntime.instanzService().createInstanz(ProductRuntime.ROOT, Type.SEND);
+		SingleInstanzValue value = ProductRuntime.singleValueService().createNew(SingleInstanzValue.class,
+				_instanz.getOwnKey(), "stored reference", first.getOwnKey(), Type.SEND);
+
+		InstanzValueDialog dialog = built(new InstanzValueDialog(_shell, value, _instanz, _messages));
+		choose(combo(dialog), second);
+		press(okButton(dialog));
+
+		assertThat(value.getValue(), is(second.getOwnKey()));
+		assertThat(ProductRuntime.instanzService().resolveInstanzValue(value), is(Optional.of(second)));
+	}
+
+	/** and a new one is created pointing at it */
+	@Test
+	void testOkPressed_newInstanzValue_createsItPointingAtTheChosenInstanz() {
+		IInstanz target = ProductRuntime.instanzService().createInstanz(ProductRuntime.ROOT, Type.SEND);
+		InstanzValueDialog dialog = built(new InstanzValueDialog(_shell, _instanz, _messages));
+
+		nameText(dialog).setText("points at");
+		choose(combo(dialog), target);
+		press(okButton(dialog));
+
+		assertThat(dialog.getSingleValue().getValue(), is(target.getOwnKey()));
+		assertThat(dialog.getSingleValue().getConnectedInstanzKeys(), contains(_instanz.getOwnKey()));
+	}
+
 	// ---------- what the model would do ----------
 
 	/**
@@ -438,12 +526,40 @@ public class ValueDialogSystemTest {
 	 * the test onto the wrong widget.
 	 */
 	private Text valueText(Dialog dialog) {
-		return texts(dialog).get(2);
+		List<Text> texts = texts(dialog);
+		assertThat("key, name and value", texts, hasSize(3));
+		return texts.get(2);
 	}
 
-	/** the name field, the second of the three - see {@link #valueText(Dialog)} */
+	/**
+	 * The name field, the second one every dialog has - see
+	 * {@link #valueText(Dialog)}. It is read off the shorter list too, because a
+	 * dialog whose value is chosen rather than typed has no third {@link Text} at
+	 * all.
+	 */
 	private Text nameText(Dialog dialog) {
 		return texts(dialog).get(1);
+	}
+
+	/** the combo box an {@link InstanzValueDialog} chooses its value in */
+	private Combo combo(Dialog dialog) {
+		return controls(dialog.getShell()).stream()//
+				.filter(Combo.class::isInstance).map(Combo.class::cast)//
+				.findFirst()//
+				.orElseThrow(() -> new AssertionError("no combo in " + dialog.getClass().getSimpleName()));
+	}
+
+	/**
+	 * Chooses an instanz the way a click does. {@code Combo.select} moves the
+	 * selection but fires nothing, so the listener that judges the OK button would
+	 * never run.
+	 */
+	private void choose(Combo combo, IInstanz instanz) {
+		// no MODEL_VIEW_TEXT value on these instanzen, so they read as themselves
+		int index = List.of(combo.getItems()).indexOf(instanz.toString());
+		assertThat("'" + instanz + "' among " + List.of(combo.getItems()), index, greaterThanOrEqualTo(0));
+		combo.select(index);
+		combo.notifyListeners(SWT.Selection, new Event());
 	}
 
 	/**
@@ -474,11 +590,15 @@ public class ValueDialogSystemTest {
 		button.notifyListeners(SWT.Selection, new Event());
 	}
 
+	/**
+	 * Key and name come from {@code AValueDialog} and are there in every dialog; a
+	 * third one is the value field of the dialogs that are typed into.
+	 */
 	private List<Text> texts(Dialog dialog) {
 		List<Text> texts = controls(dialog.getShell()).stream()//
 				.filter(Text.class::isInstance).map(Text.class::cast)//
 				.toList();
-		assertThat("key, name and value", texts, hasSize(3));
+		assertThat("key and name", texts, hasSize(greaterThanOrEqualTo(2)));
 		return texts;
 	}
 

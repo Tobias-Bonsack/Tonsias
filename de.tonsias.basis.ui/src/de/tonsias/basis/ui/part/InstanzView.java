@@ -2,6 +2,7 @@ package de.tonsias.basis.ui.part;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 
@@ -22,6 +23,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
@@ -33,15 +35,19 @@ import org.eclipse.swt.widgets.Text;
 
 import com.google.common.collect.BiMap;
 
+import de.tonsias.basis.logic.part.InstanzChoices;
+import de.tonsias.basis.logic.part.InstanzChoices.Choice;
 import de.tonsias.basis.logic.part.InstanzViewLogic;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
+import de.tonsias.basis.osgi.util.OsgiUtil;
 import de.tonsias.basis.ui.i18n.Messages;
 import de.tonsias.basis.ui.util.MessagesUtil;
 import jakarta.annotation.PostConstruct;
@@ -213,8 +219,25 @@ public class InstanzView {
 					.create(typeGroup);
 			check.setSelection(Boolean.TRUE.equals(singleValue.getValue()));
 			check.addSelectionListener(SelectionListener
-					.widgetSelectedAdapter(event -> onSingleValueSelect(singleValue, check)));
+					.widgetSelectedAdapter(event -> onSingleValueSelect(singleValue, check.getSelection(), check)));
 			control = check;
+			break;
+		case SINGLE_INSTANZ:
+			// a relation is chosen, not typed: the entries are the instanzen of the model
+			// and what travels to the job is the key behind the selected one
+			List<Choice> choices = instanzChoices().choices();
+			Combo combo = new Combo(typeGroup, SWT.READ_ONLY);
+			combo.setItems(choices.stream().map(Choice::_label).toArray(String[]::new));
+			GridDataFactory.fillDefaults().grab(true, false).applyTo(combo);
+			for (int i = 0; i < choices.size(); i++) {
+				if (choices.get(i)._key().equals(singleValue.getValue())) {
+					combo.select(i);
+					break;
+				}
+			}
+			combo.addSelectionListener(SelectionListener.widgetSelectedAdapter(
+					event -> onSingleValueSelect(singleValue, choices.get(combo.getSelectionIndex())._key(), combo)));
+			control = combo;
 			break;
 		default:
 			// without a widget the listener below would fail on null - a new type has to
@@ -276,18 +299,30 @@ public class InstanzView {
 	}
 
 	/**
-	 * The check box counterpart of {@link #onSingleValueModify} - a selection
-	 * carries its state on the widget instead of in the event, and the value goes
-	 * to the job as a {@link Boolean} rather than as text.
+	 * The counterpart of {@link #onSingleValueModify} for the controls a value is
+	 * chosen in rather than typed into: the check box and the combo box of a
+	 * relation. What they hold sits on the widget instead of in the event, so the
+	 * caller reads it out and hands it on - a {@link Boolean} for the one, the key
+	 * of the chosen instanz for the other.
 	 */
-	private void onSingleValueSelect(ISingleValue<?> singleValue, Button check) {
+	private void onSingleValueSelect(ISingleValue<?> singleValue, Object newValue, Control control) {
 		if (_logic.isInDelete(singleValue)) {
 			return;
 		}
 
-		check.setBackground(check.getDisplay().getSystemColor(SWT.COLOR_GREEN));
-		_logic.createModifySvJob(singleValue.getOwnKey(), check.getSelection());
+		control.setBackground(control.getDisplay().getSystemColor(SWT.COLOR_GREEN));
+		_logic.createModifySvJob(singleValue.getOwnKey(), newValue);
 		_part.setDirty(true);
+	}
+
+	/**
+	 * The instanzen a relation can point at. Built per call rather than kept: the
+	 * model changes under the view, and a stale list would offer instanzen that are
+	 * gone and hide the ones just made.
+	 */
+	private InstanzChoices instanzChoices() {
+		return new InstanzChoices(_instanzService, _singleService,
+				OsgiUtil.getService(IBasicPreferenceService.class));
 	}
 
 	private void createSingleValueNameText(Group parent, ISingleValue<?> singleValue, String parameterName,
