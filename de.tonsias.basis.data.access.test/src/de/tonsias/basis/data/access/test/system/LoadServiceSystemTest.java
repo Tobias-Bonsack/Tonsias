@@ -16,11 +16,13 @@ import java.util.Collection;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
+import de.tonsias.basis.model.enums.IValueType;
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.enums.ValueTypes;
 import de.tonsias.basis.model.impl.Instanz;
 import de.tonsias.basis.model.impl.value.SingleFloatValue;
 import de.tonsias.basis.model.impl.value.SingleIntegerValue;
@@ -67,30 +69,35 @@ public class LoadServiceSystemTest {
 		_saveService.safeAsGson(saved, saved.getClass());
 		IInstanz loaded = _loadService.loadFromGson("instanz/load_bimap", Instanz.class);
 
-		assertThat(loaded.getSingleValues(SingleValueType.SINGLE_STRING), hasEntry("sKey", "sName"));
-		assertThat(loaded.getSingleValues(SingleValueType.SINGLE_INTEGER), hasEntry("iKey", "iName"));
-		assertThat(loaded.getSingleValues(SingleValueType.SINGLE_BOOLEAN), hasEntry("bKey", "bName"));
-		assertThat(loaded.getSingleValues(SingleValueType.SINGLE_FLOAT), hasEntry("fKey", "fName"));
+		assertThat(loaded.getValues(SingleValueType.SINGLE_STRING), hasEntry("sKey", "sName"));
+		assertThat(loaded.getValues(SingleValueType.SINGLE_INTEGER), hasEntry("iKey", "iName"));
+		assertThat(loaded.getValues(SingleValueType.SINGLE_BOOLEAN), hasEntry("bKey", "bName"));
+		assertThat(loaded.getValues(SingleValueType.SINGLE_FLOAT), hasEntry("fKey", "fName"));
 		// the inverse view is what TreeLabelProvider looks a name up in
-		assertThat(loaded.getSingleValues(SingleValueType.SINGLE_STRING).inverse().get("sName"), is("sKey"));
+		assertThat(loaded.getValues(SingleValueType.SINGLE_STRING).inverse().get("sName"), is("sKey"));
+	}
+
+	static java.util.List<IValueType> everyType() {
+		return ValueTypes.valuesList();
 	}
 
 	/**
-	 * A file written before a {@code SingleValueType} existed carries no map for it,
-	 * and Gson constructs the instanz without running any field initializer. Every
-	 * type still has to answer with a usable map - {@code TreeNodeWrapper} and
-	 * {@code InstanzView} walk all of them and would fail on a null.
+	 * A file written before a value type existed carries no map for it, and Gson
+	 * constructs the instanz without running any field initializer. Every type still
+	 * has to answer with a usable map - {@code TreeNodeWrapper} and
+	 * {@code InstanzView} walk all of them and would fail on a null. Every instanz
+	 * on disk today is such a file for the five multi types.
 	 */
 	@ParameterizedTest
-	@EnumSource(SingleValueType.class)
-	void testLoadFromGson_mapsMissingFromTheJsonAreEmptyNotNull(SingleValueType type) throws IOException {
+	@MethodSource("everyType")
+	void testLoadFromGson_mapsMissingFromTheJsonAreEmptyNotNull(IValueType type) throws IOException {
 		Path file = InstanceLocation.resolve("instanz/load_legacy.json");
 		Files.createDirectories(file.getParent());
 		Files.writeString(file, "{\"_ownKey\":\"load_legacy\",\"_parentKey\":\"0\",\"_childKeys\":[]}");
 
 		IInstanz loaded = _loadService.loadFromGson("instanz/load_legacy", Instanz.class);
 
-		assertThat(loaded.getSingleValues(type), is(anEmptyMap()));
+		assertThat(loaded.getValues(type), is(anEmptyMap()));
 	}
 
 	@Test

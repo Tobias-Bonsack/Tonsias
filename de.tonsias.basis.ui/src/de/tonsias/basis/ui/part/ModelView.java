@@ -387,8 +387,8 @@ public class ModelView {
 
 		Collection<IInstanz> linkedInstanzen = _instanzService.resolveKeys(sv.get().getConnectedInstanzKeys());
 		if (linkedInstanzen.stream()
-				.filter(instanz -> instanz.getSingleValues(changeEvent._type()).containsKey(ownKey))
-				.anyMatch(instanz -> instanz.getSingleValues(changeEvent._type()).get(ownKey)
+				.filter(instanz -> instanz.getValues(changeEvent._type()).containsKey(ownKey))
+				.anyMatch(instanz -> instanz.getValues(changeEvent._type()).get(ownKey)
 						.equals(shownVariable))) {
 			_treeViewer.refresh();
 		}

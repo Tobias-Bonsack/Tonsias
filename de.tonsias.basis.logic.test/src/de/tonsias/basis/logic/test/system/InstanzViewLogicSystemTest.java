@@ -89,7 +89,7 @@ public class InstanzViewLogicSystemTest {
 	}
 
 	private String nameOf(SingleStringValue value) {
-		return _owner.getSingleValues(SingleValueType.SINGLE_STRING).get(value.getOwnKey());
+		return _owner.getValues(SingleValueType.SINGLE_STRING).get(value.getOwnKey());
 	}
 
 	// ---------- the pending jobs ----------
@@ -134,7 +134,7 @@ public class InstanzViewLogicSystemTest {
 		_logic.createDeleteSvJob(value);
 		apply();
 
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()), is(false));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()), is(false));
 		assertThat(value.getConnectedInstanzKeys(), hasSize(0));
 	}
 
@@ -151,7 +151,7 @@ public class InstanzViewLogicSystemTest {
 		_logic.createDeleteSvJob(value);
 		apply();
 
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()), is(false));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()), is(false));
 		assertThat(value.getValue(), is("old"));
 	}
 

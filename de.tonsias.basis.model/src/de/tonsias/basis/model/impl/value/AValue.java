@@ -25,9 +25,10 @@ public abstract class AValue implements IValue {
 
 	// no field initializer: Gson allocates this class without running a constructor,
 	// so an initializer never runs and a json that does not name the field leaves it
-	// null - which used to make getConnectedInstanzKeys throw. connections() is
-	// therefore the single place that creates the set, the same rule AInstanz
-	// follows for its maps. See
+	// null - which used to make getConnectedInstanzKeys throw, see
+	// https://github.com/Tobias-Bonsack/Tonsias/issues/83
+	// connections() is therefore the single place that creates the set, the same
+	// rule AInstanz follows for its maps, see
 	// https://github.com/Tobias-Bonsack/Tonsias/issues/61
 	private Set<String> _connectedInstanzes;
 

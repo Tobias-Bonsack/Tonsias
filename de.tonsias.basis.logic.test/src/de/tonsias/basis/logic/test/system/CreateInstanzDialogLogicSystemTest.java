@@ -254,7 +254,7 @@ public class CreateInstanzDialogLogicSystemTest {
 		_recorder.awaitTopic(EventConstants.CLOSE_OPERATION);
 
 		IInstanz created = _inse.resolveKey(parent.getChildren().iterator().next()).orElseThrow();
-		String valueKey = created.getSingleValues(SingleValueType.SINGLE_INSTANZ).keySet().iterator().next();
+		String valueKey = created.getValues(SingleValueType.SINGLE_INSTANZ).keySet().iterator().next();
 		SingleInstanzValue relation = _svs
 				.resolveKey(SingleValueType.SINGLE_INSTANZ.getPath(), valueKey, SingleInstanzValue.class).orElseThrow();
 
@@ -280,10 +280,10 @@ public class CreateInstanzDialogLogicSystemTest {
 
 		assertThat(parent.getChildren(), hasSize(1));
 		IInstanz created = _inse.resolveKey(parent.getChildren().iterator().next()).orElseThrow();
-		assertThat(created.getSingleValues(SingleValueType.SINGLE_STRING).keySet(), hasSize(1));
+		assertThat(created.getValues(SingleValueType.SINGLE_STRING).keySet(), hasSize(1));
 
-		String valueKey = created.getSingleValues(SingleValueType.SINGLE_STRING).keySet().iterator().next();
-		assertThat(created.getSingleValues(SingleValueType.SINGLE_STRING).get(valueKey), is("param"));
+		String valueKey = created.getValues(SingleValueType.SINGLE_STRING).keySet().iterator().next();
+		assertThat(created.getValues(SingleValueType.SINGLE_STRING).get(valueKey), is("param"));
 		SingleStringValue value = _svs
 				.resolveKey(SingleValueType.SINGLE_STRING.getPath(), valueKey, SingleStringValue.class).orElseThrow();
 		assertThat(value.getValue(), is("value"));
@@ -326,7 +326,7 @@ public class CreateInstanzDialogLogicSystemTest {
 
 		assertThat(parent.getChildren(), hasSize(1));
 		IInstanz created = _inse.resolveKey(parent.getChildren().iterator().next()).orElseThrow();
-		assertThat(created.getSingleValues(SingleValueType.SINGLE_STRING).keySet(), hasSize(0));
+		assertThat(created.getValues(SingleValueType.SINGLE_STRING).keySet(), hasSize(0));
 
 		List<String> topics = _recorder.topics();
 		assertThat(topics, hasSize(4));

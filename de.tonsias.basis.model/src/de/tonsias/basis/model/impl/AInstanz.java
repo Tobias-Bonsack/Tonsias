@@ -11,11 +11,14 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
+import de.tonsias.basis.model.enums.IValueType;
+import de.tonsias.basis.model.enums.MultiValueType;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 
@@ -30,12 +33,17 @@ public abstract class AInstanz implements IInstanz {
 
 	private Set<String> _childKeys = Collections.synchronizedSet(new HashSet<String>());
 
-	// no field initializers: Gson constructs an AInstanz without a constructor and
-	// would leave a map absent from the json at null. getSingleValues is therefore
-	// the single place that creates one, for every type alike - and there is
+	// One map per value type, and one named field per map rather than a map of
+	// maps: every instanz json ever written names these fields, and a map keyed by
+	// type name would make Gson drop all of them - every instanz in every workspace
+	// would silently lose its attributes.
+	//
+	// No field initializers: Gson constructs an AInstanz without a constructor and
+	// would leave a map absent from the json at null. getValues is therefore the
+	// single place that creates one, for every type alike - and there is
 	// deliberately no constructor taking the maps, which would both bypass that and
-	// have to grow a parameter with every new SingleValueType. Fill an instanz
-	// through addValuekeys instead. See
+	// have to grow a parameter with every new value type. Fill an instanz through
+	// addValuekeys instead. See
 	// https://github.com/Tobias-Bonsack/Tonsias/issues/61
 	private BiMap<String, String> _singleStringKeyValueMap;
 
@@ -46,6 +54,16 @@ public abstract class AInstanz implements IInstanz {
 	private BiMap<String, String> _singleFloatKeyValueMap;
 
 	private BiMap<String, String> _singleInstanzKeyValueMap;
+
+	private BiMap<String, String> _multiStringKeyValueMap;
+
+	private BiMap<String, String> _multiIntegerKeyValueMap;
+
+	private BiMap<String, String> _multiBooleanKeyValueMap;
+
+	private BiMap<String, String> _multiFloatKeyValueMap;
+
+	private BiMap<String, String> _multiInstanzKeyValueMap;
 
 	// the backward direction of a SINGLE_INSTANZ relation - see
 	// IInstanz.getReferencingValueKeys. No field initializer for the same reason as
@@ -94,53 +112,59 @@ public abstract class AInstanz implements IInstanz {
 	}
 
 	@Override
-	public void addValuekeys(SingleValueType type, Entry<String, String> keyToName) {
-		getSingleValues(type).put(keyToName.getKey(), keyToName.getValue());
+	public void addValuekeys(IValueType type, Entry<String, String> keyToName) {
+		getValues(type).put(keyToName.getKey(), keyToName.getValue());
 	}
 
 	@Override
-	public void deleteKeys(SingleValueType type, String... keys) {
-		BiMap<String, String> singleValues = getSingleValues(type);
-		Arrays.stream(keys).forEach(key -> singleValues.remove(key));
+	public void deleteKeys(IValueType type, String... keys) {
+		BiMap<String, String> values = getValues(type);
+		Arrays.stream(keys).forEach(key -> values.remove(key));
 	}
 
 	@Override
-	public void deleteParam(SingleValueType type, String... names) {
-		BiMap<String, String> singleValues = getSingleValues(type).inverse();
-		Arrays.stream(names).forEach(name -> singleValues.remove(name));
+	public void deleteParam(IValueType type, String... names) {
+		BiMap<String, String> values = getValues(type).inverse();
+		Arrays.stream(names).forEach(name -> values.remove(name));
 	}
 
 	@Override
-	public BiMap<String, String> getSingleValues(SingleValueType type) {
-		switch (type) {
-		case SINGLE_STRING:
-			if (_singleStringKeyValueMap == null) {
-				_singleStringKeyValueMap = HashBiMap.create();
-			}
-			return _singleStringKeyValueMap;
-		case SINGLE_INTEGER:
-			if (_singleIntegerKeyValueMap == null) {
-				_singleIntegerKeyValueMap = HashBiMap.create();
-			}
-			return _singleIntegerKeyValueMap;
-		case SINGLE_BOOLEAN:
-			if (_singleBooleanKeyValueMap == null) {
-				_singleBooleanKeyValueMap = HashBiMap.create();
-			}
-			return _singleBooleanKeyValueMap;
-		case SINGLE_FLOAT:
-			if (_singleFloatKeyValueMap == null) {
-				_singleFloatKeyValueMap = HashBiMap.create();
-			}
-			return _singleFloatKeyValueMap;
-		case SINGLE_INSTANZ:
-			if (_singleInstanzKeyValueMap == null) {
-				_singleInstanzKeyValueMap = HashBiMap.create();
-			}
-			return _singleInstanzKeyValueMap;
-		default:
-			throw new IllegalArgumentException("Unexpected value: " + type);
+	public BiMap<String, String> getValues(IValueType type) {
+		if (type instanceof SingleValueType single) {
+			return switch (single) {
+			case SINGLE_STRING -> orCreate(_singleStringKeyValueMap, map -> _singleStringKeyValueMap = map);
+			case SINGLE_INTEGER -> orCreate(_singleIntegerKeyValueMap, map -> _singleIntegerKeyValueMap = map);
+			case SINGLE_BOOLEAN -> orCreate(_singleBooleanKeyValueMap, map -> _singleBooleanKeyValueMap = map);
+			case SINGLE_FLOAT -> orCreate(_singleFloatKeyValueMap, map -> _singleFloatKeyValueMap = map);
+			case SINGLE_INSTANZ -> orCreate(_singleInstanzKeyValueMap, map -> _singleInstanzKeyValueMap = map);
+			default -> throw new IllegalArgumentException("Unexpected value: " + type);
+			};
 		}
+		if (type instanceof MultiValueType multi) {
+			return switch (multi) {
+			case MULTI_STRING -> orCreate(_multiStringKeyValueMap, map -> _multiStringKeyValueMap = map);
+			case MULTI_INTEGER -> orCreate(_multiIntegerKeyValueMap, map -> _multiIntegerKeyValueMap = map);
+			case MULTI_BOOLEAN -> orCreate(_multiBooleanKeyValueMap, map -> _multiBooleanKeyValueMap = map);
+			case MULTI_FLOAT -> orCreate(_multiFloatKeyValueMap, map -> _multiFloatKeyValueMap = map);
+			case MULTI_INSTANZ -> orCreate(_multiInstanzKeyValueMap, map -> _multiInstanzKeyValueMap = map);
+			default -> throw new IllegalArgumentException("Unexpected value: " + type);
+			};
+		}
+		throw new IllegalArgumentException("Unexpected value: " + type);
+	}
+
+	/**
+	 * @param map     the field as it stands, null when the json did not name it
+	 * @param setter  writes the created map back into that field - the one thing a
+	 *                switch arm cannot do to a field it only reads
+	 */
+	private BiMap<String, String> orCreate(BiMap<String, String> map, Consumer<BiMap<String, String>> setter) {
+		if (map != null) {
+			return map;
+		}
+		BiMap<String, String> created = HashBiMap.create();
+		setter.accept(created);
+		return created;
 	}
 
 	@Override

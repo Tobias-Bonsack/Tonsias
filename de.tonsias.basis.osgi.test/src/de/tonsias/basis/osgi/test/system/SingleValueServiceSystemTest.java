@@ -95,7 +95,7 @@ public class SingleValueServiceSystemTest {
 
 		assertThat(created.getValue(), is("content"));
 		assertThat(created.getConnectedInstanzKeys(), contains(_owner.getOwnKey()));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_STRING).get(created.getOwnKey()), is("parameter"));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_STRING).get(created.getOwnKey()), is("parameter"));
 
 		SingleValueNewEvent data = _recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class);
 		assertThat(data._key(), is(created.getOwnKey()));
@@ -111,8 +111,8 @@ public class SingleValueServiceSystemTest {
 
 		assertThat(created, is(instanceOf(SingleIntegerValue.class)));
 		assertThat(created.getValue(), is(42));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_INTEGER).get(created.getOwnKey()), is("number"));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey(created.getOwnKey()), is(false));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_INTEGER).get(created.getOwnKey()), is("number"));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_STRING).containsKey(created.getOwnKey()), is(false));
 	}
 
 	@Test
@@ -123,7 +123,7 @@ public class SingleValueServiceSystemTest {
 				Type.SEND);
 
 		assertThat(created.getValue(), is(true));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_BOOLEAN).get(created.getOwnKey()), is("flag"));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_BOOLEAN).get(created.getOwnKey()), is("flag"));
 		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
 				is(SingleValueType.SINGLE_BOOLEAN));
 	}
@@ -137,8 +137,8 @@ public class SingleValueServiceSystemTest {
 				Type.SEND);
 
 		assertThat(created.getValue(), is(3.14f));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_FLOAT).get(created.getOwnKey()), is("ratio"));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_INTEGER).containsKey(created.getOwnKey()), is(false));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_FLOAT).get(created.getOwnKey()), is("ratio"));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_INTEGER).containsKey(created.getOwnKey()), is(false));
 		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
 				is(SingleValueType.SINGLE_FLOAT));
 	}
@@ -177,8 +177,8 @@ public class SingleValueServiceSystemTest {
 				target.getOwnKey(), Type.SEND);
 
 		assertThat(created.getValue(), is(target.getOwnKey()));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_INSTANZ).get(created.getOwnKey()), is("points at"));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey(created.getOwnKey()), is(false));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_INSTANZ).get(created.getOwnKey()), is("points at"));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_STRING).containsKey(created.getOwnKey()), is(false));
 		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
 				is(SingleValueType.SINGLE_INSTANZ));
 	}
@@ -503,7 +503,7 @@ public class SingleValueServiceSystemTest {
 		assertThat(value.getConnectedInstanzKeys(),
 				containsInAnyOrder(_owner.getOwnKey(), secondOwner.getOwnKey()));
 		// the chain carries no name for the new owner, so the key stands in for it
-		assertThat(secondOwner.getSingleValues(SingleValueType.SINGLE_STRING).get(value.getOwnKey()),
+		assertThat(secondOwner.getValues(SingleValueType.SINGLE_STRING).get(value.getOwnKey()),
 				is(value.getOwnKey()));
 	}
 
@@ -547,8 +547,8 @@ public class SingleValueServiceSystemTest {
 		assertThat(data._ownerKeys(), containsInAnyOrder(_owner.getOwnKey(), secondOwner.getOwnKey()));
 
 		assertThat(value.getConnectedInstanzKeys(), hasSize(0));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()), is(false));
-		assertThat(secondOwner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()),
+		assertThat(_owner.getValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()), is(false));
+		assertThat(secondOwner.getValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()),
 				is(false));
 	}
 
@@ -561,7 +561,7 @@ public class SingleValueServiceSystemTest {
 
 		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.DELETE, SingleValueDeleteEvent.class)._key(),
 				is(value.getOwnKey()));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()), is(false));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()), is(false));
 	}
 
 	// ---------- persistence hand-off ----------

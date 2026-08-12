@@ -266,7 +266,7 @@ public class InstanzServiceImpl implements IInstanzService {
 		}
 
 		String paramName = name == null || name.isBlank() ? key : name;
-		boolean isAdded = instanz.get().getSingleValues(type).putIfAbsent(key, paramName) == null;
+		boolean isAdded = instanz.get().getValues(type).putIfAbsent(key, paramName) == null;
 		if(isAdded) {
 			var changeData = new LinkedValueChangeEvent(instanzKey, type, ChangeType.ADD, List.of(key));
 			fireEvent(eventType, InstanzEventConstants.VALUE_LIST_CHANGE, changeData);
@@ -281,8 +281,8 @@ public class InstanzServiceImpl implements IInstanzService {
 			return;
 		}
 
-		String oldName = instanz.get().getSingleValues(type).get(key);
-		instanz.get().getSingleValues(type).put(key, newName);
+		String oldName = instanz.get().getValues(type).get(key);
+		instanz.get().getValues(type).put(key, newName);
 
 		var changeData = new ValueRenameEvent(instanzKey, type, key, oldName, newName);
 		fireEvent(eventType, InstanzEventConstants.NAME_CHANGE, changeData);
@@ -293,7 +293,7 @@ public class InstanzServiceImpl implements IInstanzService {
 			IEventBrokerBridge.Type eventType) {
 		Collection<IInstanz> instanzes = resolveKeys(instanzKeys);
 		for (IInstanz instanz : instanzes) {
-			instanz.getSingleValues(type).remove(valueKeyToRemove);
+			instanz.getValues(type).remove(valueKeyToRemove);
 			var data = new LinkedValueChangeEvent(instanz.getOwnKey(), type, ChangeType.REMOVE,
 					List.of(valueKeyToRemove));
 			fireEvent(eventType, InstanzEventConstants.VALUE_LIST_CHANGE, data);

@@ -215,7 +215,7 @@ public class DeltaLogSystemTest {
 		_delta.saveDeltas();
 
 		assertThat(ProductRuntime.valueFileExists(SingleValueType.SINGLE_STRING, shortLived.getOwnKey()), is(false));
-		assertThat(ProductRuntime.reloadInstanz(owner.getOwnKey()).getSingleValues(SingleValueType.SINGLE_STRING)
+		assertThat(ProductRuntime.reloadInstanz(owner.getOwnKey()).getValues(SingleValueType.SINGLE_STRING)
 				.keySet(), is(empty()));
 	}
 }

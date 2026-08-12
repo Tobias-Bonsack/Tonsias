@@ -179,7 +179,7 @@ public class InstanzView {
 			GridDataFactory.fillDefaults().grab(true, false).applyTo(typeGroup);
 			GridLayoutFactory.fillDefaults().numColumns(3).applyTo(typeGroup);
 
-			BiMap<String, String> singleValues = _shownInstanz.getSingleValues(type);
+			BiMap<String, String> singleValues = _shownInstanz.getValues(type);
 			for (Entry<String, String> svKeyToName : singleValues.entrySet()) {
 				Optional<? extends ISingleValue<?>> singleValue = _singleService.resolveKey(type.getPath(),
 						svKeyToName.getKey(), type.getClazz());

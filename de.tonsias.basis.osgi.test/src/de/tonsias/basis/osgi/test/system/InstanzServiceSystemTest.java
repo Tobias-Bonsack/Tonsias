@@ -134,7 +134,7 @@ public class InstanzServiceSystemTest {
 		_inse.putSingleValue(child.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "vName", Type.SEND);
 
 		assertThat(_inse.resolveKey(child.getOwnKey()).get(), is(sameInstance(child)));
-		assertThat(child.getSingleValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vName"));
+		assertThat(child.getValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vName"));
 	}
 
 	/** After a save the file is a complete second source for the same instanz. */
@@ -370,7 +370,7 @@ public class InstanzServiceSystemTest {
 		assertThat(data._changeType(), is(ChangeType.ADD));
 		assertThat(data._valueKeys(), contains("vKey"));
 
-		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vName"));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vName"));
 	}
 
 	/** Without a name the key stands in for it, so the tree never shows a blank. */
@@ -380,7 +380,7 @@ public class InstanzServiceSystemTest {
 
 		_inse.putSingleValue(owner.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "  ", Type.SEND);
 
-		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vKey"));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vKey"));
 	}
 
 	@Test
@@ -391,7 +391,7 @@ public class InstanzServiceSystemTest {
 
 		_inse.putSingleValue(owner.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "otherName", Type.SEND);
 
-		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vName"));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vName"));
 		assertThat(_recorder.events(), hasSize(0));
 	}
 
@@ -418,7 +418,7 @@ public class InstanzServiceSystemTest {
 		assertThat(data._oldName(), is("oldName"));
 		assertThat(data._newName(), is("newName"));
 
-		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).get("vKey"), is("newName"));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).get("vKey"), is("newName"));
 	}
 
 	@Test
@@ -432,8 +432,8 @@ public class InstanzServiceSystemTest {
 		_inse.removeValueKey(List.of(one.getOwnKey(), other.getOwnKey()), SingleValueType.SINGLE_STRING, "vKey",
 				Type.SEND);
 
-		assertThat(one.getSingleValues(SingleValueType.SINGLE_STRING).containsKey("vKey"), is(false));
-		assertThat(other.getSingleValues(SingleValueType.SINGLE_STRING).containsKey("vKey"), is(false));
+		assertThat(one.getValues(SingleValueType.SINGLE_STRING).containsKey("vKey"), is(false));
+		assertThat(other.getValues(SingleValueType.SINGLE_STRING).containsKey("vKey"), is(false));
 
 		assertThat(_recorder.dataOf(InstanzEventConstants.VALUE_LIST_CHANGE, LinkedValueChangeEvent.class).stream()
 				.map(LinkedValueChangeEvent::_key).toList(),
@@ -675,7 +675,7 @@ public class InstanzServiceSystemTest {
 		SingleStringValue value = _svs.createNew(SingleStringValue.class, owner.getOwnKey(), "parameter", "content",
 				Type.SEND);
 
-		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).get(value.getOwnKey()), is("parameter"));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).get(value.getOwnKey()), is("parameter"));
 		assertThat(value.getConnectedInstanzKeys(), contains(owner.getOwnKey()));
 	}
 }

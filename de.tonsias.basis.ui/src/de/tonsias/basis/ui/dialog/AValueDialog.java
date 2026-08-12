@@ -137,7 +137,7 @@ public abstract class AValueDialog<T extends ISingleValue<?>, C extends Control>
 	 * being edited, and the dialog opens with it in the field.
 	 */
 	protected boolean isNameAcceptable() {
-		String owner = _instanz.getSingleValues(_type).inverse().get(_nameText.getText());
+		String owner = _instanz.getValues(_type).inverse().get(_nameText.getText());
 		return owner == null || owner.equals(_value.map(v -> v.getOwnKey()).orElse(null));
 	}
 
@@ -171,7 +171,7 @@ public abstract class AValueDialog<T extends ISingleValue<?>, C extends Control>
 		Label nameLabel = LabelFactory.newLabel(SWT.None).text(_messages.constant_name).create(composite);
 		GridDataFactory.fillDefaults().applyTo(nameLabel);
 
-		String name = _instanz.getSingleValues(_type).getOrDefault(keyString, "");
+		String name = _instanz.getValues(_type).getOrDefault(keyString, "");
 		_nameText = TextFactory.newText(SWT.SEARCH).text(name).enabled(true).create(composite);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(_nameText);
 

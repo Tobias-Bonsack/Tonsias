@@ -125,10 +125,21 @@ public abstract class AMultiValue<T> extends AValue implements IMultiValue<T> {
 		return setValues(wanted);
 	}
 
+	/**
+	 * What the type reads out of this object, if anything - and for a relation, not
+	 * the empty string. A single relation has that as a state: it is where one is
+	 * put back to when its target is deleted. A list says the same thing by having
+	 * no element, so an empty one would be a second spelling of it, and an element
+	 * pointing nowhere is not something anybody puts in a list on purpose. Asked
+	 * here rather than in {@code tryToAddValue} alone, so setting the whole list
+	 * cannot get in past the rule that adding one element obeys.
+	 */
 	@SuppressWarnings("unchecked") // the rules only ever hand back what this content type holds
 	private Optional<T> converted(Object raw) {
 		ValueContentType content = getType().getContentType();
-		return ValueContentRules.convert(content, raw).map(value -> (T) value);
+		return ValueContentRules.convert(content, raw)//
+				.filter(value -> content != ValueContentType.INSTANZ || !"".equals(value))//
+				.map(value -> (T) value);
 	}
 
 	@Override

@@ -44,15 +44,6 @@ public class MultiInstanzValue extends AMultiValue<String> {
 		return ValueContentRules.accepts(ValueContentType.INSTANZ, value);
 	}
 
-	/**
-	 * Takes a key and refuses the empty string - see the class comment: an element
-	 * pointing nowhere would say what leaving it out already says.
-	 */
-	@Override
-	public boolean tryToAddValue(Object value) {
-		return value instanceof String key && accepts(key) && super.tryToAddValue(key);
-	}
-
 	@Override
 	public MultiValueType getType() {
 		return MultiValueType.MULTI_INSTANZ;

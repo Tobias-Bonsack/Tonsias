@@ -43,7 +43,7 @@ public class TreeNodeWrapper {
 		result += instanz.getChildren().size();
 
 		if (_prefService.getValue(IBasicPreferenceService.Key.SHOW_VALUES.getKey(), Boolean.class).orElse(false)) {
-			result += Arrays.stream(SingleValueType.values()).mapToInt(s -> instanz.getSingleValues(s).size()).sum();
+			result += Arrays.stream(SingleValueType.values()).mapToInt(s -> instanz.getValues(s).size()).sum();
 		}
 		return result;
 	}
@@ -65,7 +65,7 @@ public class TreeNodeWrapper {
 		}
 
 		for (SingleValueType type : SingleValueType.values()) {
-			for (String singleValueKey : instanz.getSingleValues(type).keySet()) {
+			for (String singleValueKey : instanz.getValues(type).keySet()) {
 				if (cIndex == index) {
 					Optional<? extends ISingleValue<?>> singleValue = _singleService.resolveKey(type.getPath(),
 							singleValueKey, type.getClazz());

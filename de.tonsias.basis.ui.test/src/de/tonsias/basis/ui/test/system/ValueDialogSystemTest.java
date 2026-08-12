@@ -377,7 +377,7 @@ public class ValueDialogSystemTest {
 		nameText(dialog).setText("counter");
 		press(okButton(dialog));
 
-		assertThat(_instanz.getSingleValues(SingleValueType.SINGLE_INTEGER).get(value.getOwnKey()), is("counter"));
+		assertThat(_instanz.getValues(SingleValueType.SINGLE_INTEGER).get(value.getOwnKey()), is("counter"));
 	}
 
 	/**
