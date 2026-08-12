@@ -664,6 +664,16 @@ public class SingleValueServiceSystemTest {
 			return "unknown/";
 		}
 
+		/**
+		 * The one value there is that answers no type. Every value the model brings
+		 * along names its constant here, which is exactly why an outsider is what it
+		 * takes to reach the branches that ask what happens when none maps.
+		 */
+		@Override
+		public SingleValueType getType() {
+			return null;
+		}
+
 		@Override
 		public String getValue() {
 			return null;

@@ -1,28 +1,32 @@
 package de.tonsias.basis.model.impl.value;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 import de.tonsias.basis.model.interfaces.ISingleValue;
 
-public abstract class ASingleValue<T> implements ISingleValue<T> {
-
-	private Set<String> _connectedInstanzes = new HashSet<>();
-
-	private final String _ownKey;
+/**
+ * A value holding one content. What it holds is decided by the type its subclass
+ * answers, so {@link #tryToSetValue} is written once here rather than five times
+ * below.
+ * <p>
+ * Every concrete subclass is non-generic and binds {@code T} in its
+ * {@code extends} clause. That is what lets Gson resolve the erased
+ * {@code _value} field: the save service hands over the concrete class, and Gson
+ * walks the superclass chain to learn that {@code T} is a {@code Float}. A
+ * subclass that left {@code T} open would come back holding a {@code Double}.
+ * </p>
+ */
+public abstract class ASingleValue<T> extends AValue implements ISingleValue<T> {
 
 	private T _value;
 
 	public ASingleValue(String key) {
-		_ownKey = key;
+		super(key);
 	}
 
 	public ASingleValue(String key, T value, Set<String> connectedInstanzes) {
-		_ownKey = key;
+		super(key, connectedInstanzes);
 		_value = value;
-		_connectedInstanzes = connectedInstanzes;
 	}
 
 	@Override
@@ -40,24 +44,20 @@ public abstract class ASingleValue<T> implements ISingleValue<T> {
 		return _value;
 	}
 
+	/**
+	 * The rule is the content type's, asked of {@link ValueContentRules} so the list
+	 * of the same content cannot answer it differently.
+	 */
+	@SuppressWarnings("unchecked") // the rules only ever hand back what this content type holds
 	@Override
-	public String getOwnKey() {
-		return _ownKey;
+	public final boolean tryToSetValue(Object value) {
+		return ValueContentRules.convert(getType().getContentType(), value)//
+				.map(converted -> setValue((T) converted))//
+				.orElse(Boolean.FALSE);
 	}
 
 	@Override
-	public Collection<String> getConnectedInstanzKeys() {
-		return Collections.unmodifiableSet(_connectedInstanzes);
+	protected Object getContent() {
+		return getValue();
 	}
-
-	@Override
-	public boolean addConnectedInstanzKey(String key) {
-		return _connectedInstanzes.add(key);
-	}
-	
-	@Override
-	public boolean removeConnection(Collection<String> connectedInstanzKeys) {
-		return _connectedInstanzes.removeAll(connectedInstanzKeys);
-	}
-
 }
