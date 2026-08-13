@@ -19,14 +19,4 @@ public interface ValueEventConstants {
 		/** narrowed to its own enum by the two families */
 		IValueType getType();
 	}
-
-	/**
-	 * Which direction a link moved. Lives here rather than nested in one event
-	 * record, so the multi side does not bring a third copy along.
-	 * {@link InstanzEventConstants#ChangeType} is still its own - see
-	 * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/84">#84</a>.
-	 */
-	enum ChangeType {
-		ADD, REMOVE;
-	}
 }

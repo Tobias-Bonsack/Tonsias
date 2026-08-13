@@ -6,7 +6,6 @@ import java.util.List;
 import org.eclipse.e4.core.services.events.IEventBroker;
 
 import de.tonsias.basis.model.enums.SingleValueType;
-import de.tonsias.basis.osgi.intf.non.service.ValueEventConstants.ChangeType;
 import de.tonsias.basis.osgi.intf.non.service.ValueEventConstants.ValueEvent;
 
 public interface SingleValueEventConstants {

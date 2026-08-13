@@ -117,8 +117,23 @@ public interface IValueService<V extends IValue, T extends IValueType> {
 	 * @param type      of the value
 	 * @param valueKey  of the value
 	 * @param parentKey of the instanz
-	 * @return true if added, else false - and no event either way, which is what
+	 * @return true if added, else false - and no event when false, which is what
 	 *         keeps the propagation from re-entering itself
 	 */
 	boolean addToParent(T type, String valueKey, String parentKey, IEventBrokerBridge.Type eventType);
+
+	/**
+	 * The other direction of {@link #addToParent}: the instanz no longer holds this
+	 * value, so the value stops naming it as an owner.
+	 * <p>
+	 * The value itself is left standing. It may hang on other instanzen, and even
+	 * when it does not, dropping it is {@link #markValueAsDelete} 's decision and
+	 * not this one's - a value with no owner left is unreachable, not gone.
+	 * </p>
+	 *
+	 * @return true if it was an owner, else false - and no event when false, which
+	 *         is what ends the chain this sits in the middle of
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/85">#85</a>
+	 */
+	boolean removeFromParent(T type, String valueKey, String parentKey, IEventBrokerBridge.Type eventType);
 }

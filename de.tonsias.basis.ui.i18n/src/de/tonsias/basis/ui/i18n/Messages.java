@@ -51,6 +51,8 @@ public class Messages {
 	public String dialog_value_usedName;
 	public String dialog_value_valueSide;
 
+	public String instanzView_missingValue;
+
 	public String mi_createInstanz;
 	public String mi_delete;
 

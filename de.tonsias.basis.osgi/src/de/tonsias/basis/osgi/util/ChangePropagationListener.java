@@ -11,6 +11,7 @@ import org.eclipse.e4.core.services.events.IEventBroker;
 import org.osgi.service.event.Event;
 
 import de.tonsias.basis.model.enums.IValueType;
+import de.tonsias.basis.model.enums.MultiValueType;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.enums.ValueContentType;
 import de.tonsias.basis.model.impl.value.SingleInstanzValue;
@@ -37,8 +38,18 @@ import jakarta.inject.Singleton;
  * {@code Type.SEND}.
  * <p>
  * That only terminates because every service method here answers {@code false}
- * and fires <em>nothing</em> when it is asked for a state that already holds. The
- * one edge that would close a cycle is
+ * and fires <em>nothing</em> when it is asked for a state that already holds.
+ * That is a rule, not a courtesy: an attribute hangs on an instanz at both ends -
+ * the instanz names the value key, the value names the instanz key - and the two
+ * handlers that keep those in step call each other. Taking a value off an instanz
+ * runs
+ * {@code removeValueKey -> valueChange REMOVE -> removeFromParent -> linkedInstanzChange
+ * REMOVE -> removeValueKey}, and the second time round the key is already gone,
+ * so nothing is fired and the chain stops. A service that fired for a removal
+ * that removed nothing would never stop.
+ * </p>
+ * <p>
+ * The one edge that would close a cycle by itself is
  * {@link InstanzEventConstants#REFERENCE_LIST_CHANGE}: it is the last hop of the
  * relation chains below, and nothing but {@code DeltaServiceImpl} listens to it.
  * <b>No handler in this class may subscribe to it.</b>
@@ -168,8 +179,7 @@ public class ChangePropagationListener {
 			data._valueKeys().forEach(valueKey -> addToParent(data._valueType(), valueKey, data._key()));
 			break;
 		case REMOVE:
-			// TODO: add logic, see
-			// https://github.com/Tobias-Bonsack/Tonsias/issues/85
+			data._valueKeys().forEach(valueKey -> removeFromParent(data._valueType(), valueKey, data._key()));
 			break;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + data._changeType());
@@ -177,12 +187,19 @@ public class ChangePropagationListener {
 	}
 
 	private void addToParent(IValueType type, String valueKey, String instanzKey) {
-		if (type.isMulti()) {
-			_multiValue.addToParent((de.tonsias.basis.model.enums.MultiValueType) type, valueKey, instanzKey,
-					Type.SEND);
+		if (type instanceof MultiValueType multi) {
+			_multiValue.addToParent(multi, valueKey, instanzKey, Type.SEND);
 			return;
 		}
 		_singleValue.addToParent((SingleValueType) type, valueKey, instanzKey, Type.SEND);
+	}
+
+	private void removeFromParent(IValueType type, String valueKey, String instanzKey) {
+		if (type instanceof MultiValueType multi) {
+			_multiValue.removeFromParent(multi, valueKey, instanzKey, Type.SEND);
+			return;
+		}
+		_singleValue.removeFromParent((SingleValueType) type, valueKey, instanzKey, Type.SEND);
 	}
 
 	/**
@@ -262,8 +279,7 @@ public class ChangePropagationListener {
 					instanzKey -> _instanz.putValue(instanzKey, data._singleValuetype(), data._key(), null, Type.SEND));
 			break;
 		case REMOVE:
-			// TODO: add logic, see
-			// https://github.com/Tobias-Bonsack/Tonsias/issues/85
+			_instanz.removeValueKey(data._instanzKeys(), data._singleValuetype(), data._key(), Type.SEND);
 			break;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + data._changeType());
@@ -328,8 +344,7 @@ public class ChangePropagationListener {
 					instanzKey -> _instanz.putValue(instanzKey, data._multiValuetype(), data._key(), null, Type.SEND));
 			break;
 		case REMOVE:
-			// TODO: add logic, see
-			// https://github.com/Tobias-Bonsack/Tonsias/issues/85
+			_instanz.removeValueKey(data._instanzKeys(), data._multiValuetype(), data._key(), Type.SEND);
 			break;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + data._changeType());

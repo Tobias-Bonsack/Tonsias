@@ -28,7 +28,7 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ChangeType;
+import de.tonsias.basis.osgi.intf.non.service.ChangeType;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedValueChangeEvent;
@@ -376,7 +376,7 @@ public class EventChainSystemTest {
 		LinkedInstanzChangeEvent instanzList = _recorder.onlyDataOf(SingleValueEventConstants.INSTANZ_LIST_CHANGE,
 				LinkedInstanzChangeEvent.class);
 		assertThat(instanzList._key(), is(value.getOwnKey()));
-		assertThat(instanzList._changeType(), is(ValueEventConstants.ChangeType.ADD));
+		assertThat(instanzList._changeType(), is(ChangeType.ADD));
 		assertThat(instanzList._instanzKeys(), contains(secondOwner.getOwnKey()));
 
 		assertThat(value.getConnectedInstanzKeys(),

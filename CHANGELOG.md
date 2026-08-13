@@ -35,6 +35,27 @@ Development towards 0.3.0. The reactor is at `0.3.0-SNAPSHOT`.
 - The type combo of the create-instanz dialog indexes an explicit list instead of an
   enum's ordinals, so both families can appear in it — and new constants no longer have
   to be appended.
+- `ChangeType` is one enum next to the constants interfaces instead of one nested in
+  each of them. ([#84](https://github.com/Tobias-Bonsack/Tonsias/issues/84))
+
+### Fixed
+
+- **Taking an attribute off an instanz now reaches the attribute.** Both ends of that
+  link were kept in step in one direction only — the other ran into a `// TODO` and
+  left the value naming an instanz that no longer held it, which the next save wrote
+  out. `IValueService.removeFromParent` is the missing half, and `removeValueKey` now
+  answers without an event when there was nothing to remove, which is what keeps the
+  two handlers calling each other from looping.
+  ([#85](https://github.com/Tobias-Bonsack/Tonsias/issues/85))
+- **An attribute whose file is missing is shown instead of skipped.** The instanz view
+  used to walk past it silently, which left its name taken — a new attribute could not
+  have that name and nothing said why. It now appears with its name, a note that no
+  file backs it, and the same delete every other attribute has.
+  ([#86](https://github.com/Tobias-Bonsack/Tonsias/issues/86))
+- `AValue._connectedInstanzes` is created lazily. Gson allocates values without running
+  a constructor, so the field initializer never ran and a file that did not name the
+  field made `getConnectedInstanzKeys()` throw.
+  ([#83](https://github.com/Tobias-Bonsack/Tonsias/issues/83))
 
 ### On-disk compatibility
 

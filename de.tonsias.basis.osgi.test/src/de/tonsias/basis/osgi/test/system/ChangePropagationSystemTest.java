@@ -27,7 +27,7 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ChangeType;
+import de.tonsias.basis.osgi.intf.non.service.ChangeType;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedValueChangeEvent;
@@ -36,9 +36,6 @@ import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.LinkedInstanzChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueDeleteEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueNewEvent;
-// qualified, because ChangeType above is the instanz side's - see
-// https://github.com/Tobias-Bonsack/Tonsias/issues/84
-import de.tonsias.basis.osgi.intf.non.service.ValueEventConstants;
 import de.tonsias.basis.osgi.test.ProductRuntime;
 import de.tonsias.basis.osgi.util.ChangePropagationListener;
 
@@ -237,16 +234,20 @@ public class ChangePropagationSystemTest {
 	}
 
 	/**
-	 * The other direction has no logic yet - a value list removal is answered by
-	 * the single value service, not by the listener.
+	 * The other direction, which used to run into a {@code // TODO} and leave the
+	 * value naming an instanz that no longer held it.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/85">#85</a>
 	 */
 	@Test
-	void testValueListRemoved_isNotPropagatedYet() {
+	void testValueListRemoved_cutsTheValueLooseFromThatInstanz() {
 		IInstanz owner = newInstanz();
+		IInstanz secondOwner = newInstanz();
 		SingleStringValue value = _svs.createNew(SingleStringValue.class, owner.getOwnKey(), "parameter", "content",
 				Type.SEND);
+		_svs.addToParent(SingleValueType.SINGLE_STRING, value.getOwnKey(), secondOwner.getOwnKey(), Type.SEND);
 
-		publish(InstanzEventConstants.VALUE_LIST_CHANGE, new LinkedValueChangeEvent(owner.getOwnKey(),
+		publish(InstanzEventConstants.VALUE_LIST_CHANGE, new LinkedValueChangeEvent(secondOwner.getOwnKey(),
 				SingleValueType.SINGLE_STRING, ChangeType.REMOVE, List.of(value.getOwnKey())));
 
 		assertThat(value.getConnectedInstanzKeys(), contains(owner.getOwnKey()));
@@ -286,21 +287,28 @@ public class ChangePropagationSystemTest {
 		IInstanz owner = newInstanz();
 
 		publish(SingleValueEventConstants.INSTANZ_LIST_CHANGE, new LinkedInstanzChangeEvent("fabricated-add",
-				SingleValueType.SINGLE_STRING, ValueEventConstants.ChangeType.ADD, List.of(owner.getOwnKey())));
+				SingleValueType.SINGLE_STRING, ChangeType.ADD, List.of(owner.getOwnKey())));
 
 		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).get("fabricated-add"), is("fabricated-add"));
 	}
 
+	/**
+	 * And the same the other way round: the instanz drops the key when the value
+	 * stops naming it.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/85">#85</a>
+	 */
 	@Test
-	void testInstanzListRemoved_isNotPropagatedYet() {
+	void testInstanzListRemoved_takesTheKeyOffThatInstanz() {
 		IInstanz owner = newInstanz();
 		publish(SingleValueEventConstants.INSTANZ_LIST_CHANGE, new LinkedInstanzChangeEvent("fabricated-remove",
-				SingleValueType.SINGLE_STRING, ValueEventConstants.ChangeType.ADD, List.of(owner.getOwnKey())));
+				SingleValueType.SINGLE_STRING, ChangeType.ADD, List.of(owner.getOwnKey())));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).containsKey("fabricated-remove"), is(true));
 
 		publish(SingleValueEventConstants.INSTANZ_LIST_CHANGE, new LinkedInstanzChangeEvent("fabricated-remove",
-				SingleValueType.SINGLE_STRING, ValueEventConstants.ChangeType.REMOVE, List.of(owner.getOwnKey())));
+				SingleValueType.SINGLE_STRING, ChangeType.REMOVE, List.of(owner.getOwnKey())));
 
-		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).containsKey("fabricated-remove"), is(true));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).containsKey("fabricated-remove"), is(false));
 	}
 
 	// ---------- the relation, which is held at both ends too ----------

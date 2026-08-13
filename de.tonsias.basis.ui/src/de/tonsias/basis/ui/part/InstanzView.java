@@ -2,6 +2,8 @@ package de.tonsias.basis.ui.part;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 
@@ -198,15 +200,60 @@ public class InstanzView {
 			GridLayoutFactory.fillDefaults().numColumns(3).applyTo(typeGroup);
 
 			BiMap<String, String> values = _shownInstanz.getValues(type);
-			for (Entry<String, String> keyToName : values.entrySet()) {
+			// a copy: a delete from the context menu below takes an entry out of this map
+			// while it is being walked
+			for (Entry<String, String> keyToName : Map.copyOf(values).entrySet()) {
 				Optional<? extends IValue> value = resolve(type, keyToName.getKey());
 				if (value.isPresent()) {
 					createValueNameText(typeGroup, value.get(), keyToName.getValue());
 					createValueControls(typeGroup, value.get());
-				} // TODO: is there always a resolvable value? See
-					// https://github.com/Tobias-Bonsack/Tonsias/issues/86
+				} else {
+					createOrphanRow(typeGroup, type, keyToName.getKey(), keyToName.getValue());
+				}
 			}
 		}
+	}
+
+	/**
+	 * An attribute the instanz names and no file backs. It used to be skipped
+	 * silently, which left the name taken - a new attribute could not have it, and
+	 * nothing said why. So it is shown: the name it holds, what is the matter, and
+	 * the same delete in the context menu every other attribute has, so the dangling
+	 * entry can be got rid of.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/86">#86</a>
+	 */
+	private void createOrphanRow(Group typeGroup, IValueType type, String valueKey, String parameterName) {
+		TextFactory.newText(SWT.None)//
+				.enabled(false)//
+				.layoutData(GridDataFactory.fillDefaults().grab(true, false).align(SWT.FILL, SWT.BEGINNING).create())//
+				.text(parameterName)//
+				.create(typeGroup);
+
+		Label missing = LabelFactory.newLabel(SWT.None)//
+				.text(_messages.instanzView_missingValue)//
+				.layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
+				.create(typeGroup);
+		missing.setForeground(missing.getDisplay().getSystemColor(SWT.COLOR_RED));
+
+		Label keyLabel = LabelFactory.newLabel(SWT.None)//
+				.text(_messages.constant_key + ": " + valueKey)//
+				.layoutData(GridDataFactory.fillDefaults().create())//
+				.create(typeGroup);
+
+		Menu labelCM = new Menu(keyLabel);
+		labelCM.setData(keyLabel);
+		keyLabel.setMenu(labelCM);
+
+		MenuItem deleteMI = new MenuItem(labelCM, SWT.PUSH);
+		deleteMI.setText(_messages.mi_delete);
+		deleteMI.addSelectionListener(SelectionListener.widgetSelectedAdapter(event -> {
+			// straight through rather than queued: there is no value to change, only the
+			// instanz's own entry, and nothing on screen would show a pending one
+			_instanzService.removeValueKey(List.of(_shownInstanz.getOwnKey()), type, valueKey,
+					IEventBrokerBridge.Type.POST);
+			updateView();
+		}));
 	}
 
 	private Optional<? extends IValue> resolve(IValueType type, String valueKey) {

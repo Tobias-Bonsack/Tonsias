@@ -87,10 +87,6 @@ public interface InstanzEventConstants {
 
 	}
 
-	public static enum ChangeType {
-		ADD, REMOVE;
-	}
-
 	static record ParentChange(String _key, String _newParentKey, String _oldParentKey) implements KeyEvent {
 
 		@Override

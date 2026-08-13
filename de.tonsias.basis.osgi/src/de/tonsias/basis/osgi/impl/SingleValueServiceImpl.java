@@ -25,7 +25,7 @@ import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.LinkedInstanzChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueDeleteEvent;
-import de.tonsias.basis.osgi.intf.non.service.ValueEventConstants.ChangeType;
+import de.tonsias.basis.osgi.intf.non.service.ChangeType;
 
 /**
  * What is left once {@link AValueServiceImpl} has taken the cache, the folder

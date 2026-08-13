@@ -28,7 +28,7 @@ import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants.ElementsC
 import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants.LinkedInstanzChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants.MultiValueDeleteEvent;
 import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants.MultiValueNewEvent;
-import de.tonsias.basis.osgi.intf.non.service.ValueEventConstants.ChangeType;
+import de.tonsias.basis.osgi.intf.non.service.ChangeType;
 
 /**
  * The mirror of {@link SingleValueServiceImpl} for the lists: which class a type

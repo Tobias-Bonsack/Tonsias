@@ -26,7 +26,7 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.IValueService;
-import de.tonsias.basis.osgi.intf.non.service.ValueEventConstants.ChangeType;
+import de.tonsias.basis.osgi.intf.non.service.ChangeType;
 
 /**
  * Everything a value service does that does not depend on what a value holds: the
@@ -263,6 +263,20 @@ public abstract class AValueServiceImpl<V extends IValue, T extends IValueType> 
 			fireInstanzListChange(type, valueKey, ChangeType.ADD, Collections.singleton(parentKey), eventType);
 		}
 		return isAdded;
+	}
+
+	@Override
+	public boolean removeFromParent(T type, String valueKey, String parentKey, Type eventType) {
+		Optional<? extends V> value = resolve(type, valueKey);
+		if (value.isEmpty()) {
+			return false;
+		}
+
+		boolean isRemoved = value.get().removeConnection(List.of(parentKey));
+		if (isRemoved) {
+			fireInstanzListChange(type, valueKey, ChangeType.REMOVE, Collections.singleton(parentKey), eventType);
+		}
+		return isRemoved;
 	}
 
 	/** a new value of that type under a freshly generated key, not yet cached */

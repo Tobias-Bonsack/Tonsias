@@ -29,7 +29,7 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ChangeType;
+import de.tonsias.basis.osgi.intf.non.service.ChangeType;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedReferenceChangeEvent;
@@ -293,10 +293,17 @@ public class InstanzServiceImpl implements IInstanzService {
 			IEventBrokerBridge.Type eventType) {
 		Collection<IInstanz> instanzes = resolveKeys(instanzKeys);
 		for (IInstanz instanz : instanzes) {
-			instanz.getValues(type).remove(valueKeyToRemove);
-			var data = new LinkedValueChangeEvent(instanz.getOwnKey(), type, ChangeType.REMOVE,
-					List.of(valueKeyToRemove));
-			fireEvent(eventType, InstanzEventConstants.VALUE_LIST_CHANGE, data);
+			// only when the key was really there: the value hears about this and comes
+			// back around to take the instanz off its own end, which comes back here - and
+			// an event for a removal that removed nothing would never stop. The same
+			// guard putValue has for the other direction, see
+			// https://github.com/Tobias-Bonsack/Tonsias/issues/85
+			boolean isRemoved = instanz.getValues(type).remove(valueKeyToRemove) != null;
+			if (isRemoved) {
+				var data = new LinkedValueChangeEvent(instanz.getOwnKey(), type, ChangeType.REMOVE,
+						List.of(valueKeyToRemove));
+				fireEvent(eventType, InstanzEventConstants.VALUE_LIST_CHANGE, data);
+			}
 		}
 		return true;
 	}
