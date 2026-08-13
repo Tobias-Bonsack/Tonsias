@@ -48,7 +48,6 @@ import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.util.OsgiUtil;
 import de.tonsias.basis.osgi.intf.non.service.PreferenceEventConstants;
-import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 import de.tonsias.basis.ui.dialog.AValueDialogBase;
 import de.tonsias.basis.ui.dialog.ValueDialogs;
@@ -266,40 +265,44 @@ public class ModelView {
 		}
 	}
 
-	@Inject
-	@Optional
-	private void newInstanzListener(@UIEventTopic(InstanzEventConstants.NEW) Event data) {
+	/**
+	 * The three listeners below are the tree following the model. Each of them is
+	 * the event of the change <em>on the instanz</em>, never the event of the thing
+	 * being created: a value is created with {@code Type.POST} and hung onto its
+	 * instanz afterwards, by {@code ChangePropagationListener} on the event admin's
+	 * thread. A view refreshing on the creation reads the instanz before the
+	 * attribute is on it, shows nothing, and is not asked again until the next
+	 * operation - which is the "one operation behind" of #89.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/89">#89</a>
+	 */
+	private void refreshTree() {
 		_treeViewer.refresh();
 	}
 
 	@Inject
 	@Optional
-	private void newSvListener(@UIEventTopic(SingleValueEventConstants.NEW) Event data) {
-		IBasicPreferenceService _prefService = OsgiUtil.getService(IBasicPreferenceService.class);
-		String shownVariable = _prefService.getValue(IBasicPreferenceService.Key.MODEL_VIEW_TEXT.getKey(), String.class)
-				.orElse("");
-		Object property = data.getProperty(IEventBroker.DATA);
-		if (property instanceof SingleValueEventConstants.SingleValueNewEvent newData
-				&& newData._name().equalsIgnoreCase(shownVariable)) {
-			_treeViewer.refresh();
-		}
+	private void newInstanzListener(@UIEventTopic(InstanzEventConstants.NEW) Event data) {
+		refreshTree();
+	}
+
+	/** an instanz came under a parent, or went - the tree draws it as a child */
+	@Inject
+	@Optional
+	private void childListChangeListener(@UIEventTopic(InstanzEventConstants.CHILD_LIST_CHANGE) Event data) {
+		refreshTree();
 	}
 
 	/**
-	 * The tree shows the attributes of an instanz when the preference is on, so a
-	 * new list has to appear there like a new single value does.
+	 * An attribute came or went on an instanz. That is a child of it in the tree
+	 * while the preference is on, and it is where the label of an instanz is read
+	 * out of either way - so one listener for all ten types, because the tree draws
+	 * them all alike.
 	 */
 	@Inject
 	@Optional
-	private void newMvListener(@UIEventTopic(MultiValueEventConstants.NEW) Event data) {
-		IBasicPreferenceService prefService = OsgiUtil.getService(IBasicPreferenceService.class);
-		String shownVariable = prefService.getValue(IBasicPreferenceService.Key.MODEL_VIEW_TEXT.getKey(), String.class)
-				.orElse("");
-		Object property = data.getProperty(IEventBroker.DATA);
-		if (property instanceof MultiValueEventConstants.MultiValueNewEvent newData
-				&& newData._name().equalsIgnoreCase(shownVariable)) {
-			_treeViewer.refresh();
-		}
+	private void valueListChangeListener(@UIEventTopic(InstanzEventConstants.VALUE_LIST_CHANGE) Event data) {
+		refreshTree();
 	}
 
 	/**
