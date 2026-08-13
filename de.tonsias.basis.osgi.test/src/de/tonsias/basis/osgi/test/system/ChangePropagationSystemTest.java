@@ -36,6 +36,9 @@ import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.LinkedInstanzChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueDeleteEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueNewEvent;
+// qualified, because ChangeType above is the instanz side's - see
+// https://github.com/Tobias-Bonsack/Tonsias/issues/84
+import de.tonsias.basis.osgi.intf.non.service.ValueEventConstants;
 import de.tonsias.basis.osgi.test.ProductRuntime;
 import de.tonsias.basis.osgi.util.ChangePropagationListener;
 
@@ -283,7 +286,7 @@ public class ChangePropagationSystemTest {
 		IInstanz owner = newInstanz();
 
 		publish(SingleValueEventConstants.INSTANZ_LIST_CHANGE, new LinkedInstanzChangeEvent("fabricated-add",
-				SingleValueType.SINGLE_STRING, LinkedInstanzChangeEvent.ChangeType.ADD, List.of(owner.getOwnKey())));
+				SingleValueType.SINGLE_STRING, ValueEventConstants.ChangeType.ADD, List.of(owner.getOwnKey())));
 
 		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).get("fabricated-add"), is("fabricated-add"));
 	}
@@ -292,10 +295,10 @@ public class ChangePropagationSystemTest {
 	void testInstanzListRemoved_isNotPropagatedYet() {
 		IInstanz owner = newInstanz();
 		publish(SingleValueEventConstants.INSTANZ_LIST_CHANGE, new LinkedInstanzChangeEvent("fabricated-remove",
-				SingleValueType.SINGLE_STRING, LinkedInstanzChangeEvent.ChangeType.ADD, List.of(owner.getOwnKey())));
+				SingleValueType.SINGLE_STRING, ValueEventConstants.ChangeType.ADD, List.of(owner.getOwnKey())));
 
 		publish(SingleValueEventConstants.INSTANZ_LIST_CHANGE, new LinkedInstanzChangeEvent("fabricated-remove",
-				SingleValueType.SINGLE_STRING, LinkedInstanzChangeEvent.ChangeType.REMOVE, List.of(owner.getOwnKey())));
+				SingleValueType.SINGLE_STRING, ValueEventConstants.ChangeType.REMOVE, List.of(owner.getOwnKey())));
 
 		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).containsKey("fabricated-remove"), is(true));
 	}
@@ -352,7 +355,7 @@ public class ChangePropagationSystemTest {
 		SingleInstanzValue relation = _svs.createNew(SingleInstanzValue.class, owner.getOwnKey(), "points at",
 				target.getOwnKey(), Type.SEND);
 
-		_svs.removeValue(relation, Type.SEND);
+		_svs.deleteValue(relation, Type.SEND);
 
 		assertThat(target.getReferencingValueKeys(), hasSize(0));
 	}

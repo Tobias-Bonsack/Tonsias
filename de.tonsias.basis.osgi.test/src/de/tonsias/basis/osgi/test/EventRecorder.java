@@ -15,6 +15,7 @@ import de.tonsias.basis.osgi.intf.IDeltaService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 
 /**
@@ -47,12 +48,15 @@ public final class EventRecorder implements EventHandler {
 	}
 
 	/**
-	 * @return a recorder subscribed to the same two wildcard topics
-	 *         {@link IDeltaService} listens on, headless - the tests do not run in
-	 *         a UI thread
+	 * @return a recorder subscribed to the same three wildcard topics
+	 *         {@link IDeltaService} listens on, headless - the tests do not run in a
+	 *         UI thread. Every one of them has to be here: a family this recorder
+	 *         does not hear is a half of the chain the tests would never see, and
+	 *         they would pass on it.
 	 */
 	public static EventRecorder subscribeToAllDeltas(IEventBrokerBridge bridge) {
-		return subscribeTo(bridge, InstanzEventConstants.ALL_DELTA_TOPIC, SingleValueEventConstants.ALL_DELTA_TOPIC);
+		return subscribeTo(bridge, InstanzEventConstants.ALL_DELTA_TOPIC, SingleValueEventConstants.ALL_DELTA_TOPIC,
+				MultiValueEventConstants.ALL_DELTA_TOPIC);
 	}
 
 	/**

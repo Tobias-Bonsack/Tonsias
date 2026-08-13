@@ -73,7 +73,7 @@ public class InstanzViewLogic {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				_svService.removeValue(singleValue, Type.SEND);
+				_svService.deleteValue(singleValue, Type.SEND);
 				return Status.OK_STATUS;
 			}
 
@@ -99,7 +99,7 @@ public class InstanzViewLogic {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				Optional<SingleValueType> svType = SingleValueType.getByClass(sv.getClass());
-				_inService.changeSingleValueName(instanzKey, svType.get(), sv.getOwnKey(), newName, Type.SEND);
+				_inService.changeValueName(instanzKey, svType.get(), sv.getOwnKey(), newName, Type.SEND);
 				return Status.OK_STATUS;
 			}
 

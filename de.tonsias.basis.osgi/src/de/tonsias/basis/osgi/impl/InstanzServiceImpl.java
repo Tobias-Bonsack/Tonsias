@@ -20,7 +20,7 @@ import org.osgi.service.component.annotations.Reference;
 import de.tonsias.basis.data.access.osgi.intf.DeleteService;
 import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
-import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.enums.IValueType;
 import de.tonsias.basis.model.impl.Instanz;
 import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
@@ -258,7 +258,7 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public void putSingleValue(String instanzKey, SingleValueType type, String key, String name,
+	public void putValue(String instanzKey, IValueType type, String key, String name,
 			IEventBrokerBridge.Type eventType) {
 		Optional<IInstanz> instanz = resolveKey(instanzKey);
 		if (instanz.isEmpty() || type == null || key.isBlank()) {
@@ -274,7 +274,7 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public void changeSingleValueName(String instanzKey, SingleValueType type, String key, String newName,
+	public void changeValueName(String instanzKey, IValueType type, String key, String newName,
 			IEventBrokerBridge.Type eventType) {
 		Optional<IInstanz> instanz = resolveKey(instanzKey);
 		if (instanz.isEmpty() || type == null || key.isBlank() || newName.isBlank()) {
@@ -289,7 +289,7 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public boolean removeValueKey(Collection<String> instanzKeys, SingleValueType type, String valueKeyToRemove,
+	public boolean removeValueKey(Collection<String> instanzKeys, IValueType type, String valueKeyToRemove,
 			IEventBrokerBridge.Type eventType) {
 		Collection<IInstanz> instanzes = resolveKeys(instanzKeys);
 		for (IInstanz instanz : instanzes) {

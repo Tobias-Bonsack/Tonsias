@@ -40,6 +40,7 @@ import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleVa
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueNewEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.ValueChangeEvent;
 import de.tonsias.basis.osgi.test.E4ServiceContext;
+import de.tonsias.basis.osgi.intf.non.service.ValueEventConstants;
 import de.tonsias.basis.osgi.test.EventRecorder;
 import de.tonsias.basis.osgi.util.ChangePropagationListener;
 import de.tonsias.basis.osgi.util.OsgiUtil;
@@ -335,7 +336,7 @@ public class EventChainSystemTest {
 		LinkedValueChangeEvent valueList = _recorder.onlyDataOf(InstanzEventConstants.VALUE_LIST_CHANGE,
 				LinkedValueChangeEvent.class);
 		assertThat(valueList._key(), is(owner.getOwnKey()));
-		assertThat(valueList._singleValuetype(), is(SingleValueType.SINGLE_STRING));
+		assertThat(valueList._valueType(), is(SingleValueType.SINGLE_STRING));
 		assertThat(valueList._changeType(), is(ChangeType.ADD));
 		assertThat(valueList._valueKeys(), contains(value.getOwnKey()));
 
@@ -375,7 +376,7 @@ public class EventChainSystemTest {
 		LinkedInstanzChangeEvent instanzList = _recorder.onlyDataOf(SingleValueEventConstants.INSTANZ_LIST_CHANGE,
 				LinkedInstanzChangeEvent.class);
 		assertThat(instanzList._key(), is(value.getOwnKey()));
-		assertThat(instanzList._changeType(), is(LinkedInstanzChangeEvent.ChangeType.ADD));
+		assertThat(instanzList._changeType(), is(ValueEventConstants.ChangeType.ADD));
 		assertThat(instanzList._instanzKeys(), contains(secondOwner.getOwnKey()));
 
 		assertThat(value.getConnectedInstanzKeys(),
@@ -442,7 +443,7 @@ public class EventChainSystemTest {
 				Type.SEND);
 		_recorder.clear();
 
-		_inse.changeSingleValueName(owner.getOwnKey(), SingleValueType.SINGLE_STRING, value.getOwnKey(), "newName",
+		_inse.changeValueName(owner.getOwnKey(), SingleValueType.SINGLE_STRING, value.getOwnKey(), "newName",
 				Type.SEND);
 
 		assertThat(_recorder.topics(), contains(InstanzEventConstants.NAME_CHANGE));
@@ -470,7 +471,7 @@ public class EventChainSystemTest {
 		_svs.addToParent(SingleValueType.SINGLE_STRING, value.getOwnKey(), secondOwner.getOwnKey(), Type.SEND);
 		_recorder.clear();
 
-		_svs.markSingleValueAsDelete(value.getOwnKey(), Type.SEND);
+		_svs.markValueAsDelete(value.getOwnKey(), Type.SEND);
 
 		assertThat(_recorder.topics(), containsInAnyOrder(SingleValueEventConstants.DELETE,
 				InstanzEventConstants.VALUE_LIST_CHANGE, InstanzEventConstants.VALUE_LIST_CHANGE));
@@ -502,7 +503,7 @@ public class EventChainSystemTest {
 				Type.SEND);
 		_recorder.clear();
 
-		assertThat(_svs.removeValue(value, Type.SEND), is(true));
+		assertThat(_svs.deleteValue(value, Type.SEND), is(true));
 
 		assertThat(_recorder.topics(),
 				containsInAnyOrder(SingleValueEventConstants.DELETE, InstanzEventConstants.VALUE_LIST_CHANGE));
@@ -524,7 +525,7 @@ public class EventChainSystemTest {
 		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
 				is(SingleValueType.SINGLE_INTEGER));
 		assertThat(_recorder.onlyDataOf(InstanzEventConstants.VALUE_LIST_CHANGE, LinkedValueChangeEvent.class)
-				._singleValuetype(), is(SingleValueType.SINGLE_INTEGER));
+				._valueType(), is(SingleValueType.SINGLE_INTEGER));
 
 		assertThat(owner.getValues(SingleValueType.SINGLE_INTEGER).get(value.getOwnKey()), is("number"));
 		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).keySet(), is(empty()));
@@ -542,7 +543,7 @@ public class EventChainSystemTest {
 		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
 				is(SingleValueType.SINGLE_BOOLEAN));
 		assertThat(_recorder.onlyDataOf(InstanzEventConstants.VALUE_LIST_CHANGE, LinkedValueChangeEvent.class)
-				._singleValuetype(), is(SingleValueType.SINGLE_BOOLEAN));
+				._valueType(), is(SingleValueType.SINGLE_BOOLEAN));
 
 		assertThat(owner.getValues(SingleValueType.SINGLE_BOOLEAN).get(value.getOwnKey()), is("flag"));
 		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).keySet(), is(empty()));
@@ -565,7 +566,7 @@ public class EventChainSystemTest {
 		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
 				is(SingleValueType.SINGLE_FLOAT));
 		assertThat(_recorder.onlyDataOf(InstanzEventConstants.VALUE_LIST_CHANGE, LinkedValueChangeEvent.class)
-				._singleValuetype(), is(SingleValueType.SINGLE_FLOAT));
+				._valueType(), is(SingleValueType.SINGLE_FLOAT));
 
 		assertThat(owner.getValues(SingleValueType.SINGLE_FLOAT).get(value.getOwnKey()), is("ratio"));
 		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).keySet(), is(empty()));

@@ -17,15 +17,16 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
 
 import de.tonsias.basis.data.access.osgi.intf.LoadService;
-import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.enums.IValueType;
 import de.tonsias.basis.model.impl.Instanz;
 import de.tonsias.basis.model.interfaces.IInstanz;
-import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.model.interfaces.IValue;
 import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
 import de.tonsias.basis.osgi.intf.IDeltaService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.IKeyService;
+import de.tonsias.basis.osgi.intf.IMultiValueService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.util.OsgiUtil;
 
@@ -76,6 +77,10 @@ public final class ProductRuntime {
 
 	public static ISingleValueService singleValueService() {
 		return service(ISingleValueService.class);
+	}
+
+	public static IMultiValueService multiValueService() {
+		return service(IMultiValueService.class);
 	}
 
 	public static IDeltaService deltaService() {
@@ -166,9 +171,14 @@ public final class ProductRuntime {
 		return loaded;
 	}
 
-	public static <T extends ISingleValue<?>> T reloadValue(SingleValueType type, String key, Class<T> clazz) {
+	/**
+	 * Takes an {@link IValueType}, so the same call reads a single value and a list
+	 * back - every existing caller keeps compiling, a {@code SingleValueType} being
+	 * one.
+	 */
+	public static <T extends IValue> T reloadValue(IValueType type, String key, Class<T> clazz) {
 		T loaded = loadService().loadFromGson(type.getPath() + key, clazz);
-		assertThat("no file for single value " + key, loaded, is(not(nullValue())));
+		assertThat("no file for value " + key, loaded, is(not(nullValue())));
 		return loaded;
 	}
 
@@ -176,7 +186,7 @@ public final class ProductRuntime {
 		return Files.exists(instanzFile(key));
 	}
 
-	public static boolean valueFileExists(SingleValueType type, String key) {
+	public static boolean valueFileExists(IValueType type, String key) {
 		return Files.exists(valueFile(type, key));
 	}
 
@@ -184,7 +194,7 @@ public final class ProductRuntime {
 		return workspace().resolve(INSTANZ_PATH + key + ".json");
 	}
 
-	public static Path valueFile(SingleValueType type, String key) {
+	public static Path valueFile(IValueType type, String key) {
 		return workspace().resolve(type.getPath() + key + ".json");
 	}
 

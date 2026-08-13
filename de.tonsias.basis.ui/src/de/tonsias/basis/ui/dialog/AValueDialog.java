@@ -255,7 +255,7 @@ public abstract class AValueDialog<T extends ISingleValue<?>, C extends Control>
 					));
 		} else {
 			String ownKey = _value.get().getOwnKey();
-			_iService.changeSingleValueName(_instanz.getOwnKey(), _type, ownKey, _nameText.getText(),
+			_iService.changeValueName(_instanz.getOwnKey(), _type, ownKey, _nameText.getText(),
 					IEventBrokerBridge.Type.POST);
 			_sVService.changeValue(ownKey, getEnteredValue(), IEventBrokerBridge.Type.POST);
 		}

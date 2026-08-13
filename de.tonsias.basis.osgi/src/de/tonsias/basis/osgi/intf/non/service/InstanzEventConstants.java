@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.eclipse.e4.core.services.events.IEventBroker;
 
-import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.enums.IValueType;
 
 public interface InstanzEventConstants {
 	// topic identifier for all topics
@@ -46,8 +46,8 @@ public interface InstanzEventConstants {
 	final String VALUE_LIST_CHANGE = INSTANZ + "/delta/valueChange";
 
 	/**
-	 * The instanz is the <em>target</em> of a relation, not its owner: a
-	 * {@code SingleInstanzValue} started or stopped pointing at it.
+	 * The instanz is the <em>target</em> of a relation, not its owner: a relation
+	 * started or stopped pointing at it.
 	 * <p>
 	 * {@link IEventBroker#DATA} maps to {@link LinkedReferenceChangeEvent}
 	 * </p>
@@ -77,8 +77,8 @@ public interface InstanzEventConstants {
 
 	}
 
-	static record ValueRenameEvent(String _key, SingleValueType _type, String _attrKey, String _oldName,
-			String _newName) implements KeyEvent {
+	static record ValueRenameEvent(String _key, IValueType _type, String _attrKey, String _oldName, String _newName)
+			implements KeyEvent {
 
 		@Override
 		public String getKey() {
@@ -110,7 +110,7 @@ public interface InstanzEventConstants {
 
 	}
 
-	static record LinkedValueChangeEvent(String _key, SingleValueType _singleValuetype, ChangeType _changeType,
+	static record LinkedValueChangeEvent(String _key, IValueType _valueType, ChangeType _changeType,
 			Collection<String> _valueKeys) implements KeyEvent {
 
 		@Override
@@ -122,12 +122,18 @@ public interface InstanzEventConstants {
 
 	/**
 	 * The counterpart of {@link LinkedValueChangeEvent} for the relation: there the
-	 * instanz owns the values, here it is what they point at. No
-	 * {@link SingleValueType} field, because there is only one type a relation can
-	 * be.
+	 * instanz owns the values, here it is what they point at.
+	 * <p>
+	 * A relation is a {@code SINGLE_INSTANZ} or a {@code MULTI_INSTANZ} value, and
+	 * the type is still not carried: what the target stores is a set of value keys
+	 * and nothing else, so the only consumer - {@code DeltaServiceImpl}, which folds
+	 * {@link #_key()} - has no use for it. Whoever does have to know which of the
+	 * two a key is asks the services, see
+	 * {@code ChangePropagationListener.emptyReferencesPointingAt}.
+	 * </p>
 	 *
-	 * @param _key        of the instanz being pointed at
-	 * @param _valueKeys  of the {@code SingleInstanzValue}s doing the pointing
+	 * @param _key       of the instanz being pointed at
+	 * @param _valueKeys of the relations doing the pointing
 	 */
 	static record LinkedReferenceChangeEvent(String _key, ChangeType _changeType, Collection<String> _valueKeys)
 			implements KeyEvent {

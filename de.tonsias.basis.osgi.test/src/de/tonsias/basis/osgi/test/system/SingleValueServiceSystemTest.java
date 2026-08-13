@@ -38,6 +38,7 @@ import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.LinkedIn
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueDeleteEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueNewEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.ValueChangeEvent;
+import de.tonsias.basis.osgi.intf.non.service.ValueEventConstants;
 import de.tonsias.basis.osgi.test.EventRecorder;
 import de.tonsias.basis.osgi.test.ProductRuntime;
 
@@ -440,7 +441,7 @@ public class SingleValueServiceSystemTest {
 		assertThat(_recorder.events(), hasSize(0));
 	}
 
-	/** {@code markSingleValueAsDelete} read the cache the same way - @see #78 */
+	/** {@code markValueAsDelete} read the cache the same way - @see #78 */
 	@Test
 	void testMarkSingleValueAsDelete_reachesAValueThatIsOnDiskOnly() {
 		SingleStringValue value = newStringValue("parameter", "content");
@@ -449,7 +450,7 @@ public class SingleValueServiceSystemTest {
 		_svs.removeFromCache(key);
 		_recorder.clear();
 
-		_svs.markSingleValueAsDelete(key, Type.SEND);
+		_svs.markValueAsDelete(key, Type.SEND);
 
 		SingleValueDeleteEvent data = _recorder.onlyDataOf(SingleValueEventConstants.DELETE,
 				SingleValueDeleteEvent.class);
@@ -462,7 +463,7 @@ public class SingleValueServiceSystemTest {
 	void testMarkSingleValueAsDelete_aKeyWithoutAValueIsSilent() {
 		_recorder.clear();
 
-		_svs.markSingleValueAsDelete("no-such-key", Type.SEND);
+		_svs.markValueAsDelete("no-such-key", Type.SEND);
 
 		assertThat(_recorder.events(), hasSize(0));
 	}
@@ -497,7 +498,7 @@ public class SingleValueServiceSystemTest {
 		LinkedInstanzChangeEvent data = _recorder.onlyDataOf(SingleValueEventConstants.INSTANZ_LIST_CHANGE,
 				LinkedInstanzChangeEvent.class);
 		assertThat(data._key(), is(value.getOwnKey()));
-		assertThat(data._changeType(), is(LinkedInstanzChangeEvent.ChangeType.ADD));
+		assertThat(data._changeType(), is(ValueEventConstants.ChangeType.ADD));
 		assertThat(data._instanzKeys(), contains(secondOwner.getOwnKey()));
 
 		assertThat(value.getConnectedInstanzKeys(),
@@ -538,7 +539,7 @@ public class SingleValueServiceSystemTest {
 		_svs.addToParent(SingleValueType.SINGLE_STRING, value.getOwnKey(), secondOwner.getOwnKey(), Type.SEND);
 		_recorder.clear();
 
-		_svs.markSingleValueAsDelete(value.getOwnKey(), Type.SEND);
+		_svs.markValueAsDelete(value.getOwnKey(), Type.SEND);
 
 		SingleValueDeleteEvent data = _recorder.onlyDataOf(SingleValueEventConstants.DELETE,
 				SingleValueDeleteEvent.class);
@@ -557,7 +558,7 @@ public class SingleValueServiceSystemTest {
 		SingleStringValue value = newStringValue("parameter", "content");
 		_recorder.clear();
 
-		assertThat(_svs.removeValue(value, Type.SEND), is(true));
+		assertThat(_svs.deleteValue(value, Type.SEND), is(true));
 
 		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.DELETE, SingleValueDeleteEvent.class)._key(),
 				is(value.getOwnKey()));

@@ -179,7 +179,7 @@ public class DeltaPersistenceSystemTest {
 				Type.SEND);
 		_delta.saveDeltas();
 
-		_inse.changeSingleValueName(owner.getOwnKey(), SingleValueType.SINGLE_STRING, value.getOwnKey(), "newName",
+		_inse.changeValueName(owner.getOwnKey(), SingleValueType.SINGLE_STRING, value.getOwnKey(), "newName",
 				Type.SEND);
 		_delta.saveDeltas();
 
@@ -202,7 +202,7 @@ public class DeltaPersistenceSystemTest {
 		_delta.saveDeltas();
 		assertThat(Files.exists(stringValueFile(value.getOwnKey())), is(true));
 
-		_svs.markSingleValueAsDelete(value.getOwnKey(), Type.SEND);
+		_svs.markValueAsDelete(value.getOwnKey(), Type.SEND);
 		_delta.saveDeltas();
 
 		assertThat(Files.exists(stringValueFile(value.getOwnKey())), is(false));

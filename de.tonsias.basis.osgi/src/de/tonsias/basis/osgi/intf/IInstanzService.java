@@ -6,10 +6,10 @@ import java.util.Set;
 import java.util.concurrent.CompletionException;
 
 import de.tonsias.basis.data.access.osgi.intf.DeleteService;
-import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.enums.IValueType;
 import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
-import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.model.interfaces.IValue;
 import de.tonsias.basis.osgi.util.ChangePropagationListener;
 import jakarta.annotation.Nullable;
 
@@ -112,36 +112,36 @@ public interface IInstanzService {
 
 	/**
 	 * Will change a attribute name
-	 * 
+	 *
 	 * @param instanzKey of the instance to change a attribute
 	 * @param type       of the attribute to change
 	 * @param key        of the attribute to change
 	 * @param newName    of the attribute
 	 */
-	void changeSingleValueName(String instanzKey, SingleValueType type, String key, String newName,
+	void changeValueName(String instanzKey, IValueType type, String key, String newName,
 			IEventBrokerBridge.Type eventType);
 
 	/**
 	 * Add attribute to instanz
-	 * 
+	 *
 	 * @param instanzKey of the instance to change a attribute
-	 * @param type       of the attribute to change {@link SingleValueType}
+	 * @param type       of the attribute to change, from either value type enum
 	 * @param key        of the attribute to change
 	 * @param name       of the attribute
 	 */
-	void putSingleValue(String instanzKey, SingleValueType type, String key, @Nullable  String name,
+	void putValue(String instanzKey, IValueType type, String key, @Nullable String name,
 			IEventBrokerBridge.Type eventType);
 
 	/**
-	 * Removes the given key from the given {@link IInstanz} keys in the
-	 * {@link SingleValueType}
-	 * 
+	 * Removes the given key from the given {@link IInstanz} keys in the map of that
+	 * {@link IValueType}
+	 *
 	 * @param instanzKeys      where to remove the key
 	 * @param type             of the key
-	 * @param valueKeyToRemove {@link ISingleValue} key to remove
+	 * @param valueKeyToRemove {@link IValue} key to remove
 	 * @return true if no given {@link IInstanz} has the key anymore
 	 */
-	boolean removeValueKey(Collection<String> instanzKeys, SingleValueType type, String valueKeyToRemove,
+	boolean removeValueKey(Collection<String> instanzKeys, IValueType type, String valueKeyToRemove,
 			IEventBrokerBridge.Type eventType);
 
 	/**

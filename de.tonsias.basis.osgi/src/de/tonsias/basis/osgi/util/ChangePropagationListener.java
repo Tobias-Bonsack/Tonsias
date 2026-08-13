@@ -1,6 +1,8 @@
 package de.tonsias.basis.osgi.util;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.eclipse.e4.core.di.annotations.Creatable;
 import org.eclipse.e4.core.di.annotations.Optional;
@@ -8,21 +10,40 @@ import org.eclipse.e4.core.di.extensions.EventTopic;
 import org.eclipse.e4.core.services.events.IEventBroker;
 import org.osgi.service.event.Event;
 
+import de.tonsias.basis.model.enums.IValueType;
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.enums.ValueContentType;
 import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.IInstanzService;
+import de.tonsias.basis.osgi.intf.IMultiValueService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.*;
+import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants.ElementsChangeEvent;
+import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants.MultiValueDeleteEvent;
+import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants.MultiValueNewEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.*;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+/**
+ * Keeps both ends of every relation in sync by re-entering the services with
+ * {@code Type.SEND}.
+ * <p>
+ * That only terminates because every service method here answers {@code false}
+ * and fires <em>nothing</em> when it is asked for a state that already holds. The
+ * one edge that would close a cycle is
+ * {@link InstanzEventConstants#REFERENCE_LIST_CHANGE}: it is the last hop of the
+ * relation chains below, and nothing but {@code DeltaServiceImpl} listens to it.
+ * <b>No handler in this class may subscribe to it.</b>
+ * </p>
+ */
 @Creatable
 @Singleton
 public class ChangePropagationListener {
@@ -31,10 +52,13 @@ public class ChangePropagationListener {
 
 	ISingleValueService _singleValue;
 
+	IMultiValueService _multiValue;
+
 	@PostConstruct
 	public void loadServices() {
 		OsgiUtil.lazyLoading(IInstanzService.class, this::initInstanz);
 		OsgiUtil.lazyLoading(ISingleValueService.class, this::initSingleValue);
+		OsgiUtil.lazyLoading(IMultiValueService.class, this::initMultiValue);
 	}
 
 	private void initInstanz(IInstanzService service) {
@@ -43,6 +67,10 @@ public class ChangePropagationListener {
 
 	private void initSingleValue(ISingleValueService service) {
 		_singleValue = service;
+	}
+
+	private void initMultiValue(IMultiValueService service) {
+		_multiValue = service;
 	}
 
 	@Inject
@@ -96,17 +124,30 @@ public class ChangePropagationListener {
 	}
 
 	/**
-	 * Puts every relation pointing at this instanz back to pointing nowhere. The
-	 * value itself is left standing: it is an attribute of somebody else, with a
-	 * name that instanz gave it, and deleting the target is no reason to take an
-	 * attribute off an instanz nobody asked to change.
+	 * Takes this instanz out of every relation pointing at it. The value itself is
+	 * left standing: it is an attribute of somebody else, with a name that instanz
+	 * gave it, and deleting the target is no reason to take an attribute off an
+	 * instanz nobody asked to change.
 	 * <p>
-	 * Copied first, because emptying a value comes back around through
-	 * {@link #changeSingleValueListener} and takes its key out of exactly this set.
+	 * A single relation ends up pointing nowhere, which is the state it has for
+	 * exactly this. A list keeps pointing at everything else it points at - only the
+	 * one element goes. Emptying it would take relations off targets nobody touched,
+	 * for the same reason the value is not deleted.
+	 * </p>
+	 * <p>
+	 * The referencing set holds bare keys and does not say which family one belongs
+	 * to, so the multi service is asked first - {@code resolveAnyKey} reaches a value
+	 * stored in an earlier session as well, and answers empty for a key it holds no
+	 * file for. Copied first, because both calls come back around and take the key
+	 * out of exactly this set.
 	 * </p>
 	 */
 	private void emptyReferencesPointingAt(IInstanz target) {
 		for (String valueKey : List.copyOf(target.getReferencingValueKeys())) {
+			if (_multiValue.resolveAnyKey(valueKey).isPresent()) {
+				_multiValue.removeElement(valueKey, target.getOwnKey(), Type.SEND);
+				continue;
+			}
 			// changeValue resolves off the disk when it has to, so a relation stored in an
 			// earlier session is reached as well - a key the set names and no file backs
 			// answers false and changes nothing
@@ -115,24 +156,33 @@ public class ChangePropagationListener {
 	}
 
 	/**
-	 * ------------- Start cross Instanz to SingleValue Events -------------
+	 * ------------- Start cross Instanz to Value Events -------------
 	 */
 
 	@Inject
 	@Optional
-	public void putSingleValueListener(@EventTopic(InstanzEventConstants.VALUE_LIST_CHANGE) Event event) {
+	public void putValueListener(@EventTopic(InstanzEventConstants.VALUE_LIST_CHANGE) Event event) {
 		LinkedValueChangeEvent data = (LinkedValueChangeEvent) event.getProperty(IEventBroker.DATA);
 		switch (data._changeType()) {
 		case ADD:
-			data._valueKeys()
-					.forEach(svKey -> _singleValue.addToParent(data._singleValuetype(), svKey, data._key(), Type.SEND));
+			data._valueKeys().forEach(valueKey -> addToParent(data._valueType(), valueKey, data._key()));
 			break;
 		case REMOVE:
-			// TODO: add logic
+			// TODO: add logic, see
+			// https://github.com/Tobias-Bonsack/Tonsias/issues/85
 			break;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + data._changeType());
 		}
+	}
+
+	private void addToParent(IValueType type, String valueKey, String instanzKey) {
+		if (type.isMulti()) {
+			_multiValue.addToParent((de.tonsias.basis.model.enums.MultiValueType) type, valueKey, instanzKey,
+					Type.SEND);
+			return;
+		}
+		_singleValue.addToParent((SingleValueType) type, valueKey, instanzKey, Type.SEND);
 	}
 
 	/**
@@ -144,7 +194,7 @@ public class ChangePropagationListener {
 	public void newSingleValueListener(@EventTopic(SingleValueEventConstants.NEW) Event event) {
 		SingleValueNewEvent data = (SingleValueNewEvent) event.getProperty(IEventBroker.DATA);
 		for (String ownerKey : data._ownerKeys()) {
-			_instanz.putSingleValue(ownerKey, data._type(), data._key(), data._name(), Type.SEND);
+			_instanz.putValue(ownerKey, data._type(), data._key(), data._name(), Type.SEND);
 		}
 
 		// a relation is created pointing somewhere already, so the target learns about
@@ -185,11 +235,11 @@ public class ChangePropagationListener {
 
 	/**
 	 * Where the relation named by this event points. The single value events carry
-	 * the key and the type of a value, never its content, so the value itself has
-	 * to be read - and only for the one type that has a target at all.
+	 * the key and the type of a value, never its content, so the value itself has to
+	 * be read - and only for the one type that has a target at all.
 	 *
-	 * @return the target key, empty for every other type and for a relation
-	 *         pointing nowhere
+	 * @return the target key, empty for every other type and for a relation pointing
+	 *         nowhere
 	 */
 	private java.util.Optional<String> targetOf(SingleValueEvent data) {
 		if (data.getType() != SingleValueType.SINGLE_INSTANZ) {
@@ -208,11 +258,12 @@ public class ChangePropagationListener {
 		LinkedInstanzChangeEvent data = (LinkedInstanzChangeEvent) event.getProperty(IEventBroker.DATA);
 		switch (data._changeType()) {
 		case ADD:
-			data._instanzKeys().forEach(instanzKey -> _instanz.putSingleValue(instanzKey, data._singleValuetype(),
-					data._key(), null, Type.SEND));
+			data._instanzKeys().forEach(
+					instanzKey -> _instanz.putValue(instanzKey, data._singleValuetype(), data._key(), null, Type.SEND));
 			break;
 		case REMOVE:
-			// TODO: add logic
+			// TODO: add logic, see
+			// https://github.com/Tobias-Bonsack/Tonsias/issues/85
 			break;
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + data._changeType());
@@ -220,7 +271,84 @@ public class ChangePropagationListener {
 	}
 
 	/**
-	 * ------------- Start SingleValue Events -------------
+	 * ------------- Start cross MultiValue to Instanz Events -------------
 	 */
 
+	@Inject
+	@Optional
+	public void newMultiValueListener(@EventTopic(MultiValueEventConstants.NEW) Event event) {
+		MultiValueNewEvent data = (MultiValueNewEvent) event.getProperty(IEventBroker.DATA);
+		for (String ownerKey : data._ownerKeys()) {
+			_instanz.putValue(ownerKey, data._type(), data._key(), data._name(), Type.SEND);
+		}
+
+		// a list of relations is created pointing somewhere already, so every target
+		// learns about it here rather than from a change that never comes
+		targetsOf(data._type(), data._elements())
+				.forEach(target -> _instanz.putReferencingValue(target, data._key(), Type.SEND));
+	}
+
+	@Inject
+	@Optional
+	public void removeMultiValueListener(@EventTopic(MultiValueEventConstants.DELETE) Event event) {
+		MultiValueDeleteEvent data = (MultiValueDeleteEvent) event.getProperty(IEventBroker.DATA);
+		_instanz.removeValueKey(data._ownerKeys(), data._type(), data._key(), Type.SEND);
+
+		// the elements travel with the event, because by now the value may be out of
+		// the cache and its file already scheduled for deletion
+		targetsOf(data._type(), data._elements())
+				.forEach(target -> _instanz.removeReferencingValue(target, data._key(), Type.SEND));
+	}
+
+	/**
+	 * The list moved: some targets stopped being pointed at and some started. Both
+	 * services answer {@code false} and fire nothing when the key is not in the set,
+	 * or already is, so a list that was only reordered ends the chain here - it
+	 * arrives with both collections empty.
+	 */
+	@Inject
+	@Optional
+	public void changeMultiValueListener(@EventTopic(MultiValueEventConstants.VALUES_CHANGE) Event event) {
+		ElementsChangeEvent data = (ElementsChangeEvent) event.getProperty(IEventBroker.DATA);
+
+		targetsOf(data._type(), data._removedElements())
+				.forEach(target -> _instanz.removeReferencingValue(target, data._key(), Type.SEND));
+		targetsOf(data._type(), data._addedElements())
+				.forEach(target -> _instanz.putReferencingValue(target, data._key(), Type.SEND));
+	}
+
+	@Inject
+	@Optional
+	public void addToParentMultiListener(@EventTopic(MultiValueEventConstants.INSTANZ_LIST_CHANGE) Event event) {
+		MultiValueEventConstants.LinkedInstanzChangeEvent data = (MultiValueEventConstants.LinkedInstanzChangeEvent) event
+				.getProperty(IEventBroker.DATA);
+		switch (data._changeType()) {
+		case ADD:
+			data._instanzKeys().forEach(
+					instanzKey -> _instanz.putValue(instanzKey, data._multiValuetype(), data._key(), null, Type.SEND));
+			break;
+		case REMOVE:
+			// TODO: add logic, see
+			// https://github.com/Tobias-Bonsack/Tonsias/issues/85
+			break;
+		default:
+			throw new IllegalArgumentException("Unexpected value: " + data._changeType());
+		}
+	}
+
+	/**
+	 * The instanzes a list of relations points at. Unlike the single side this needs
+	 * no lookup - the multi events carry their elements, which is what they are for.
+	 *
+	 * @return the target keys, empty for every content type that has no target
+	 */
+	private Stream<String> targetsOf(IValueType type, Collection<?> elements) {
+		if (type.getContentType() != ValueContentType.INSTANZ) {
+			return Stream.empty();
+		}
+		return elements.stream()//
+				.filter(String.class::isInstance)//
+				.map(String.class::cast)//
+				.filter(key -> !key.isBlank());
+	}
 }

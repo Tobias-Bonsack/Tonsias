@@ -26,6 +26,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-19
 Service-Component: OSGI-INF/de.tonsias.basis.osgi.impl.BasicPreferenceServiceImpl.xml,
  OSGI-INF/de.tonsias.basis.osgi.impl.InstanzServiceImpl.xml,
  OSGI-INF/de.tonsias.basis.osgi.impl.KeyServiceImpl.xml,
+ OSGI-INF/de.tonsias.basis.osgi.impl.MultiValueServiceImpl.xml,
  OSGI-INF/de.tonsias.basis.osgi.impl.SingleValueServiceImpl.xml,
  OSGI-INF/de.tonsias.basis.osgi.util.DeltaServiceContextFunction.xml,
  OSGI-INF/de.tonsias.basis.osgi.util.EventBrokerContextFunction.xml

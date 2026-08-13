@@ -6,6 +6,8 @@ import java.util.List;
 import org.eclipse.e4.core.services.events.IEventBroker;
 
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.osgi.intf.non.service.ValueEventConstants.ChangeType;
+import de.tonsias.basis.osgi.intf.non.service.ValueEventConstants.ValueEvent;
 
 public interface SingleValueEventConstants {
 
@@ -37,9 +39,12 @@ public interface SingleValueEventConstants {
 	final List<String> KNOWN_DELTA = List.of(NEW, VALUE_CHANGE, INSTANZ_LIST_CHANGE, DELETE);
 
 	// data and the keys
-	interface SingleValueEvent {
+	interface SingleValueEvent extends ValueEvent {
+
+		@Override
 		String getKey();
 
+		@Override
 		SingleValueType getType();
 	}
 
@@ -98,10 +103,6 @@ public interface SingleValueEventConstants {
 		@Override
 		public SingleValueType getType() {
 			return _singleValuetype;
-		}
-
-		public static enum ChangeType {
-			ADD, REMOVE;
 		}
 	}
 }
