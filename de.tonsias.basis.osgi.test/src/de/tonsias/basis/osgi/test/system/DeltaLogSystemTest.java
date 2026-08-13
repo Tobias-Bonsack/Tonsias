@@ -210,12 +210,12 @@ public class DeltaLogSystemTest {
 		IInstanz owner = _inse.createInstanz(ROOT, Type.SEND);
 		SingleStringValue shortLived = _svs.createNew(SingleStringValue.class, owner.getOwnKey(), "parameter",
 				"content", Type.SEND);
-		_svs.markSingleValueAsDelete(shortLived.getOwnKey(), Type.SEND);
+		_svs.markValueAsDelete(shortLived.getOwnKey(), Type.SEND);
 
 		_delta.saveDeltas();
 
 		assertThat(ProductRuntime.valueFileExists(SingleValueType.SINGLE_STRING, shortLived.getOwnKey()), is(false));
-		assertThat(ProductRuntime.reloadInstanz(owner.getOwnKey()).getSingleValues(SingleValueType.SINGLE_STRING)
+		assertThat(ProductRuntime.reloadInstanz(owner.getOwnKey()).getValues(SingleValueType.SINGLE_STRING)
 				.keySet(), is(empty()));
 	}
 }

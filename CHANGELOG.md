@@ -9,6 +9,62 @@ All notable changes to Tonsias are documented here. The format follows
 
 Development towards 0.3.0. The reactor is at `0.3.0-SNAPSHOT`.
 
+### Added
+
+- **`MultiValueType`** — the same five contents an attribute can hold, now also as a
+  *list*: `MULTI_STRING`, `MULTI_INTEGER`, `MULTI_BOOLEAN`, `MULTI_FLOAT` and
+  `MULTI_INSTANZ`, stored under `multi_value/<type>/`. A list is ordered and holds no
+  duplicates, and an empty one is a value in its own right — it is what a list says
+  instead of a default. Lists are created from the model view and from the
+  create-instanz dialog, and edited from the instanz view in a dialog that adds,
+  removes and reorders their elements.
+- **A relation can now point at several instanzen at once.** `MULTI_INSTANZ` holds a
+  list of target keys, every target records the relation back the way it does for a
+  single one, and deleting a target takes *its* element out and leaves the rest of the
+  list pointing where it pointed.
+
+### Changed
+
+- The two kinds of attribute are one thing with two shapes rather than two parallel
+  worlds. `IValueType` is what both type enums answer, `AValue` carries what every
+  value has, and `ValueContentRules` holds every accepts/convert rule once — so the
+  single value and the list of the same content cannot answer the same question
+  differently. `IInstanz.getSingleValues(SingleValueType)` is now
+  `getValues(IValueType)`, and `IInstanzService`'s attribute methods take an
+  `IValueType`.
+- The type combo of the create-instanz dialog indexes an explicit list instead of an
+  enum's ordinals, so both families can appear in it — and new constants no longer have
+  to be appended.
+- `ChangeType` is one enum next to the constants interfaces instead of one nested in
+  each of them. ([#84](https://github.com/Tobias-Bonsack/Tonsias/issues/84))
+
+### Fixed
+
+- **Taking an attribute off an instanz now reaches the attribute.** Both ends of that
+  link were kept in step in one direction only — the other ran into a `// TODO` and
+  left the value naming an instanz that no longer held it, which the next save wrote
+  out. `IValueService.removeFromParent` is the missing half, and `removeValueKey` now
+  answers without an event when there was nothing to remove, which is what keeps the
+  two handlers calling each other from looping.
+  ([#85](https://github.com/Tobias-Bonsack/Tonsias/issues/85))
+- **An attribute whose file is missing is shown instead of skipped.** The instanz view
+  used to walk past it silently, which left its name taken — a new attribute could not
+  have that name and nothing said why. It now appears with its name, a note that no
+  file backs it, and the same delete every other attribute has.
+  ([#86](https://github.com/Tobias-Bonsack/Tonsias/issues/86))
+- `AValue._connectedInstanzes` is created lazily. Gson allocates values without running
+  a constructor, so the field initializer never ran and a file that did not name the
+  field made `getConnectedInstanzKeys()` throw.
+  ([#83](https://github.com/Tobias-Bonsack/Tonsias/issues/83))
+
+### On-disk compatibility
+
+A model written by 0.2.0 loads unchanged: instanz files gain five optional maps that
+come back empty when the file does not name them, and value files are byte-identical in
+shape. The other direction is not covered — a model saved by 0.3.0 and then opened by
+0.2.0 loses its list attributes on the next save, because Gson drops the fields the old
+classes do not declare.
+
 ## [0.2.0] - 2026-08-09
 
 Two more attribute types — a decimal number and, for the first time, a **relation** that

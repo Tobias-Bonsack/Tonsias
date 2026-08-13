@@ -27,7 +27,7 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ChangeType;
+import de.tonsias.basis.osgi.intf.non.service.ChangeType;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedValueChangeEvent;
@@ -234,16 +234,20 @@ public class ChangePropagationSystemTest {
 	}
 
 	/**
-	 * The other direction has no logic yet - a value list removal is answered by
-	 * the single value service, not by the listener.
+	 * The other direction, which used to run into a {@code // TODO} and leave the
+	 * value naming an instanz that no longer held it.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/85">#85</a>
 	 */
 	@Test
-	void testValueListRemoved_isNotPropagatedYet() {
+	void testValueListRemoved_cutsTheValueLooseFromThatInstanz() {
 		IInstanz owner = newInstanz();
+		IInstanz secondOwner = newInstanz();
 		SingleStringValue value = _svs.createNew(SingleStringValue.class, owner.getOwnKey(), "parameter", "content",
 				Type.SEND);
+		_svs.addToParent(SingleValueType.SINGLE_STRING, value.getOwnKey(), secondOwner.getOwnKey(), Type.SEND);
 
-		publish(InstanzEventConstants.VALUE_LIST_CHANGE, new LinkedValueChangeEvent(owner.getOwnKey(),
+		publish(InstanzEventConstants.VALUE_LIST_CHANGE, new LinkedValueChangeEvent(secondOwner.getOwnKey(),
 				SingleValueType.SINGLE_STRING, ChangeType.REMOVE, List.of(value.getOwnKey())));
 
 		assertThat(value.getConnectedInstanzKeys(), contains(owner.getOwnKey()));
@@ -259,8 +263,8 @@ public class ChangePropagationSystemTest {
 		publish(SingleValueEventConstants.NEW, new SingleValueNewEvent(SingleValueType.SINGLE_STRING, "fabricated-new", "vName",
 				List.of(first.getOwnKey(), second.getOwnKey())));
 
-		assertThat(first.getSingleValues(SingleValueType.SINGLE_STRING).get("fabricated-new"), is("vName"));
-		assertThat(second.getSingleValues(SingleValueType.SINGLE_STRING).get("fabricated-new"), is("vName"));
+		assertThat(first.getValues(SingleValueType.SINGLE_STRING).get("fabricated-new"), is("vName"));
+		assertThat(second.getValues(SingleValueType.SINGLE_STRING).get("fabricated-new"), is("vName"));
 	}
 
 	@Test
@@ -273,8 +277,8 @@ public class ChangePropagationSystemTest {
 		publish(SingleValueEventConstants.DELETE, new SingleValueDeleteEvent(SingleValueType.SINGLE_STRING, "fabricated-delete",
 				List.of(first.getOwnKey(), second.getOwnKey())));
 
-		assertThat(first.getSingleValues(SingleValueType.SINGLE_STRING).containsKey("fabricated-delete"), is(false));
-		assertThat(second.getSingleValues(SingleValueType.SINGLE_STRING).containsKey("fabricated-delete"), is(false));
+		assertThat(first.getValues(SingleValueType.SINGLE_STRING).containsKey("fabricated-delete"), is(false));
+		assertThat(second.getValues(SingleValueType.SINGLE_STRING).containsKey("fabricated-delete"), is(false));
 	}
 
 	/** The chain carries no name here, so the key has to stand in for one. */
@@ -283,21 +287,28 @@ public class ChangePropagationSystemTest {
 		IInstanz owner = newInstanz();
 
 		publish(SingleValueEventConstants.INSTANZ_LIST_CHANGE, new LinkedInstanzChangeEvent("fabricated-add",
-				SingleValueType.SINGLE_STRING, LinkedInstanzChangeEvent.ChangeType.ADD, List.of(owner.getOwnKey())));
+				SingleValueType.SINGLE_STRING, ChangeType.ADD, List.of(owner.getOwnKey())));
 
-		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).get("fabricated-add"), is("fabricated-add"));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).get("fabricated-add"), is("fabricated-add"));
 	}
 
+	/**
+	 * And the same the other way round: the instanz drops the key when the value
+	 * stops naming it.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/85">#85</a>
+	 */
 	@Test
-	void testInstanzListRemoved_isNotPropagatedYet() {
+	void testInstanzListRemoved_takesTheKeyOffThatInstanz() {
 		IInstanz owner = newInstanz();
 		publish(SingleValueEventConstants.INSTANZ_LIST_CHANGE, new LinkedInstanzChangeEvent("fabricated-remove",
-				SingleValueType.SINGLE_STRING, LinkedInstanzChangeEvent.ChangeType.ADD, List.of(owner.getOwnKey())));
+				SingleValueType.SINGLE_STRING, ChangeType.ADD, List.of(owner.getOwnKey())));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).containsKey("fabricated-remove"), is(true));
 
 		publish(SingleValueEventConstants.INSTANZ_LIST_CHANGE, new LinkedInstanzChangeEvent("fabricated-remove",
-				SingleValueType.SINGLE_STRING, LinkedInstanzChangeEvent.ChangeType.REMOVE, List.of(owner.getOwnKey())));
+				SingleValueType.SINGLE_STRING, ChangeType.REMOVE, List.of(owner.getOwnKey())));
 
-		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey("fabricated-remove"), is(true));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).containsKey("fabricated-remove"), is(false));
 	}
 
 	// ---------- the relation, which is held at both ends too ----------
@@ -352,7 +363,7 @@ public class ChangePropagationSystemTest {
 		SingleInstanzValue relation = _svs.createNew(SingleInstanzValue.class, owner.getOwnKey(), "points at",
 				target.getOwnKey(), Type.SEND);
 
-		_svs.removeValue(relation, Type.SEND);
+		_svs.deleteValue(relation, Type.SEND);
 
 		assertThat(target.getReferencingValueKeys(), hasSize(0));
 	}
@@ -377,7 +388,7 @@ public class ChangePropagationSystemTest {
 		assertThat(relation.getValue(), is(""));
 		assertThat(_inse.resolveInstanzValue(relation), is(java.util.Optional.empty()));
 		assertThat("the attribute itself is untouched",
-				owner.getSingleValues(SingleValueType.SINGLE_INSTANZ).get(relation.getOwnKey()), is("points at"));
+				owner.getValues(SingleValueType.SINGLE_INSTANZ).get(relation.getOwnKey()), is("points at"));
 		assertThat(target.getReferencingValueKeys(), hasSize(0));
 	}
 

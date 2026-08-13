@@ -3,6 +3,7 @@ package de.tonsias.basis.model.impl.value;
 import java.util.Set;
 
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.enums.ValueContentType;
 
 public class SingleBooleanValue extends ASingleValue<Boolean> {
 
@@ -16,38 +17,18 @@ public class SingleBooleanValue extends ASingleValue<Boolean> {
 	}
 
 	/**
-	 * Only the two literals are accepted - anything else is rejected instead of
-	 * being folded into {@code false}, so a typo does not silently clear the value.
+	 * Whether this type would read the text: only the two literals, so a typo is
+	 * rejected instead of being folded into {@code false}. The rule itself lives in
+	 * {@link ValueContentRules}, where the list of the same content asks it too.
+	 *
+	 * @see ValueContentRules#accepts(ValueContentType, String)
 	 */
-	@Override
-	public boolean tryToSetValue(Object value) {
-		if (value instanceof Boolean b) {
-			return setValue(b);
-		} else if (value instanceof String s) {
-			String trimmed = s.strip();
-			if (Boolean.TRUE.toString().equalsIgnoreCase(trimmed)) {
-				return setValue(Boolean.TRUE);
-			}
-			if (Boolean.FALSE.toString().equalsIgnoreCase(trimmed)) {
-				return setValue(Boolean.FALSE);
-			}
-		}
-		return false;
+	public static boolean accepts(String value) {
+		return ValueContentRules.accepts(ValueContentType.BOOLEAN, value);
 	}
 
 	@Override
-	public String getPath() {
-		return SingleValueType.SINGLE_BOOLEAN.getPath();
+	public SingleValueType getType() {
+		return SingleValueType.SINGLE_BOOLEAN;
 	}
-
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append(this.getOwnKey()).append(" ");
-		builder.append(this.getValue()).append(" ");
-		String[] string = this.getClass().toString().split("\\.");
-		builder.append(": ").append(string[string.length - 1]);
-		return builder.toString();
-	}
-
 }

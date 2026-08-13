@@ -12,10 +12,15 @@ import org.osgi.service.event.Event;
 import de.tonsias.basis.osgi.intf.IDeltaService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
+import de.tonsias.basis.osgi.intf.IMultiValueService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.*;
+import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants.ElementsChangeEvent;
+import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants.MultiValueDeleteEvent;
+import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants.MultiValueNewEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.*;
 import jakarta.inject.Inject;
@@ -39,6 +44,9 @@ public class DeltaServiceImpl implements IDeltaService {
 	@Inject
 	protected ISingleValueService _singleValueService;
 
+	@Inject
+	protected IMultiValueService _multiValueService;
+
 	protected Collection<Event> _notSavedEvents = new LinkedList<Event>();
 
 	public void postConstruct() {
@@ -46,6 +54,7 @@ public class DeltaServiceImpl implements IDeltaService {
 
 		_eventBridge.subscribe(InstanzEventConstants.ALL_DELTA_TOPIC, this, true);
 		_eventBridge.subscribe(SingleValueEventConstants.ALL_DELTA_TOPIC, this, true);
+		_eventBridge.subscribe(MultiValueEventConstants.ALL_DELTA_TOPIC, this, true);
 		_eventBridge.subscribe(EventConstants.OPEN_OPERATION, this, true);
 		_eventBridge.subscribe(EventConstants.CLOSE_OPERATION, this, true);
 		_eventBridge.subscribe(EventConstants.SAVE_ALL, event -> saveDeltas(), true);
@@ -60,8 +69,10 @@ public class DeltaServiceImpl implements IDeltaService {
 	public void saveDeltas() {
 		Set<String> instanzKeysToSave = new HashSet<String>();
 		Set<String> singlevalueKeysToSave = new HashSet<String>();
+		Set<String> multivalueKeysToSave = new HashSet<String>();
 		Set<String> instanzKeysToDelete = new HashSet<String>();
 		Set<String> singlevalueKeysToDelete = new HashSet<String>();
+		Set<String> multivalueKeysToDelete = new HashSet<String>();
 
 		for (Event event : _notSavedEvents) {
 			if (InstanzEventConstants.KNOWN_DELTA.contains(event.getTopic())) {
@@ -69,6 +80,9 @@ public class DeltaServiceImpl implements IDeltaService {
 			}
 			if (SingleValueEventConstants.KNOWN_DELTA.contains(event.getTopic())) {
 				handleSingleValueEvents(event, singlevalueKeysToSave, singlevalueKeysToDelete);
+			}
+			if (MultiValueEventConstants.KNOWN_DELTA.contains(event.getTopic())) {
+				handleMultiValueEvents(event, multivalueKeysToSave, multivalueKeysToDelete);
 			}
 		}
 
@@ -80,8 +94,10 @@ public class DeltaServiceImpl implements IDeltaService {
 			attempt(failures, () -> _instanzService.deleteAll(instanzKeysToDelete));
 			attempt(failures, () -> _singleValueService.saveAll(singlevalueKeysToSave));
 			attempt(failures, () -> _singleValueService.deleteAll(singlevalueKeysToDelete));
+			attempt(failures, () -> _multiValueService.saveAll(multivalueKeysToSave));
+			attempt(failures, () -> _multiValueService.deleteAll(multivalueKeysToDelete));
 		} finally {
-			// The log is the difference against the disk, and every one of the four steps
+			// The log is the difference against the disk, and every one of the six steps
 			// was given its chance - so it is spent, whatever came of it. Keeping it would
 			// fold the same set again on the next save, fail on the same step again, and
 			// from then on nothing would ever be written, see
@@ -97,8 +113,8 @@ public class DeltaServiceImpl implements IDeltaService {
 
 	/**
 	 * Runs one step of the save and keeps what it threw instead of letting it end
-	 * the save - the other three steps have files of their own to write, and they
-	 * are not lost because one of them could not.
+	 * the save - the other five steps have files of their own to write, and they are
+	 * not lost because one of them could not.
 	 */
 	private void attempt(CompletionException failures, Runnable step) {
 		try {
@@ -126,6 +142,35 @@ public class DeltaServiceImpl implements IDeltaService {
 		case SingleValueEventConstants.DELETE:
 			var value4 = SingleValueDeleteEvent.class.cast(event.getProperty(IEventBroker.DATA));
 			singlevalueKeysToDelete.add(value4._key());
+			break;
+		default:
+			throw new IllegalArgumentException("Enum value unknown: " + event.getTopic());
+		}
+	}
+
+	/**
+	 * The four cases have to match {@link MultiValueEventConstants#KNOWN_DELTA}
+	 * exactly: a topic in that list without a branch here throws, and the log is
+	 * cleared in the {@code finally} above - so the whole batch would be gone
+	 * without a trace.
+	 */
+	private void handleMultiValueEvents(Event event, Set<String> multivalueKeysToSave,
+			Set<String> multivalueKeysToDelete) {
+		Object property = event.getProperty(IEventBroker.DATA);
+		switch (event.getTopic()) {
+		case MultiValueEventConstants.NEW:
+			multivalueKeysToSave.add(MultiValueNewEvent.class.cast(property)._key());
+			break;
+		case MultiValueEventConstants.VALUES_CHANGE:
+			// an event with nothing added and nothing removed is a reorder, and the order
+			// is part of the value - the file still has to be rewritten
+			multivalueKeysToSave.add(ElementsChangeEvent.class.cast(property)._key());
+			break;
+		case MultiValueEventConstants.INSTANZ_LIST_CHANGE:
+			multivalueKeysToSave.add(MultiValueEventConstants.LinkedInstanzChangeEvent.class.cast(property)._key());
+			break;
+		case MultiValueEventConstants.DELETE:
+			multivalueKeysToDelete.add(MultiValueDeleteEvent.class.cast(property)._key());
 			break;
 		default:
 			throw new IllegalArgumentException("Enum value unknown: " + event.getTopic());

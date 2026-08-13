@@ -6,6 +6,8 @@ import java.util.Map.Entry;
 
 import com.google.common.collect.BiMap;
 
+import de.tonsias.basis.model.enums.IValueType;
+import de.tonsias.basis.model.enums.MultiValueType;
 import de.tonsias.basis.model.enums.SingleValueType;
 
 /**
@@ -41,32 +43,39 @@ public interface IInstanz extends IObject, ISavePathOwner {
 	 */
 	Map<Boolean, Collection<String>> removeChildKeys(String... children);
 
-	// single value section
+	// value section
 
 	/**
-	 * Get all {@link ISingleValue} available of this {@link IInstanz}
-	 * 
-	 * @param type from {@link SingleValueType} to search for
-	 * @return {@link BiMap} Key is the Key of the {@link ISingleValue}, Value is
-	 *         the Name of the Parameter
+	 * Get all {@link IValue}s of one type available of this {@link IInstanz}
+	 *
+	 * @param type from {@link SingleValueType} or {@link MultiValueType} to search
+	 *             for
+	 * @return {@link BiMap} Key is the Key of the {@link IValue}, Value is the Name
+	 *         of the Parameter
 	 */
-	BiMap<String, String> getSingleValues(SingleValueType type);
+	BiMap<String, String> getValues(IValueType type);
 
-	void addValuekeys(SingleValueType type, Entry<String, String> keyToName);
+	void addValuekeys(IValueType type, Entry<String, String> keyToName);
 
-	void deleteKeys(SingleValueType type, String... keys);
+	void deleteKeys(IValueType type, String... keys);
 
-	void deleteParam(SingleValueType type, String... names);
+	void deleteParam(IValueType type, String... names);
 
 	// relation section
 
 	/**
-	 * The other end of a {@code SingleValueType.SINGLE_INSTANZ} relation: the keys
-	 * of the values pointing <em>at</em> this instanz. A relation is stored on the
-	 * value alone - it carries the key of its target - so without this set nothing
-	 * could ever answer which values a given instanz is the target of, and a
+	 * The other end of a {@code SINGLE_INSTANZ} or {@code MULTI_INSTANZ} relation:
+	 * the keys of the values pointing <em>at</em> this instanz. A relation is stored
+	 * on the value alone - it carries the key of its target - so without this set
+	 * nothing could ever answer which values a given instanz is the target of, and a
 	 * deleted instanz would leave every one of them holding a key that resolves to
 	 * nothing.
+	 * <p>
+	 * A set, and each value key is in it at most once. That holds for a list of
+	 * relations as well because {@code MultiInstanzValue} refuses duplicates, so one
+	 * value points at one target at most once - a list that could point at the same
+	 * instanz twice would need this end to count how often.
+	 * </p>
 	 * <p>
 	 * Kept in sync by {@code ChangePropagationListener}, like both ends of every
 	 * other relation. Do not fill it directly: a reference set past

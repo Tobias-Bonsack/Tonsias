@@ -1,5 +1,7 @@
 package de.tonsias.basis.ui.util;
 
+import de.tonsias.basis.model.enums.IValueType;
+import de.tonsias.basis.model.enums.MultiValueType;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
 import de.tonsias.basis.osgi.intf.IKeyService;
@@ -15,21 +17,45 @@ public class MessagesUtil {
 	private MessagesUtil() {
 	}
 
-	public static String getSingleValueTypeLabel(Messages messages, SingleValueType type) {
-		switch (type) {
-		case SINGLE_STRING:
-			return messages.constant_type_string;
-		case SINGLE_INTEGER:
-			return messages.constant_type_integer;
-		case SINGLE_BOOLEAN:
-			return messages.constant_type_boolean;
-		case SINGLE_FLOAT:
-			return messages.constant_type_float;
-		case SINGLE_INSTANZ:
-			return messages.constant_type_instanz;
-		default:
-			return type.name();
+	/**
+	 * The label of a value type, from either enum. The fallback is the constant's
+	 * own name, which is what {@code MessagesUtilTest} fails on for a type nobody
+	 * translated.
+	 */
+	public static String getValueTypeLabel(Messages messages, IValueType type) {
+		if (type instanceof SingleValueType single) {
+			switch (single) {
+			case SINGLE_STRING:
+				return messages.constant_type_string;
+			case SINGLE_INTEGER:
+				return messages.constant_type_integer;
+			case SINGLE_BOOLEAN:
+				return messages.constant_type_boolean;
+			case SINGLE_FLOAT:
+				return messages.constant_type_float;
+			case SINGLE_INSTANZ:
+				return messages.constant_type_instanz;
+			default:
+				return single.name();
+			}
 		}
+		if (type instanceof MultiValueType multi) {
+			switch (multi) {
+			case MULTI_STRING:
+				return messages.constant_type_multi_string;
+			case MULTI_INTEGER:
+				return messages.constant_type_multi_integer;
+			case MULTI_BOOLEAN:
+				return messages.constant_type_multi_boolean;
+			case MULTI_FLOAT:
+				return messages.constant_type_multi_float;
+			case MULTI_INSTANZ:
+				return messages.constant_type_multi_instanz;
+			default:
+				return multi.name();
+			}
+		}
+		return type.name();
 	}
 
 	/**

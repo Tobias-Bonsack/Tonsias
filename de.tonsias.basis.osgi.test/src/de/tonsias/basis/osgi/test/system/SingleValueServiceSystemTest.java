@@ -33,11 +33,13 @@ import de.tonsias.basis.model.interfaces.ISingleValue;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
+import de.tonsias.basis.osgi.intf.non.service.ChangeType;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.LinkedInstanzChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueDeleteEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueNewEvent;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.ValueChangeEvent;
+import de.tonsias.basis.osgi.intf.non.service.ValueEventConstants;
 import de.tonsias.basis.osgi.test.EventRecorder;
 import de.tonsias.basis.osgi.test.ProductRuntime;
 
@@ -95,7 +97,7 @@ public class SingleValueServiceSystemTest {
 
 		assertThat(created.getValue(), is("content"));
 		assertThat(created.getConnectedInstanzKeys(), contains(_owner.getOwnKey()));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_STRING).get(created.getOwnKey()), is("parameter"));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_STRING).get(created.getOwnKey()), is("parameter"));
 
 		SingleValueNewEvent data = _recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class);
 		assertThat(data._key(), is(created.getOwnKey()));
@@ -111,8 +113,8 @@ public class SingleValueServiceSystemTest {
 
 		assertThat(created, is(instanceOf(SingleIntegerValue.class)));
 		assertThat(created.getValue(), is(42));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_INTEGER).get(created.getOwnKey()), is("number"));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey(created.getOwnKey()), is(false));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_INTEGER).get(created.getOwnKey()), is("number"));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_STRING).containsKey(created.getOwnKey()), is(false));
 	}
 
 	@Test
@@ -123,7 +125,7 @@ public class SingleValueServiceSystemTest {
 				Type.SEND);
 
 		assertThat(created.getValue(), is(true));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_BOOLEAN).get(created.getOwnKey()), is("flag"));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_BOOLEAN).get(created.getOwnKey()), is("flag"));
 		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
 				is(SingleValueType.SINGLE_BOOLEAN));
 	}
@@ -137,8 +139,8 @@ public class SingleValueServiceSystemTest {
 				Type.SEND);
 
 		assertThat(created.getValue(), is(3.14f));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_FLOAT).get(created.getOwnKey()), is("ratio"));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_INTEGER).containsKey(created.getOwnKey()), is(false));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_FLOAT).get(created.getOwnKey()), is("ratio"));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_INTEGER).containsKey(created.getOwnKey()), is(false));
 		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
 				is(SingleValueType.SINGLE_FLOAT));
 	}
@@ -177,8 +179,8 @@ public class SingleValueServiceSystemTest {
 				target.getOwnKey(), Type.SEND);
 
 		assertThat(created.getValue(), is(target.getOwnKey()));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_INSTANZ).get(created.getOwnKey()), is("points at"));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey(created.getOwnKey()), is(false));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_INSTANZ).get(created.getOwnKey()), is("points at"));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_STRING).containsKey(created.getOwnKey()), is(false));
 		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.NEW, SingleValueNewEvent.class)._type(),
 				is(SingleValueType.SINGLE_INSTANZ));
 	}
@@ -440,7 +442,7 @@ public class SingleValueServiceSystemTest {
 		assertThat(_recorder.events(), hasSize(0));
 	}
 
-	/** {@code markSingleValueAsDelete} read the cache the same way - @see #78 */
+	/** {@code markValueAsDelete} read the cache the same way - @see #78 */
 	@Test
 	void testMarkSingleValueAsDelete_reachesAValueThatIsOnDiskOnly() {
 		SingleStringValue value = newStringValue("parameter", "content");
@@ -449,7 +451,7 @@ public class SingleValueServiceSystemTest {
 		_svs.removeFromCache(key);
 		_recorder.clear();
 
-		_svs.markSingleValueAsDelete(key, Type.SEND);
+		_svs.markValueAsDelete(key, Type.SEND);
 
 		SingleValueDeleteEvent data = _recorder.onlyDataOf(SingleValueEventConstants.DELETE,
 				SingleValueDeleteEvent.class);
@@ -462,7 +464,7 @@ public class SingleValueServiceSystemTest {
 	void testMarkSingleValueAsDelete_aKeyWithoutAValueIsSilent() {
 		_recorder.clear();
 
-		_svs.markSingleValueAsDelete("no-such-key", Type.SEND);
+		_svs.markValueAsDelete("no-such-key", Type.SEND);
 
 		assertThat(_recorder.events(), hasSize(0));
 	}
@@ -497,13 +499,13 @@ public class SingleValueServiceSystemTest {
 		LinkedInstanzChangeEvent data = _recorder.onlyDataOf(SingleValueEventConstants.INSTANZ_LIST_CHANGE,
 				LinkedInstanzChangeEvent.class);
 		assertThat(data._key(), is(value.getOwnKey()));
-		assertThat(data._changeType(), is(LinkedInstanzChangeEvent.ChangeType.ADD));
+		assertThat(data._changeType(), is(ChangeType.ADD));
 		assertThat(data._instanzKeys(), contains(secondOwner.getOwnKey()));
 
 		assertThat(value.getConnectedInstanzKeys(),
 				containsInAnyOrder(_owner.getOwnKey(), secondOwner.getOwnKey()));
 		// the chain carries no name for the new owner, so the key stands in for it
-		assertThat(secondOwner.getSingleValues(SingleValueType.SINGLE_STRING).get(value.getOwnKey()),
+		assertThat(secondOwner.getValues(SingleValueType.SINGLE_STRING).get(value.getOwnKey()),
 				is(value.getOwnKey()));
 	}
 
@@ -538,7 +540,7 @@ public class SingleValueServiceSystemTest {
 		_svs.addToParent(SingleValueType.SINGLE_STRING, value.getOwnKey(), secondOwner.getOwnKey(), Type.SEND);
 		_recorder.clear();
 
-		_svs.markSingleValueAsDelete(value.getOwnKey(), Type.SEND);
+		_svs.markValueAsDelete(value.getOwnKey(), Type.SEND);
 
 		SingleValueDeleteEvent data = _recorder.onlyDataOf(SingleValueEventConstants.DELETE,
 				SingleValueDeleteEvent.class);
@@ -547,8 +549,8 @@ public class SingleValueServiceSystemTest {
 		assertThat(data._ownerKeys(), containsInAnyOrder(_owner.getOwnKey(), secondOwner.getOwnKey()));
 
 		assertThat(value.getConnectedInstanzKeys(), hasSize(0));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()), is(false));
-		assertThat(secondOwner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()),
+		assertThat(_owner.getValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()), is(false));
+		assertThat(secondOwner.getValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()),
 				is(false));
 	}
 
@@ -557,11 +559,11 @@ public class SingleValueServiceSystemTest {
 		SingleStringValue value = newStringValue("parameter", "content");
 		_recorder.clear();
 
-		assertThat(_svs.removeValue(value, Type.SEND), is(true));
+		assertThat(_svs.deleteValue(value, Type.SEND), is(true));
 
 		assertThat(_recorder.onlyDataOf(SingleValueEventConstants.DELETE, SingleValueDeleteEvent.class)._key(),
 				is(value.getOwnKey()));
-		assertThat(_owner.getSingleValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()), is(false));
+		assertThat(_owner.getValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()), is(false));
 	}
 
 	// ---------- persistence hand-off ----------
@@ -662,6 +664,16 @@ public class SingleValueServiceSystemTest {
 		@Override
 		public String getPath() {
 			return "unknown/";
+		}
+
+		/**
+		 * The one value there is that answers no type. Every value the model brings
+		 * along names its constant here, which is exactly why an outsider is what it
+		 * takes to reach the branches that ask what happens when none maps.
+		 */
+		@Override
+		public SingleValueType getType() {
+			return null;
 		}
 
 		@Override

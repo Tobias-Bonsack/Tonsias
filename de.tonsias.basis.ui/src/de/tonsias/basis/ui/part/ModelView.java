@@ -29,34 +29,33 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.osgi.service.event.Event;
 
+import de.tonsias.basis.model.enums.IValueType;
+import de.tonsias.basis.model.enums.MultiValueType;
 import de.tonsias.basis.model.enums.SingleValueType;
-import de.tonsias.basis.model.impl.value.SingleBooleanValue;
-import de.tonsias.basis.model.impl.value.SingleFloatValue;
-import de.tonsias.basis.model.impl.value.SingleInstanzValue;
-import de.tonsias.basis.model.impl.value.SingleIntegerValue;
-import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
+import de.tonsias.basis.model.interfaces.IMultiValue;
 import de.tonsias.basis.model.interfaces.IObject;
 import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.model.interfaces.IValue;
 import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
 import de.tonsias.basis.osgi.intf.IDeltaService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
+import de.tonsias.basis.osgi.intf.IMultiValueService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.util.OsgiUtil;
 import de.tonsias.basis.osgi.intf.non.service.PreferenceEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
-import de.tonsias.basis.ui.dialog.BooleanValueDialog;
-import de.tonsias.basis.ui.dialog.FloatValueDialog;
-import de.tonsias.basis.ui.dialog.InstanzValueDialog;
-import de.tonsias.basis.ui.dialog.IntegerValueDialog;
-import de.tonsias.basis.ui.dialog.StringValueDialog;
+import de.tonsias.basis.ui.dialog.AValueDialogBase;
+import de.tonsias.basis.ui.dialog.ValueDialogs;
 import de.tonsias.basis.ui.handler.CreateInstanzOperation;
 import de.tonsias.basis.ui.i18n.Messages;
 import de.tonsias.basis.ui.node.TreeNodeWrapper;
+import de.tonsias.basis.ui.util.MessagesUtil;
 import de.tonsias.basis.ui.provider.TreeContentProvider;
 import de.tonsias.basis.ui.provider.TreeLabelProvider;
 import jakarta.annotation.PostConstruct;
@@ -72,6 +71,9 @@ public class ModelView {
 
 	@Inject
 	ISingleValueService _singleService;
+
+	@Inject
+	IMultiValueService _multiService;
 
 	@Inject
 	IDeltaService _deltaService;
@@ -125,7 +127,8 @@ public class ModelView {
 		createInstanzMenuItem(tree, menu);
 
 		// Value Menu Items
-		createSingleValueMenuItems(tree, menu);
+		createValueMenuItems(tree, menu, _messages.constant_singleValue, SingleValueType.values());
+		createValueMenuItems(tree, menu, _messages.constant_multiValue, MultiValueType.values());
 		createMenuItemsForvalues(tree, menu);
 
 		tree.setMenu(menu);
@@ -166,7 +169,7 @@ public class ModelView {
 	private void createMenuItemsForvalues(Tree tree, Menu menu) {
 		MenuItem menuItem = new MenuItem(menu, SWT.NONE);
 		menuItem.setText(_messages.mi_delete);
-		_menuItems.computeIfAbsent(ISingleValue.class, c -> new ArrayList<>()).add(menuItem);
+		_menuItems.computeIfAbsent(IValue.class, c -> new ArrayList<>()).add(menuItem);
 
 		menuItem.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
@@ -175,12 +178,13 @@ public class ModelView {
 					return;
 				}
 
-				ISingleValue<?> value = (ISingleValue<?>) selection[0].getData();
+				IValue value = (IValue) selection[0].getData();
 				Collection<String> connectedInstanzKeys = value.getConnectedInstanzKeys();
-				SingleValueType type = SingleValueType.getByClass(value.getClass()).get();
+				// the value says which type it is, so there is nothing to look up
+				IValueType type = value.getType();
 
 				_broker.post(EventConstants.OPEN_OPERATION, null);
-				_singleService.removeValue(value, IEventBrokerBridge.Type.SEND);
+				deleteValue(value);
 				_instanzService.removeValueKey(connectedInstanzKeys, type, value.getOwnKey(),
 						IEventBrokerBridge.Type.POST);
 				_broker.post(EventConstants.CLOSE_OPERATION, null);
@@ -188,6 +192,14 @@ public class ModelView {
 				_treeViewer.refresh();
 			};
 		});
+	}
+
+	private void deleteValue(IValue value) {
+		if (value.getType().isMulti()) {
+			_multiService.deleteValue((IMultiValue<?>) value, IEventBrokerBridge.Type.SEND);
+			return;
+		}
+		_singleService.deleteValue((ISingleValue<?>) value, IEventBrokerBridge.Type.SEND);
 	}
 
 	private void createInstanzMenuItem(Tree tree, Menu menu) {
@@ -213,137 +225,45 @@ public class ModelView {
 		});
 	}
 
-	private void createSingleValueMenuItems(Tree tree, Menu menu) {
+	/**
+	 * One cascading menu per kind, one item per type in it. Which dialog an item
+	 * opens is {@link ValueDialogs}', and what happens afterwards is the same for
+	 * all ten - so a new type is a constant in an enum and nothing here.
+	 */
+	private void createValueMenuItems(Tree tree, Menu menu, String label, IValueType[] types) {
 		MenuItem parentItem = new MenuItem(menu, SWT.CASCADE);
-		parentItem.setText(_messages.constant_singleValue);
+		parentItem.setText(label);
 		_menuItems.get(IInstanz.class).add(parentItem);
 
-		Menu singleValueMenu = new Menu(menu);
-		parentItem.setMenu(singleValueMenu);
+		Menu valueMenu = new Menu(menu);
+		parentItem.setMenu(valueMenu);
 
-		MenuItem createStringSingleValueItem = new MenuItem(singleValueMenu, SWT.None);
-		createStringSingleValueItem.setText(_messages.constant_type_string);
-
-		createStringSingleValueItem.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				TreeItem[] selection = tree.getSelection();
-				if (selection.length != 1) {
-					return;
+		for (IValueType type : types) {
+			MenuItem item = new MenuItem(valueMenu, SWT.None);
+			item.setText(MessagesUtil.getValueTypeLabel(_messages, type));
+			item.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					openValueDialog(tree, type);
 				}
+			});
+		}
+	}
 
-				TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
-				IInstanz parentObject = (IInstanz) parent.getObject();
+	private void openValueDialog(Tree tree, IValueType type) {
+		TreeItem[] selection = tree.getSelection();
+		if (selection.length != 1) {
+			return;
+		}
 
-				StringValueDialog dialog = new StringValueDialog(new Shell(), parentObject, _messages);
-				int open = dialog.open();
-				if (open == Window.OK) {
-					SingleStringValue singleValue = dialog.getSingleValue();
-					new TreeNodeWrapper(singleValue, parent);
-					_treeViewer.refresh(parent);
-				}
-			}
-		});
+		TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
+		IInstanz parentObject = (IInstanz) parent.getObject();
 
-		MenuItem createStringIntegerValueItem = new MenuItem(singleValueMenu, SWT.None);
-		createStringIntegerValueItem.setText(_messages.constant_type_integer);
-
-		createStringIntegerValueItem.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				TreeItem[] selection = tree.getSelection();
-				if (selection.length != 1) {
-					return;
-				}
-
-				TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
-				IInstanz parentObject = (IInstanz) parent.getObject();
-
-				IntegerValueDialog dialog = new IntegerValueDialog(new Shell(), parentObject, _messages);
-				int open = dialog.open();
-				if (open == Window.OK) {
-					SingleIntegerValue singleValue = dialog.getSingleValue();
-					new TreeNodeWrapper(singleValue, parent);
-					_treeViewer.refresh(parent);
-				}
-
-			}
-		});
-
-		MenuItem createBooleanValueItem = new MenuItem(singleValueMenu, SWT.None);
-		createBooleanValueItem.setText(_messages.constant_type_boolean);
-
-		createBooleanValueItem.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				TreeItem[] selection = tree.getSelection();
-				if (selection.length != 1) {
-					return;
-				}
-
-				TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
-				IInstanz parentObject = (IInstanz) parent.getObject();
-
-				BooleanValueDialog dialog = new BooleanValueDialog(new Shell(), parentObject, _messages);
-				int open = dialog.open();
-				if (open == Window.OK) {
-					SingleBooleanValue singleValue = dialog.getSingleValue();
-					new TreeNodeWrapper(singleValue, parent);
-					_treeViewer.refresh(parent);
-				}
-
-			}
-		});
-
-		MenuItem createFloatValueItem = new MenuItem(singleValueMenu, SWT.None);
-		createFloatValueItem.setText(_messages.constant_type_float);
-
-		createFloatValueItem.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				TreeItem[] selection = tree.getSelection();
-				if (selection.length != 1) {
-					return;
-				}
-
-				TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
-				IInstanz parentObject = (IInstanz) parent.getObject();
-
-				FloatValueDialog dialog = new FloatValueDialog(new Shell(), parentObject, _messages);
-				int open = dialog.open();
-				if (open == Window.OK) {
-					SingleFloatValue singleValue = dialog.getSingleValue();
-					new TreeNodeWrapper(singleValue, parent);
-					_treeViewer.refresh(parent);
-				}
-
-			}
-		});
-
-		MenuItem createInstanzValueItem = new MenuItem(singleValueMenu, SWT.None);
-		createInstanzValueItem.setText(_messages.constant_type_instanz);
-
-		createInstanzValueItem.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				TreeItem[] selection = tree.getSelection();
-				if (selection.length != 1) {
-					return;
-				}
-
-				TreeNodeWrapper parent = (TreeNodeWrapper) selection[0].getData();
-				IInstanz parentObject = (IInstanz) parent.getObject();
-
-				InstanzValueDialog dialog = new InstanzValueDialog(new Shell(), parentObject, _messages);
-				int open = dialog.open();
-				if (open == Window.OK) {
-					SingleInstanzValue singleValue = dialog.getSingleValue();
-					new TreeNodeWrapper(singleValue, parent);
-					_treeViewer.refresh(parent);
-				}
-
-			}
-		});
+		AValueDialogBase<?, ?> dialog = ValueDialogs.create(type, new Shell(), parentObject, _messages);
+		if (dialog.open() == Window.OK) {
+			new TreeNodeWrapper(dialog.getCreatedValue(), parent);
+			_treeViewer.refresh(parent);
+		}
 	}
 
 	@Inject
@@ -365,6 +285,27 @@ public class ModelView {
 		}
 	}
 
+	/**
+	 * The tree shows the attributes of an instanz when the preference is on, so a
+	 * new list has to appear there like a new single value does.
+	 */
+	@Inject
+	@Optional
+	private void newMvListener(@UIEventTopic(MultiValueEventConstants.NEW) Event data) {
+		IBasicPreferenceService prefService = OsgiUtil.getService(IBasicPreferenceService.class);
+		String shownVariable = prefService.getValue(IBasicPreferenceService.Key.MODEL_VIEW_TEXT.getKey(), String.class)
+				.orElse("");
+		Object property = data.getProperty(IEventBroker.DATA);
+		if (property instanceof MultiValueEventConstants.MultiValueNewEvent newData
+				&& newData._name().equalsIgnoreCase(shownVariable)) {
+			_treeViewer.refresh();
+		}
+	}
+
+	/**
+	 * Stays on {@code SINGLE_STRING} alone: the label of the model view is one
+	 * string by definition, so a list can never be the attribute it shows.
+	 */
 	@Inject
 	@Optional
 	private void changeOfModelViewText(@UIEventTopic(SingleValueEventConstants.VALUE_CHANGE) Event data) {
@@ -387,8 +328,8 @@ public class ModelView {
 
 		Collection<IInstanz> linkedInstanzen = _instanzService.resolveKeys(sv.get().getConnectedInstanzKeys());
 		if (linkedInstanzen.stream()
-				.filter(instanz -> instanz.getSingleValues(changeEvent._type()).containsKey(ownKey))
-				.anyMatch(instanz -> instanz.getSingleValues(changeEvent._type()).get(ownKey)
+				.filter(instanz -> instanz.getValues(changeEvent._type()).containsKey(ownKey))
+				.anyMatch(instanz -> instanz.getValues(changeEvent._type()).get(ownKey)
 						.equals(shownVariable))) {
 			_treeViewer.refresh();
 		}

@@ -14,15 +14,21 @@ import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import de.tonsias.basis.model.enums.IValueType;
+import de.tonsias.basis.model.enums.MultiValueType;
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.enums.ValueContentType;
+import de.tonsias.basis.model.enums.ValueTypes;
 import de.tonsias.basis.model.impl.Instanz;
+import de.tonsias.basis.model.interfaces.IValue;
 
 /**
  * Exercises the {@code AInstanz} behaviour through {@link Instanz}, the only
@@ -82,40 +88,93 @@ public class AInstanzTest {
 		assertThat(result.get(false), contains("unknown"));
 	}
 
+	static List<IValueType> everyType() {
+		return ValueTypes.valuesList();
+	}
+
 	@ParameterizedTest
-	@EnumSource(SingleValueType.class)
-	void testAddValuekeys_storedUnderItsType(SingleValueType type) {
+	@MethodSource("everyType")
+	void testAddValuekeys_storedUnderItsType(IValueType type) {
 		_instanz.addValuekeys(type, Map.entry("valueKey", "name"));
 
-		assertThat(_instanz.getSingleValues(type), hasEntry("valueKey", "name"));
-		// the maps are strictly per type, nothing leaks into the other one
-		for (SingleValueType other : SingleValueType.values()) {
+		assertThat(_instanz.getValues(type), hasEntry("valueKey", "name"));
+		// the maps are strictly per type, nothing leaks into any other one - single
+		// and multi of the same content least of all, they are the pair that would
+		// go unnoticed
+		for (IValueType other : ValueTypes.valuesList()) {
 			if (other != type) {
-				assertThat(_instanz.getSingleValues(other).size(), is(0));
+				assertThat("leaked into " + other, _instanz.getValues(other).size(), is(0));
 			}
 		}
 	}
 
 	@ParameterizedTest
-	@EnumSource(SingleValueType.class)
-	void testGetSingleValues_sameMapPerType(SingleValueType type) {
-		assertThat(_instanz.getSingleValues(type), is(sameInstance(_instanz.getSingleValues(type))));
+	@MethodSource("everyType")
+	void testGetValues_sameMapPerType(IValueType type) {
+		assertThat(_instanz.getValues(type), is(sameInstance(_instanz.getValues(type))));
 	}
 
 	/**
 	 * The maps are created on demand rather than by a field initializer, because
-	 * Gson skips those. Every type has to answer with a usable map from the start.
+	 * Gson skips those. Every type has to answer with a usable map from the start -
+	 * including the five an instanz written before they existed names nowhere.
 	 */
 	@ParameterizedTest
-	@EnumSource(SingleValueType.class)
-	void testGetSingleValues_isEmptyNotNullOnANewInstanz(SingleValueType type) {
-		assertThat(_instanz.getSingleValues(type), is(anEmptyMap()));
+	@MethodSource("everyType")
+	void testGetValues_isEmptyNotNullOnANewInstanz(IValueType type) {
+		assertThat(_instanz.getValues(type), is(anEmptyMap()));
 	}
 
 	@Test
-	void testGetSingleValues_nullTypeRejected() {
-		// switch over an enum throws NPE before reaching the default branch
-		assertThrows(NullPointerException.class, () -> _instanz.getSingleValues(null));
+	void testGetValues_nullTypeRejected() {
+		assertThrows(IllegalArgumentException.class, () -> _instanz.getValues(null));
+	}
+
+	/** a type from neither enum belongs to no map either */
+	@Test
+	void testGetValues_foreignTypeRejected() {
+		IValueType foreign = new IValueType() {
+
+			@Override
+			public String name() {
+				return "FOREIGN";
+			}
+
+			@Override
+			public String getPath() {
+				return "foreign/";
+			}
+
+			@Override
+			public Class<? extends IValue> getClazz() {
+				return IValue.class;
+			}
+
+			@Override
+			public ValueContentType getContentType() {
+				return ValueContentType.STRING;
+			}
+
+			@Override
+			public boolean isMulti() {
+				return false;
+			}
+		};
+
+		assertThrows(IllegalArgumentException.class, () -> _instanz.getValues(foreign));
+	}
+
+	/**
+	 * A list attribute and a single attribute of the same content are two different
+	 * attributes, and the name side is unique per map rather than across them.
+	 */
+	@Test
+	void testAddValuekeys_singleAndMultiOfOneContentAreSeparate() {
+		_instanz.addValuekeys(SingleValueType.SINGLE_STRING, Map.entry("k1", "name"));
+		_instanz.addValuekeys(MultiValueType.MULTI_STRING, Map.entry("k2", "name"));
+
+		assertThat(_instanz.getValues(SingleValueType.SINGLE_STRING), hasEntry("k1", "name"));
+		assertThat(_instanz.getValues(MultiValueType.MULTI_STRING), hasEntry("k2", "name"));
 	}
 
 	@Test
@@ -125,8 +184,8 @@ public class AInstanzTest {
 
 		_instanz.deleteKeys(SingleValueType.SINGLE_STRING, "k1", "unknown");
 
-		assertThat(_instanz.getSingleValues(SingleValueType.SINGLE_STRING), hasEntry("k2", "n2"));
-		assertThat(_instanz.getSingleValues(SingleValueType.SINGLE_STRING).size(), is(1));
+		assertThat(_instanz.getValues(SingleValueType.SINGLE_STRING), hasEntry("k2", "n2"));
+		assertThat(_instanz.getValues(SingleValueType.SINGLE_STRING).size(), is(1));
 	}
 
 	@Test
@@ -136,8 +195,8 @@ public class AInstanzTest {
 
 		_instanz.deleteParam(SingleValueType.SINGLE_INTEGER, "n1", "unknown");
 
-		assertThat(_instanz.getSingleValues(SingleValueType.SINGLE_INTEGER), hasEntry("k2", "n2"));
-		assertThat(_instanz.getSingleValues(SingleValueType.SINGLE_INTEGER).size(), is(1));
+		assertThat(_instanz.getValues(SingleValueType.SINGLE_INTEGER), hasEntry("k2", "n2"));
+		assertThat(_instanz.getValues(SingleValueType.SINGLE_INTEGER).size(), is(1));
 	}
 
 	@Test

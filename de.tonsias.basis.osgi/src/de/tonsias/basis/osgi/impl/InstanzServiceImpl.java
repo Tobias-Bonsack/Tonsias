@@ -20,7 +20,7 @@ import org.osgi.service.component.annotations.Reference;
 import de.tonsias.basis.data.access.osgi.intf.DeleteService;
 import de.tonsias.basis.data.access.osgi.intf.LoadService;
 import de.tonsias.basis.data.access.osgi.intf.SaveService;
-import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.enums.IValueType;
 import de.tonsias.basis.model.impl.Instanz;
 import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
@@ -29,7 +29,7 @@ import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.IInstanzService;
 import de.tonsias.basis.osgi.intf.IKeyService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ChangeType;
+import de.tonsias.basis.osgi.intf.non.service.ChangeType;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedReferenceChangeEvent;
@@ -258,7 +258,7 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public void putSingleValue(String instanzKey, SingleValueType type, String key, String name,
+	public void putValue(String instanzKey, IValueType type, String key, String name,
 			IEventBrokerBridge.Type eventType) {
 		Optional<IInstanz> instanz = resolveKey(instanzKey);
 		if (instanz.isEmpty() || type == null || key.isBlank()) {
@@ -266,7 +266,7 @@ public class InstanzServiceImpl implements IInstanzService {
 		}
 
 		String paramName = name == null || name.isBlank() ? key : name;
-		boolean isAdded = instanz.get().getSingleValues(type).putIfAbsent(key, paramName) == null;
+		boolean isAdded = instanz.get().getValues(type).putIfAbsent(key, paramName) == null;
 		if(isAdded) {
 			var changeData = new LinkedValueChangeEvent(instanzKey, type, ChangeType.ADD, List.of(key));
 			fireEvent(eventType, InstanzEventConstants.VALUE_LIST_CHANGE, changeData);
@@ -274,29 +274,36 @@ public class InstanzServiceImpl implements IInstanzService {
 	}
 
 	@Override
-	public void changeSingleValueName(String instanzKey, SingleValueType type, String key, String newName,
+	public void changeValueName(String instanzKey, IValueType type, String key, String newName,
 			IEventBrokerBridge.Type eventType) {
 		Optional<IInstanz> instanz = resolveKey(instanzKey);
 		if (instanz.isEmpty() || type == null || key.isBlank() || newName.isBlank()) {
 			return;
 		}
 
-		String oldName = instanz.get().getSingleValues(type).get(key);
-		instanz.get().getSingleValues(type).put(key, newName);
+		String oldName = instanz.get().getValues(type).get(key);
+		instanz.get().getValues(type).put(key, newName);
 
 		var changeData = new ValueRenameEvent(instanzKey, type, key, oldName, newName);
 		fireEvent(eventType, InstanzEventConstants.NAME_CHANGE, changeData);
 	}
 
 	@Override
-	public boolean removeValueKey(Collection<String> instanzKeys, SingleValueType type, String valueKeyToRemove,
+	public boolean removeValueKey(Collection<String> instanzKeys, IValueType type, String valueKeyToRemove,
 			IEventBrokerBridge.Type eventType) {
 		Collection<IInstanz> instanzes = resolveKeys(instanzKeys);
 		for (IInstanz instanz : instanzes) {
-			instanz.getSingleValues(type).remove(valueKeyToRemove);
-			var data = new LinkedValueChangeEvent(instanz.getOwnKey(), type, ChangeType.REMOVE,
-					List.of(valueKeyToRemove));
-			fireEvent(eventType, InstanzEventConstants.VALUE_LIST_CHANGE, data);
+			// only when the key was really there: the value hears about this and comes
+			// back around to take the instanz off its own end, which comes back here - and
+			// an event for a removal that removed nothing would never stop. The same
+			// guard putValue has for the other direction, see
+			// https://github.com/Tobias-Bonsack/Tonsias/issues/85
+			boolean isRemoved = instanz.getValues(type).remove(valueKeyToRemove) != null;
+			if (isRemoved) {
+				var data = new LinkedValueChangeEvent(instanz.getOwnKey(), type, ChangeType.REMOVE,
+						List.of(valueKeyToRemove));
+				fireEvent(eventType, InstanzEventConstants.VALUE_LIST_CHANGE, data);
+			}
 		}
 		return true;
 	}

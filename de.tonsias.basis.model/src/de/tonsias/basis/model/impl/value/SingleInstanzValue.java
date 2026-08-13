@@ -1,9 +1,9 @@
 package de.tonsias.basis.model.impl.value;
 
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.enums.ValueContentType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 
 /**
@@ -16,11 +16,12 @@ import de.tonsias.basis.model.interfaces.IInstanz;
  * also what lets the value be persisted by the same Gson as every other one: a
  * resolved {@link IInstanz} would be written into this value's own file.
  * </p>
+ * <p>
+ * {@code MultiInstanzValue} is the same relation pointing at several instanzes at
+ * once.
+ * </p>
  */
 public class SingleInstanzValue extends ASingleValue<String> {
-
-	/** the shape of a key - see {@link #accepts} */
-	private static final Pattern KEY = Pattern.compile("[0-9a-z]+");
 
 	public SingleInstanzValue(String key) {
 		super(key);
@@ -41,42 +42,23 @@ public class SingleInstanzValue extends ASingleValue<String> {
 	 * this one and not the other way round. A key that resolves to nothing is
 	 * therefore accepted here and comes back empty from the service.
 	 * <p>
-	 * The dialog asks the same question for its OK button, so there is no second
-	 * rule that could drift.
+	 * The dialog asks the same question for its OK button, and so does the list of
+	 * the same content, so there is no second rule that could drift - it lives in
+	 * {@link ValueContentRules}. Taking the empty string back is the wider question
+	 * that {@code tryToSetValue} asks: pointing nowhere is a state this value has -
+	 * it is the one a fresh one starts in - and it is where a reference is put back
+	 * to when its target is deleted, so the way in has to exist. Nothing chosen must
+	 * still not become a value, which is what this narrower question is for.
 	 * </p>
+	 *
+	 * @see ValueContentRules#accepts(ValueContentType, String)
 	 */
 	public static boolean accepts(String value) {
-		if (value == null) {
-			return false;
-		}
-		return KEY.matcher(value).matches();
-	}
-
-	/**
-	 * Takes a key, and takes the empty string back as well. Pointing nowhere is a
-	 * state this value has - it is the one a fresh one starts in - and it is where
-	 * a reference is put back to when its target is deleted, so the way in has to
-	 * exist. {@link #accepts} is the narrower question, and the dialog asks that
-	 * one: nothing chosen must not become a value.
-	 */
-	@Override
-	public boolean tryToSetValue(Object value) {
-		return value instanceof String s && (s.isEmpty() || accepts(s)) && setValue(s);
+		return ValueContentRules.accepts(ValueContentType.INSTANZ, value);
 	}
 
 	@Override
-	public String getPath() {
-		return SingleValueType.SINGLE_INSTANZ.getPath();
+	public SingleValueType getType() {
+		return SingleValueType.SINGLE_INSTANZ;
 	}
-
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append(this.getOwnKey()).append(" ");
-		builder.append(this.getValue()).append(" ");
-		String[] string = this.getClass().toString().split("\\.");
-		builder.append(": ").append(string[string.length - 1]);
-		return builder.toString();
-	}
-
 }

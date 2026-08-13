@@ -1,6 +1,5 @@
 package de.tonsias.basis.ui.dialog;
 
-import java.util.Arrays;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -29,11 +28,12 @@ import org.eclipse.swt.widgets.Shell;
 
 import de.tonsias.basis.logic.dialog.CreateInstanzDialogLogic;
 import de.tonsias.basis.logic.dialog.CreateInstanzDialogLogic.TableRecord;
-import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.enums.ValueContentType;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
+import de.tonsias.basis.osgi.intf.IMultiValueService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.util.OsgiUtil;
 import de.tonsias.basis.ui.i18n.Messages;
@@ -43,7 +43,8 @@ import de.tonsias.basis.ui.widget.InstanzSelectionDialog;
 public class CreateInstanzDialog extends Dialog {
 
 	private CreateInstanzDialogLogic _logic = new CreateInstanzDialogLogic(OsgiUtil.getService(IInstanzService.class),
-			OsgiUtil.getService(ISingleValueService.class), OsgiUtil.getService(IBasicPreferenceService.class));
+			OsgiUtil.getService(ISingleValueService.class), OsgiUtil.getService(IMultiValueService.class),
+			OsgiUtil.getService(IBasicPreferenceService.class));
 
 	private TableViewer _viewer;
 
@@ -108,23 +109,22 @@ public class CreateInstanzDialog extends Dialog {
 		_viewer.getTable().setHeaderVisible(true);
 		_viewer.getTable().setLinesVisible(true);
 
-		createColumn(_messages.constant_singleValue, 200,
-				tRec -> MessagesUtil.getSingleValueTypeLabel(_messages, tRec.type), //
+		// the combo shows both families at once, so its selection indexes into the
+		// list the logic keeps rather than into an enum's ordinals
+		createColumn(_messages.constant_type, 200, tRec -> MessagesUtil.getValueTypeLabel(_messages, tRec.type), //
 				getEditingSupport(//
 						(element, value) -> {
 							// the logic drops a value the new type would not take with it, so the row
-							// never carries text under a type that stores a key
-							_logic.setType(element, SingleValueType.values()[(int) value]);
+							// never carries text under a type that stores a key or a list
+							_logic.setType(element, _logic.typeAt((int) value));
 							_viewer.update(element, null);
 						}, //
-						element -> Arrays.asList(SingleValueType.values()).indexOf(element.type), //
+						element -> _logic.indexOf(element), //
 						element -> {
-							String[] array = Arrays.stream(SingleValueType.values())
-									.map(i -> MessagesUtil.getSingleValueTypeLabel(_messages, i))
+							String[] array = CreateInstanzDialogLogic.TYPE_CHOICES.stream()
+									.map(type -> MessagesUtil.getValueTypeLabel(_messages, type))
 									.collect(Collectors.toList()).toArray(String[]::new);
-							var editor = new ComboBoxCellEditor(_viewer.getTable(), array);
-
-							return editor;
+							return new ComboBoxCellEditor(_viewer.getTable(), array);
 						}));
 
 		createColumn(_messages.constant_parameterName, 200, tRec -> tRec.parameterName, //
@@ -146,7 +146,8 @@ public class CreateInstanzDialog extends Dialog {
 							_viewer.update(element, null);
 						}, //
 						element -> element.value, //
-						element -> element.type == SingleValueType.SINGLE_INSTANZ ? instanzCellEditor()
+						element -> element.type.getContentType() == ValueContentType.INSTANZ && !element.type.isMulti()
+								? instanzCellEditor()
 								: new TextCellEditor(_viewer.getTable())));
 
 

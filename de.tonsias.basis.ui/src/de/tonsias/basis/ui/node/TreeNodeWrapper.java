@@ -1,14 +1,17 @@
 package de.tonsias.basis.ui.node;
 
-import java.util.Arrays;
 import java.util.Optional;
 
+import de.tonsias.basis.model.enums.IValueType;
+import de.tonsias.basis.model.enums.MultiValueType;
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.enums.ValueTypes;
 import de.tonsias.basis.model.interfaces.IInstanz;
 import de.tonsias.basis.model.interfaces.IObject;
-import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.model.interfaces.IValue;
 import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
 import de.tonsias.basis.osgi.intf.IInstanzService;
+import de.tonsias.basis.osgi.intf.IMultiValueService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.util.OsgiUtil;
 import jakarta.inject.Inject;
@@ -18,6 +21,8 @@ public class TreeNodeWrapper {
 	static final IInstanzService _instanzService = OsgiUtil.getService(IInstanzService.class);
 
 	static final ISingleValueService _singleService = OsgiUtil.getService(ISingleValueService.class);
+
+	static final IMultiValueService _multiService = OsgiUtil.getService(IMultiValueService.class);
 
 	static final IBasicPreferenceService _prefService = OsgiUtil.getService(IBasicPreferenceService.class);
 
@@ -43,7 +48,7 @@ public class TreeNodeWrapper {
 		result += instanz.getChildren().size();
 
 		if (_prefService.getValue(IBasicPreferenceService.Key.SHOW_VALUES.getKey(), Boolean.class).orElse(false)) {
-			result += Arrays.stream(SingleValueType.values()).mapToInt(s -> instanz.getSingleValues(s).size()).sum();
+			result += ValueTypes.valuesList().stream().mapToInt(type -> instanz.getValues(type).size()).sum();
 		}
 		return result;
 	}
@@ -64,13 +69,12 @@ public class TreeNodeWrapper {
 			cIndex++;
 		}
 
-		for (SingleValueType type : SingleValueType.values()) {
-			for (String singleValueKey : instanz.getSingleValues(type).keySet()) {
+		for (IValueType type : ValueTypes.valuesList()) {
+			for (String valueKey : instanz.getValues(type).keySet()) {
 				if (cIndex == index) {
-					Optional<? extends ISingleValue<?>> singleValue = _singleService.resolveKey(type.getPath(),
-							singleValueKey, type.getClazz());
-					if (singleValue.isPresent()) {
-						return new TreeNodeWrapper(singleValue.get(), this);
+					Optional<? extends IValue> value = resolve(type, valueKey);
+					if (value.isPresent()) {
+						return new TreeNodeWrapper(value.get(), this);
 					}
 				}
 				cIndex++;
@@ -78,6 +82,13 @@ public class TreeNodeWrapper {
 
 		}
 		return null;
+	}
+
+	private Optional<? extends IValue> resolve(IValueType type, String valueKey) {
+		if (type instanceof MultiValueType multi) {
+			return _multiService.resolveKey(multi.getPath(), valueKey, multi.getClazz());
+		}
+		return _singleService.resolveKey(type.getPath(), valueKey, ((SingleValueType) type).getClazz());
 	}
 
 	public TreeNodeWrapper getParent() {

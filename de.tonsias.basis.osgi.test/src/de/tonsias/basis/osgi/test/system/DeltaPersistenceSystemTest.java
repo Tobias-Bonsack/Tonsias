@@ -138,7 +138,7 @@ public class DeltaPersistenceSystemTest {
 		assertThat(reloaded.getValue(), is("content"));
 		assertThat(reloaded.getConnectedInstanzKeys(), contains(owner.getOwnKey()));
 
-		assertThat(reloadInstanz(owner.getOwnKey()).getSingleValues(SingleValueType.SINGLE_STRING)
+		assertThat(reloadInstanz(owner.getOwnKey()).getValues(SingleValueType.SINGLE_STRING)
 				.get(value.getOwnKey()), is("parameter"));
 	}
 
@@ -168,7 +168,7 @@ public class DeltaPersistenceSystemTest {
 
 		assertThat(reloadStringValue(value.getOwnKey()).getConnectedInstanzKeys(),
 				containsInAnyOrder(owner.getOwnKey(), secondOwner.getOwnKey()));
-		assertThat(reloadInstanz(secondOwner.getOwnKey()).getSingleValues(SingleValueType.SINGLE_STRING)
+		assertThat(reloadInstanz(secondOwner.getOwnKey()).getValues(SingleValueType.SINGLE_STRING)
 				.containsKey(value.getOwnKey()), is(true));
 	}
 
@@ -179,11 +179,11 @@ public class DeltaPersistenceSystemTest {
 				Type.SEND);
 		_delta.saveDeltas();
 
-		_inse.changeSingleValueName(owner.getOwnKey(), SingleValueType.SINGLE_STRING, value.getOwnKey(), "newName",
+		_inse.changeValueName(owner.getOwnKey(), SingleValueType.SINGLE_STRING, value.getOwnKey(), "newName",
 				Type.SEND);
 		_delta.saveDeltas();
 
-		assertThat(reloadInstanz(owner.getOwnKey()).getSingleValues(SingleValueType.SINGLE_STRING)
+		assertThat(reloadInstanz(owner.getOwnKey()).getValues(SingleValueType.SINGLE_STRING)
 				.get(value.getOwnKey()), is("newName"));
 	}
 
@@ -202,13 +202,13 @@ public class DeltaPersistenceSystemTest {
 		_delta.saveDeltas();
 		assertThat(Files.exists(stringValueFile(value.getOwnKey())), is(true));
 
-		_svs.markSingleValueAsDelete(value.getOwnKey(), Type.SEND);
+		_svs.markValueAsDelete(value.getOwnKey(), Type.SEND);
 		_delta.saveDeltas();
 
 		assertThat(Files.exists(stringValueFile(value.getOwnKey())), is(false));
-		assertThat(reloadInstanz(owner.getOwnKey()).getSingleValues(SingleValueType.SINGLE_STRING)
+		assertThat(reloadInstanz(owner.getOwnKey()).getValues(SingleValueType.SINGLE_STRING)
 				.containsKey(value.getOwnKey()), is(false));
-		assertThat(reloadInstanz(secondOwner.getOwnKey()).getSingleValues(SingleValueType.SINGLE_STRING)
+		assertThat(reloadInstanz(secondOwner.getOwnKey()).getValues(SingleValueType.SINGLE_STRING)
 				.containsKey(value.getOwnKey()), is(false));
 	}
 

@@ -32,7 +32,7 @@ import de.tonsias.basis.osgi.intf.IInstanzService;
 
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
-import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.ChangeType;
+import de.tonsias.basis.osgi.intf.non.service.ChangeType;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedChildChangeEvent;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.LinkedReferenceChangeEvent;
@@ -131,10 +131,10 @@ public class InstanzServiceSystemTest {
 	void testResolveKey_returnsTheInstanzTheServicesMutate() {
 		IInstanz child = _inse.createInstanz(ROOT, Type.SEND);
 
-		_inse.putSingleValue(child.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "vName", Type.SEND);
+		_inse.putValue(child.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "vName", Type.SEND);
 
 		assertThat(_inse.resolveKey(child.getOwnKey()).get(), is(sameInstance(child)));
-		assertThat(child.getSingleValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vName"));
+		assertThat(child.getValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vName"));
 	}
 
 	/** After a save the file is a complete second source for the same instanz. */
@@ -361,16 +361,16 @@ public class InstanzServiceSystemTest {
 		IInstanz owner = _inse.createInstanz(ROOT, Type.SEND);
 		_recorder.clear();
 
-		_inse.putSingleValue(owner.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "vName", Type.SEND);
+		_inse.putValue(owner.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "vName", Type.SEND);
 
 		LinkedValueChangeEvent data = _recorder.onlyDataOf(InstanzEventConstants.VALUE_LIST_CHANGE,
 				LinkedValueChangeEvent.class);
 		assertThat(data._key(), is(owner.getOwnKey()));
-		assertThat(data._singleValuetype(), is(SingleValueType.SINGLE_STRING));
+		assertThat(data._valueType(), is(SingleValueType.SINGLE_STRING));
 		assertThat(data._changeType(), is(ChangeType.ADD));
 		assertThat(data._valueKeys(), contains("vKey"));
 
-		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vName"));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vName"));
 	}
 
 	/** Without a name the key stands in for it, so the tree never shows a blank. */
@@ -378,20 +378,20 @@ public class InstanzServiceSystemTest {
 	void testPutSingleValue_blankNameFallsBackToTheKey() {
 		IInstanz owner = _inse.createInstanz(ROOT, Type.SEND);
 
-		_inse.putSingleValue(owner.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "  ", Type.SEND);
+		_inse.putValue(owner.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "  ", Type.SEND);
 
-		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vKey"));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vKey"));
 	}
 
 	@Test
 	void testPutSingleValue_anAlreadyLinkedValueKeepsItsNameAndIsSilent() {
 		IInstanz owner = _inse.createInstanz(ROOT, Type.SEND);
-		_inse.putSingleValue(owner.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "vName", Type.SEND);
+		_inse.putValue(owner.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "vName", Type.SEND);
 		_recorder.clear();
 
-		_inse.putSingleValue(owner.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "otherName", Type.SEND);
+		_inse.putValue(owner.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "otherName", Type.SEND);
 
-		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vName"));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).get("vKey"), is("vName"));
 		assertThat(_recorder.events(), hasSize(0));
 	}
 
@@ -399,7 +399,7 @@ public class InstanzServiceSystemTest {
 	void testPutSingleValue_anUnresolvableInstanzIsIgnored() {
 		_recorder.clear();
 
-		_inse.putSingleValue("no-such-key", SingleValueType.SINGLE_STRING, "vKey", "vName", Type.SEND);
+		_inse.putValue("no-such-key", SingleValueType.SINGLE_STRING, "vKey", "vName", Type.SEND);
 
 		assertThat(_recorder.events(), hasSize(0));
 	}
@@ -407,10 +407,10 @@ public class InstanzServiceSystemTest {
 	@Test
 	void testChangeSingleValueName_firesTheRenameWithOldAndNewName() {
 		IInstanz owner = _inse.createInstanz(ROOT, Type.SEND);
-		_inse.putSingleValue(owner.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "oldName", Type.SEND);
+		_inse.putValue(owner.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "oldName", Type.SEND);
 		_recorder.clear();
 
-		_inse.changeSingleValueName(owner.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "newName", Type.SEND);
+		_inse.changeValueName(owner.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "newName", Type.SEND);
 
 		ValueRenameEvent data = _recorder.onlyDataOf(InstanzEventConstants.NAME_CHANGE, ValueRenameEvent.class);
 		assertThat(data._key(), is(owner.getOwnKey()));
@@ -418,22 +418,22 @@ public class InstanzServiceSystemTest {
 		assertThat(data._oldName(), is("oldName"));
 		assertThat(data._newName(), is("newName"));
 
-		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).get("vKey"), is("newName"));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).get("vKey"), is("newName"));
 	}
 
 	@Test
 	void testRemoveValueKey_unlinksTheValueFromEveryInstanzItNames() {
 		IInstanz one = _inse.createInstanz(ROOT, Type.SEND);
 		IInstanz other = _inse.createInstanz(ROOT, Type.SEND);
-		_inse.putSingleValue(one.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "n1", Type.SEND);
-		_inse.putSingleValue(other.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "n2", Type.SEND);
+		_inse.putValue(one.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "n1", Type.SEND);
+		_inse.putValue(other.getOwnKey(), SingleValueType.SINGLE_STRING, "vKey", "n2", Type.SEND);
 		_recorder.clear();
 
 		_inse.removeValueKey(List.of(one.getOwnKey(), other.getOwnKey()), SingleValueType.SINGLE_STRING, "vKey",
 				Type.SEND);
 
-		assertThat(one.getSingleValues(SingleValueType.SINGLE_STRING).containsKey("vKey"), is(false));
-		assertThat(other.getSingleValues(SingleValueType.SINGLE_STRING).containsKey("vKey"), is(false));
+		assertThat(one.getValues(SingleValueType.SINGLE_STRING).containsKey("vKey"), is(false));
+		assertThat(other.getValues(SingleValueType.SINGLE_STRING).containsKey("vKey"), is(false));
 
 		assertThat(_recorder.dataOf(InstanzEventConstants.VALUE_LIST_CHANGE, LinkedValueChangeEvent.class).stream()
 				.map(LinkedValueChangeEvent::_key).toList(),
@@ -675,7 +675,7 @@ public class InstanzServiceSystemTest {
 		SingleStringValue value = _svs.createNew(SingleStringValue.class, owner.getOwnKey(), "parameter", "content",
 				Type.SEND);
 
-		assertThat(owner.getSingleValues(SingleValueType.SINGLE_STRING).get(value.getOwnKey()), is("parameter"));
+		assertThat(owner.getValues(SingleValueType.SINGLE_STRING).get(value.getOwnKey()), is("parameter"));
 		assertThat(value.getConnectedInstanzKeys(), contains(owner.getOwnKey()));
 	}
 }

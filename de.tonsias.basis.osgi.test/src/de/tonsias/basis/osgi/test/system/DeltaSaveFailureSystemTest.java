@@ -114,11 +114,11 @@ public class DeltaSaveFailureSystemTest {
 		SingleStringValue value = _svs.createNew(SingleStringValue.class, owner.getOwnKey(), "parameter", "content",
 				Type.SEND);
 		_delta.saveDeltas();
-		_svs.markSingleValueAsDelete(value.getOwnKey(), Type.SEND);
+		_svs.markValueAsDelete(value.getOwnKey(), Type.SEND);
 		_delta.saveDeltas();
 		assertThat(ProductRuntime.valueFileExists(SingleValueType.SINGLE_STRING, value.getOwnKey()), is(false));
 
-		_svs.markSingleValueAsDelete(value.getOwnKey(), Type.SEND);
+		_svs.markValueAsDelete(value.getOwnKey(), Type.SEND);
 		_delta.saveDeltas();
 
 		assertThat(_delta.getDeltas(), contains(IDeltaService.START_EVENT));

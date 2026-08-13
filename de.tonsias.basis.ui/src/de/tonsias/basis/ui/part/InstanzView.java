@@ -2,6 +2,8 @@ package de.tonsias.basis.ui.part;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 
@@ -36,19 +38,30 @@ import com.google.common.collect.BiMap;
 
 import de.tonsias.basis.logic.part.InstanzChoices;
 import de.tonsias.basis.logic.part.InstanzViewLogic;
+import de.tonsias.basis.model.enums.IValueType;
+import de.tonsias.basis.model.enums.MultiValueType;
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.enums.ValueContentType;
 import de.tonsias.basis.model.interfaces.IInstanz;
+import de.tonsias.basis.model.interfaces.IMultiValue;
 import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.model.interfaces.IValue;
 import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IInstanzService;
+import de.tonsias.basis.osgi.intf.IMultiValueService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.MultiValueEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants;
+import de.tonsias.basis.osgi.intf.non.service.ValueEventConstants;
 import de.tonsias.basis.osgi.util.OsgiUtil;
+import de.tonsias.basis.ui.dialog.AMultiValueDialog;
+import de.tonsias.basis.ui.dialog.ValueDialogs;
 import de.tonsias.basis.ui.i18n.Messages;
 import de.tonsias.basis.ui.util.MessagesUtil;
 import de.tonsias.basis.ui.widget.InstanzSelectionDialog;
+import java.util.stream.Collectors;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 
@@ -68,6 +81,9 @@ public class InstanzView {
 	private ISingleValueService _singleService;
 
 	@Inject
+	private IMultiValueService _multiService;
+
+	@Inject
 	private IEventBrokerBridge _broker;
 
 	private InstanzViewLogic _logic;
@@ -82,7 +98,7 @@ public class InstanzView {
 
 	@PostConstruct
 	public void postConstruct(Composite parent) {
-		_logic = new InstanzViewLogic(_instanzService, _singleService);
+		_logic = new InstanzViewLogic(_instanzService, _singleService, _multiService);
 
 		GridLayoutFactory.fillDefaults().applyTo(parent);
 		_parent = parent;
@@ -91,7 +107,7 @@ public class InstanzView {
 			return;
 		}
 		createInstanzInfos();
-		createSingleValueGroup();
+		createValueGroups();
 		createChildren();
 		createParent();
 
@@ -129,7 +145,7 @@ public class InstanzView {
 		_ownKeyLabel.setText(_shownInstanz.getOwnKey());
 
 		_groups.forEach(group -> group.dispose());
-		createSingleValueGroup();
+		createValueGroups();
 		createParent();
 		createChildren();
 
@@ -165,53 +181,179 @@ public class InstanzView {
 		}
 	}
 
-	private void createSingleValueGroup() {
+	private void createValueGroups() {
+		createValueGroup(_messages.constant_singleValue, SingleValueType.values());
+		createValueGroup(_messages.constant_multiValue, MultiValueType.values());
+	}
+
+	private void createValueGroup(String label, IValueType[] types) {
 		Group parent = new Group(_parent, SWT.None);
-		parent.setText(_messages.constant_singleValue);
+		parent.setText(label);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(parent);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(parent);
 		_groups.add(parent);
 
-		SingleValueType[] values = SingleValueType.values();
-		for (SingleValueType type : values) {
+		for (IValueType type : types) {
 			Group typeGroup = new Group(parent, SWT.None);
-			typeGroup.setText(MessagesUtil.getSingleValueTypeLabel(_messages, type));
+			typeGroup.setText(MessagesUtil.getValueTypeLabel(_messages, type));
 			GridDataFactory.fillDefaults().grab(true, false).applyTo(typeGroup);
 			GridLayoutFactory.fillDefaults().numColumns(3).applyTo(typeGroup);
 
-			BiMap<String, String> singleValues = _shownInstanz.getSingleValues(type);
-			for (Entry<String, String> svKeyToName : singleValues.entrySet()) {
-				Optional<? extends ISingleValue<?>> singleValue = _singleService.resolveKey(type.getPath(),
-						svKeyToName.getKey(), type.getClazz());
-				if (singleValue.isPresent()) {
-					createSingleValueNameText(typeGroup, singleValue.get(), svKeyToName.getValue(), type);
-					createSinlgeValueTexts(typeGroup, singleValue.get());
-				} // TODO: is there always a resolvable single value?
+			BiMap<String, String> values = _shownInstanz.getValues(type);
+			// a copy: a delete from the context menu below takes an entry out of this map
+			// while it is being walked
+			for (Entry<String, String> keyToName : Map.copyOf(values).entrySet()) {
+				Optional<? extends IValue> value = resolve(type, keyToName.getKey());
+				if (value.isPresent()) {
+					createValueNameText(typeGroup, value.get(), keyToName.getValue());
+					createValueControls(typeGroup, value.get());
+				} else {
+					createOrphanRow(typeGroup, type, keyToName.getKey(), keyToName.getValue());
+				}
 			}
 		}
 	}
 
-	private void createSinlgeValueTexts(Group typeGroup, ISingleValue<?> singleValue) {
-		Control control = null;
-		switch (SingleValueType.getByClass(singleValue.getClass()).get()) {
+	/**
+	 * An attribute the instanz names and no file backs. It used to be skipped
+	 * silently, which left the name taken - a new attribute could not have it, and
+	 * nothing said why. So it is shown: the name it holds, what is the matter, and
+	 * the same delete in the context menu every other attribute has, so the dangling
+	 * entry can be got rid of.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/86">#86</a>
+	 */
+	private void createOrphanRow(Group typeGroup, IValueType type, String valueKey, String parameterName) {
+		TextFactory.newText(SWT.None)//
+				.enabled(false)//
+				.layoutData(GridDataFactory.fillDefaults().grab(true, false).align(SWT.FILL, SWT.BEGINNING).create())//
+				.text(parameterName)//
+				.create(typeGroup);
+
+		Label missing = LabelFactory.newLabel(SWT.None)//
+				.text(_messages.instanzView_missingValue)//
+				.layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
+				.create(typeGroup);
+		missing.setForeground(missing.getDisplay().getSystemColor(SWT.COLOR_RED));
+
+		Label keyLabel = LabelFactory.newLabel(SWT.None)//
+				.text(_messages.constant_key + ": " + valueKey)//
+				.layoutData(GridDataFactory.fillDefaults().create())//
+				.create(typeGroup);
+
+		Menu labelCM = new Menu(keyLabel);
+		labelCM.setData(keyLabel);
+		keyLabel.setMenu(labelCM);
+
+		MenuItem deleteMI = new MenuItem(labelCM, SWT.PUSH);
+		deleteMI.setText(_messages.mi_delete);
+		deleteMI.addSelectionListener(SelectionListener.widgetSelectedAdapter(event -> {
+			// straight through rather than queued: there is no value to change, only the
+			// instanz's own entry, and nothing on screen would show a pending one
+			_instanzService.removeValueKey(List.of(_shownInstanz.getOwnKey()), type, valueKey,
+					IEventBrokerBridge.Type.POST);
+			updateView();
+		}));
+	}
+
+	private Optional<? extends IValue> resolve(IValueType type, String valueKey) {
+		if (type instanceof MultiValueType multi) {
+			return _multiService.resolveKey(multi.getPath(), valueKey, multi.getClazz());
+		}
+		return _singleService.resolveKey(type.getPath(), valueKey, ((SingleValueType) type).getClazz());
+	}
+
+	/**
+	 * The widget an attribute is edited with, chosen by what it holds rather than by
+	 * which of the ten types it is - five contents, plus the one branch that really
+	 * differs.
+	 */
+	private void createValueControls(Group typeGroup, IValue value) {
+		Control control = value.getType().isMulti() ? createElementsButton(typeGroup, (IMultiValue<?>) value)
+				: createSingleValueControl(typeGroup, (ISingleValue<?>) value);
+		createSaveKeyListener(control);
+
+		Label keyLabel = LabelFactory.newLabel(SWT.None)//
+				.text(_messages.constant_key + ": " + value.getOwnKey())//
+				.layoutData(GridDataFactory.fillDefaults().create())//
+				.create(typeGroup);
+
+		Menu labelCM = new Menu(keyLabel);
+		labelCM.setData(keyLabel);
+		keyLabel.setMenu(labelCM);
+
+		MenuItem deleteMI = new MenuItem(labelCM, SWT.PUSH);
+		deleteMI.setData(value);
+		deleteMI.setText(_messages.mi_delete);
+		deleteMI.addSelectionListener(deleteValueSelectionListener());
+	}
+
+	/**
+	 * A list is edited in the dialog that shows the whole of it. The view has one
+	 * line per attribute, which is no room for a table - so the button says what the
+	 * list holds and opens the dialog, the way a relation's button opens the
+	 * chooser.
+	 */
+	private Control createElementsButton(Group typeGroup, IMultiValue<?> multiValue) {
+		Button edit = ButtonFactory.newButton(SWT.PUSH)//
+				.text(elementsLabel(multiValue))//
+				.layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
+				.create(typeGroup);
+		edit.addSelectionListener(SelectionListener.widgetSelectedAdapter(event -> editElements(multiValue, edit)));
+		return edit;
+	}
+
+	private String elementsLabel(IMultiValue<?> multiValue) {
+		if (multiValue.getValues().isEmpty()) {
+			return _messages.constant_edit;
+		}
+		if (multiValue.getType().getContentType() == ValueContentType.INSTANZ) {
+			return multiValue.getValues().stream().map(element -> targetLabel(String.valueOf(element)))
+					.collect(Collectors.joining(", "));
+		}
+		return multiValue.getValues().stream().map(String::valueOf).collect(Collectors.joining(", "));
+	}
+
+	/**
+	 * Opens the list dialog on the value as it stands and queues what comes back.
+	 * Cancelling leaves the list as it is - the button is not a change in itself.
+	 */
+	private void editElements(IMultiValue<?> multiValue, Button button) {
+		if (_logic.isInDelete(multiValue)) {
+			return;
+		}
+
+		AMultiValueDialog<?> dialog = ValueDialogs.edit(multiValue, button.getShell(), _shownInstanz, _messages);
+		// the view queues what its widgets did and applies it all on save, so the
+		// dialog must not write on its own - the same rule the text fields follow
+		dialog.setWriteOnOk(false);
+		if (dialog.open() != Window.OK) {
+			return;
+		}
+
+		button.setBackground(button.getDisplay().getSystemColor(SWT.COLOR_GREEN));
+		_logic.createModifyElementsJob(multiValue.getOwnKey(), dialog.getEnteredElements());
+		_part.setDirty(true);
+	}
+
+	private Control createSingleValueControl(Group typeGroup, ISingleValue<?> singleValue) {
+		switch (singleValue.getType().getContentType()) {
 		// both numbers are entered in one line and travel on as text, which
 		// tryToSetValue parses - the only difference is what it accepts there
-		case SINGLE_INTEGER:
-		case SINGLE_FLOAT:
-			control = TextFactory.newText(SWT.None)//
+		case INTEGER:
+		case FLOAT:
+			return TextFactory.newText(SWT.None)//
 					.text(singleValue.getValue().toString())//
 					.onModify(event -> onSingleValueModify(singleValue, event))
 					.layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
 					.create(typeGroup);
-			break;
-		case SINGLE_STRING:
-			control = TextFactory.newText(SWT.MULTI | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL)//
+		case STRING:
+			return TextFactory.newText(SWT.MULTI | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL)//
 					.text(singleValue.getValue().toString())//
 					.onModify(event -> onSingleValueModify(singleValue, event))//
 					.layoutData(GridDataFactory.fillDefaults().grab(true, false).hint(SWT.DEFAULT, 100).create())//
 					.create(typeGroup);
-			break;
-		case SINGLE_BOOLEAN:
+		case BOOLEAN:
 			Button check = ButtonFactory.newButton(SWT.CHECK)//
 					.text("")//
 					.layoutData(GridDataFactory.fillDefaults().grab(true, false).create())//
@@ -219,9 +361,8 @@ public class InstanzView {
 			check.setSelection(Boolean.TRUE.equals(singleValue.getValue()));
 			check.addSelectionListener(SelectionListener
 					.widgetSelectedAdapter(event -> onSingleValueSelect(singleValue, check.getSelection(), check)));
-			control = check;
-			break;
-		case SINGLE_INSTANZ:
+			return check;
+		case INSTANZ:
 			// a relation is chosen, not typed. The view has one line per attribute, which
 			// is no room for a tree, so the button says where the relation points and
 			// opens the chooser
@@ -231,28 +372,12 @@ public class InstanzView {
 					.create(typeGroup);
 			choose.addSelectionListener(
 					SelectionListener.widgetSelectedAdapter(event -> chooseTarget(singleValue, choose)));
-			control = choose;
-			break;
+			return choose;
 		default:
-			// without a widget the listener below would fail on null - a new type has to
-			// bring its own case rather than break the whole view
-			throw new IllegalArgumentException("Unexpected value: " + singleValue.getClass());
+			// without a widget the caller would go on with null - a new content type has
+			// to bring its own case rather than break the whole view
+			throw new IllegalArgumentException("Unexpected value: " + singleValue.getType());
 		}
-		createSaveKeyListener(control);
-
-		Label keyLabel = LabelFactory.newLabel(SWT.None)//
-				.text(_messages.constant_key + ": " + singleValue.getOwnKey())//
-				.layoutData(GridDataFactory.fillDefaults().create())//
-				.create(typeGroup);
-
-		Menu labelCM = new Menu(keyLabel);
-		labelCM.setData(keyLabel);
-		keyLabel.setMenu(labelCM);
-
-		MenuItem deleteMI = new MenuItem(labelCM, SWT.PUSH);
-		deleteMI.setData(singleValue);
-		deleteMI.setText(_messages.mi_delete);
-		deleteMI.addSelectionListener(deleteSingleValueSelectionListener());
 	}
 
 	private void createSaveKeyListener(Control control) {
@@ -266,16 +391,16 @@ public class InstanzView {
 		});
 	}
 
-	private SelectionAdapter deleteSingleValueSelectionListener() {
+	private SelectionAdapter deleteValueSelectionListener() {
 		return new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				ISingleValue<?> singleValue = (ISingleValue<?>) e.widget.getData();
+				IValue singleValue = (IValue) e.widget.getData();
 				if (e.getSource() instanceof MenuItem mi) {
 					Control parent = (Control) mi.getParent().getData();
 					parent.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_RED));
 				}
-				_logic.createDeleteSvJob(singleValue);
+				_logic.createDeleteValueJob(singleValue);
 				_part.setDirty(true);
 			}
 		};
@@ -288,7 +413,7 @@ public class InstanzView {
 
 		Text text = (Text) event.widget;
 		text.setBackground(text.getDisplay().getSystemColor(SWT.COLOR_GREEN));
-		_logic.createModifySvJob(singleValue.getOwnKey(), text.getText());
+		_logic.createModifyValueJob(singleValue.getOwnKey(), text.getText());
 		_part.setDirty(true);
 	}
 
@@ -305,7 +430,7 @@ public class InstanzView {
 		}
 
 		control.setBackground(control.getDisplay().getSystemColor(SWT.COLOR_GREEN));
-		_logic.createModifySvJob(singleValue.getOwnKey(), newValue);
+		_logic.createModifyValueJob(singleValue.getOwnKey(), newValue);
 		_part.setDirty(true);
 	}
 
@@ -344,20 +469,19 @@ public class InstanzView {
 				OsgiUtil.getService(IBasicPreferenceService.class));
 	}
 
-	private void createSingleValueNameText(Group parent, ISingleValue<?> singleValue, String parameterName,
-			SingleValueType type) {
+	private void createValueNameText(Group parent, IValue value, String parameterName) {
 		TextFactory.newText(SWT.None)//
 				.enabled(true)//
 				.layoutData(GridDataFactory.fillDefaults().grab(true, false).align(SWT.FILL, SWT.BEGINNING).create())//
 				.text(parameterName)//
-				.onModify(event -> onSingleValueNameModify(singleValue, type, event))//
+				.onModify(event -> onValueNameModify(value, event))//
 				.create(parent);
 	}
 
-	private void onSingleValueNameModify(ISingleValue<?> singleValue, SingleValueType type, ModifyEvent event) {
+	private void onValueNameModify(IValue value, ModifyEvent event) {
 		Text text = (Text) event.widget;
 		text.setBackground(text.getDisplay().getSystemColor(SWT.COLOR_GREEN));
-		_logic.createSvNameModifyJob(_shownInstanz.getOwnKey(), ((Text) event.widget).getText(), singleValue);
+		_logic.createValueNameModifyJob(_shownInstanz.getOwnKey(), ((Text) event.widget).getText(), value);
 		_part.setDirty(true);
 	}
 
@@ -425,11 +549,22 @@ public class InstanzView {
 	}
 	@Inject
 	@org.eclipse.e4.core.di.annotations.Optional
-	private void singlevalueDeltaEventListener(@UIEventTopic(SingleValueEventConstants.ALL_DELTA_TOPIC) SingleValueEventConstants.SingleValueEvent event) {
+	private void singlevalueDeltaEventListener(
+			@UIEventTopic(SingleValueEventConstants.ALL_DELTA_TOPIC) SingleValueEventConstants.SingleValueEvent event) {
+		valueDeltaEvent(event);
+	}
+
+	@Inject
+	@org.eclipse.e4.core.di.annotations.Optional
+	private void multivalueDeltaEventListener(
+			@UIEventTopic(MultiValueEventConstants.ALL_DELTA_TOPIC) MultiValueEventConstants.MultiValueEvent event) {
+		valueDeltaEvent(event);
+	}
+
+	/** both families ask the same question, so they answer it in the same place */
+	private void valueDeltaEvent(ValueEventConstants.ValueEvent event) {
 		if (_logic.affectsShownInstanz(_shownInstanz, event)) {
 			updateView();
 		}
 	}
-	
-	
 }

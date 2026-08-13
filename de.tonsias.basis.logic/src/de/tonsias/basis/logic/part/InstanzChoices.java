@@ -116,7 +116,7 @@ public class InstanzChoices {
 			return instanz.toString();
 		}
 
-		String valueKey = instanz.getSingleValues(SingleValueType.SINGLE_STRING).inverse().get(parameterName.get());
+		String valueKey = instanz.getValues(SingleValueType.SINGLE_STRING).inverse().get(parameterName.get());
 		return _singleValueService
 				.resolveKey(SingleValueType.SINGLE_STRING.getPath(), valueKey, SingleStringValue.class)
 				.map(SingleStringValue::getValue)//
