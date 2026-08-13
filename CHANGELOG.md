@@ -9,6 +9,41 @@ All notable changes to Tonsias are documented here. The format follows
 
 Development towards 0.3.0. The reactor is at `0.3.0-SNAPSHOT`.
 
+### Added
+
+- **`MultiValueType`** — the same five contents an attribute can hold, now also as a
+  *list*: `MULTI_STRING`, `MULTI_INTEGER`, `MULTI_BOOLEAN`, `MULTI_FLOAT` and
+  `MULTI_INSTANZ`, stored under `multi_value/<type>/`. A list is ordered and holds no
+  duplicates, and an empty one is a value in its own right — it is what a list says
+  instead of a default. Lists are created from the model view and from the
+  create-instanz dialog, and edited from the instanz view in a dialog that adds,
+  removes and reorders their elements.
+- **A relation can now point at several instanzen at once.** `MULTI_INSTANZ` holds a
+  list of target keys, every target records the relation back the way it does for a
+  single one, and deleting a target takes *its* element out and leaves the rest of the
+  list pointing where it pointed.
+
+### Changed
+
+- The two kinds of attribute are one thing with two shapes rather than two parallel
+  worlds. `IValueType` is what both type enums answer, `AValue` carries what every
+  value has, and `ValueContentRules` holds every accepts/convert rule once — so the
+  single value and the list of the same content cannot answer the same question
+  differently. `IInstanz.getSingleValues(SingleValueType)` is now
+  `getValues(IValueType)`, and `IInstanzService`'s attribute methods take an
+  `IValueType`.
+- The type combo of the create-instanz dialog indexes an explicit list instead of an
+  enum's ordinals, so both families can appear in it — and new constants no longer have
+  to be appended.
+
+### On-disk compatibility
+
+A model written by 0.2.0 loads unchanged: instanz files gain five optional maps that
+come back empty when the file does not name them, and value files are byte-identical in
+shape. The other direction is not covered — a model saved by 0.3.0 and then opened by
+0.2.0 loses its list attributes on the next save, because Gson drops the fields the old
+classes do not declare.
+
 ## [0.2.0] - 2026-08-09
 
 Two more attribute types — a decimal number and, for the first time, a **relation** that

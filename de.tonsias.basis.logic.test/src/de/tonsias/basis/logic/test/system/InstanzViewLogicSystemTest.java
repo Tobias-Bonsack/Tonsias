@@ -67,7 +67,7 @@ public class InstanzViewLogicSystemTest {
 		_broker = ProductRuntime.broker();
 		_owner = _inse.createInstanz(ROOT, Type.SEND);
 
-		_logic = new InstanzViewLogic(_inse, _svs);
+		_logic = new InstanzViewLogic(_inse, _svs, ProductRuntime.multiValueService());
 		_recorder = EventRecorder.subscribeToAllDeltasAndOperations(_broker);
 	}
 
@@ -98,7 +98,7 @@ public class InstanzViewLogicSystemTest {
 	void testModifyJob_reachesTheValueOnlyOnApply() throws Exception {
 		SingleStringValue value = newValue("parameter", "old");
 
-		_logic.createModifySvJob(value.getOwnKey(), "new");
+		_logic.createModifyValueJob(value.getOwnKey(), "new");
 		assertThat(value.getValue(), is("old"));
 
 		apply();
@@ -110,8 +110,8 @@ public class InstanzViewLogicSystemTest {
 	void testModifyJob_theLastEditOfAValueWins() throws Exception {
 		SingleStringValue value = newValue("parameter", "old");
 
-		_logic.createModifySvJob(value.getOwnKey(), "first");
-		_logic.createModifySvJob(value.getOwnKey(), "second");
+		_logic.createModifyValueJob(value.getOwnKey(), "first");
+		_logic.createModifyValueJob(value.getOwnKey(), "second");
 		apply();
 
 		assertThat(value.getValue(), is("second"));
@@ -121,7 +121,7 @@ public class InstanzViewLogicSystemTest {
 	void testNameJob_renamesTheAttributeOnItsOwner() throws Exception {
 		SingleStringValue value = newValue("oldName", "content");
 
-		_logic.createSvNameModifyJob(_owner.getOwnKey(), "newName", value);
+		_logic.createValueNameModifyJob(_owner.getOwnKey(), "newName", value);
 		apply();
 
 		assertThat(nameOf(value), is("newName"));
@@ -131,7 +131,7 @@ public class InstanzViewLogicSystemTest {
 	void testDeleteJob_unlinksTheValueFromItsOwner() throws Exception {
 		SingleStringValue value = newValue("parameter", "content");
 
-		_logic.createDeleteSvJob(value);
+		_logic.createDeleteValueJob(value);
 		apply();
 
 		assertThat(_owner.getValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()), is(false));
@@ -146,9 +146,9 @@ public class InstanzViewLogicSystemTest {
 	void testDeleteJob_dropsTheEditsAlreadyQueuedForTheSameValue() throws Exception {
 		SingleStringValue value = newValue("oldName", "old");
 
-		_logic.createModifySvJob(value.getOwnKey(), "new");
-		_logic.createSvNameModifyJob(_owner.getOwnKey(), "newName", value);
-		_logic.createDeleteSvJob(value);
+		_logic.createModifyValueJob(value.getOwnKey(), "new");
+		_logic.createValueNameModifyJob(_owner.getOwnKey(), "newName", value);
+		_logic.createDeleteValueJob(value);
 		apply();
 
 		assertThat(_owner.getValues(SingleValueType.SINGLE_STRING).containsKey(value.getOwnKey()), is(false));
@@ -159,9 +159,9 @@ public class InstanzViewLogicSystemTest {
 	void testEditsAfterADelete_areIgnored() throws Exception {
 		SingleStringValue value = newValue("oldName", "old");
 
-		_logic.createDeleteSvJob(value);
-		_logic.createModifySvJob(value.getOwnKey(), "new");
-		_logic.createSvNameModifyJob(_owner.getOwnKey(), "newName", value);
+		_logic.createDeleteValueJob(value);
+		_logic.createModifyValueJob(value.getOwnKey(), "new");
+		_logic.createValueNameModifyJob(_owner.getOwnKey(), "newName", value);
 		apply();
 
 		assertThat(value.getValue(), is("old"));
@@ -173,7 +173,7 @@ public class InstanzViewLogicSystemTest {
 		SingleStringValue deleted = newValue("deleted", "content");
 		SingleStringValue kept = newValue("kept", "content");
 
-		_logic.createDeleteSvJob(deleted);
+		_logic.createDeleteValueJob(deleted);
 
 		assertThat(_logic.isInDelete(deleted), is(true));
 		assertThat(_logic.isInDelete(kept), is(false));
@@ -182,7 +182,7 @@ public class InstanzViewLogicSystemTest {
 	@Test
 	void testApply_clearsThePendingJobsSoASecondApplyDoesNothing() throws Exception {
 		SingleStringValue value = newValue("parameter", "old");
-		_logic.createModifySvJob(value.getOwnKey(), "new");
+		_logic.createModifyValueJob(value.getOwnKey(), "new");
 		apply();
 		_svs.changeValue(value.getOwnKey(), "changed elsewhere", Type.SEND);
 
@@ -200,7 +200,7 @@ public class InstanzViewLogicSystemTest {
 	@Test
 	void testExecuteChanges_apply_bracketsTheChangesWithOneOperation() throws Exception {
 		SingleStringValue value = newValue("parameter", "old");
-		_logic.createModifySvJob(value.getOwnKey(), "new");
+		_logic.createModifyValueJob(value.getOwnKey(), "new");
 		_recorder.clear();
 
 		apply();
@@ -225,8 +225,8 @@ public class InstanzViewLogicSystemTest {
 	@Test
 	void testExecuteChanges_cancel_dropsEveryPendingJobSilently() throws Exception {
 		SingleStringValue value = newValue("parameter", "old");
-		_logic.createModifySvJob(value.getOwnKey(), "new");
-		_logic.createDeleteSvJob(newValue("other", "content"));
+		_logic.createModifyValueJob(value.getOwnKey(), "new");
+		_logic.createDeleteValueJob(newValue("other", "content"));
 		_recorder.clear();
 
 		_logic.executeChanges(1, _broker, null);

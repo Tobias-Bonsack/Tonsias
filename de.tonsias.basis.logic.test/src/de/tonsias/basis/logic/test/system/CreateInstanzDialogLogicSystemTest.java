@@ -78,7 +78,7 @@ public class CreateInstanzDialogLogicSystemTest {
 	}
 
 	private CreateInstanzDialogLogic newLogic() {
-		return new CreateInstanzDialogLogic(_inse, _svs, _prefs);
+		return new CreateInstanzDialogLogic(_inse, _svs, ProductRuntime.multiValueService(), _prefs);
 	}
 
 	// ---------- the table the dialog starts with ----------

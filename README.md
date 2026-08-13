@@ -56,8 +56,8 @@ until it is saved.
 ### Persistence
 
 - One JSON file per object, written with Gson under the Eclipse instance location:
-  `instanz/<key>.json` and `single_value/<type>/<key>.json`, one folder per attribute
-  type.
+  `instanz/<key>.json`, `single_value/<type>/<key>.json` and
+  `multi_value/<type>/<key>.json`, one folder per attribute type.
 - Objects are referenced by string key, never by object reference; the services cache
   what they have loaded and only touch the disk on a miss or a save.
 - Keys come from a base-36 counter over a lower-case alphabet, persisted in the Eclipse
@@ -159,7 +159,7 @@ mocking framework anywhere in the build.
 
 | Bundle                        | Contents                                                            |
 | ----------------------------- | ------------------------------------------------------------------- |
-| `de.tonsias.basis.model`      | the POJO model: `IInstanz`, `ISingleValue`, `SingleValueType`        |
+| `de.tonsias.basis.model`      | the POJO model: `IInstanz`, `ISingleValue`, `IMultiValue`, `IValueType` |
 | `de.tonsias.basis.data.access`| Gson persistence: load, save and delete services                    |
 | `de.tonsias.basis.osgi`       | service interfaces (`…osgi.intf`) and their implementations         |
 | `de.tonsias.basis.logic`      | headless view logic, no SWT — unit-testable                         |

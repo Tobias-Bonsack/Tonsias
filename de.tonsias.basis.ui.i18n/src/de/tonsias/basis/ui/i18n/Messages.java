@@ -18,6 +18,7 @@ public class Messages {
 	public String constant_remove;
 	public String constant_save;
 	public String constant_singleValue;
+	public String constant_type;
 	public String constant_type_boolean;
 	public String constant_type_float;
 	public String constant_type_instanz;

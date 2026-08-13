@@ -10,109 +10,121 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobGroup;
 import org.eclipse.e4.core.services.events.IEventBroker;
 
+import de.tonsias.basis.model.enums.IValueType;
+import de.tonsias.basis.model.enums.MultiValueType;
 import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.interfaces.IInstanz;
-import de.tonsias.basis.model.interfaces.ISingleValue;
+import de.tonsias.basis.model.interfaces.IValue;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
 import de.tonsias.basis.osgi.intf.IInstanzService;
+import de.tonsias.basis.osgi.intf.IMultiValueService;
 import de.tonsias.basis.osgi.intf.ISingleValueService;
 import de.tonsias.basis.osgi.intf.non.service.EventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants;
 import de.tonsias.basis.osgi.intf.non.service.InstanzEventConstants.InstanzEvent;
-import de.tonsias.basis.osgi.intf.non.service.SingleValueEventConstants.SingleValueEvent;
+import de.tonsias.basis.osgi.intf.non.service.ValueEventConstants.ValueEvent;
 
 public class InstanzViewLogic {
 
-	private final Map<String, Job> _modifySvMap = new HashMap<>();
+	private final Map<String, Job> _modifyValueMap = new HashMap<>();
 
-	private final Map<String, Job> _modifySvNameMap = new HashMap<>();
+	private final Map<String, Job> _modifyValueNameMap = new HashMap<>();
 
-	private final Map<String, Job> _deleteSvMap = new HashMap<>();
+	private final Map<String, Job> _deleteValueMap = new HashMap<>();
 
 	private final JobGroup _jobGroup;
 
 	private ISingleValueService _svService;
 
+	private IMultiValueService _mvService;
+
 	private IInstanzService _inService;
 
-	public InstanzViewLogic(IInstanzService inService, ISingleValueService svService) {
+	public InstanzViewLogic(IInstanzService inService, ISingleValueService svService, IMultiValueService mvService) {
 		_inService = inService;
 		_svService = svService;
+		_mvService = mvService;
 		_jobGroup = new JobGroup("InstanzViewLogic JobGroup", 1, 0);
 	}
 
-	public void createModifySvJob(String valueKey, Object newValue) {
-		if (_deleteSvMap.containsKey(valueKey)) {
+	public void createModifyValueJob(String valueKey, Object newValue) {
+		if (_deleteValueMap.containsKey(valueKey)) {
 			return;
 		}
 
-		Job job = new Job("Change SV-Value: " + valueKey) {
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				_svService.changeValue(valueKey, newValue, Type.SEND);
-				return Status.OK_STATUS;
-			}
-
-			@Override
-			public boolean belongsTo(Object family) {
-				return family == InstanzViewLogic.this;
-			}
-		};
-		job.setJobGroup(_jobGroup);
-		_modifySvMap.put(valueKey, job);
+		Job job = job("Change value: " + valueKey, () -> _svService.changeValue(valueKey, newValue, Type.SEND));
+		_modifyValueMap.put(valueKey, job);
 	}
 
-	public boolean isInDelete(ISingleValue<?> singleValue) {
-		return _deleteSvMap.containsKey(singleValue.getOwnKey());
-	}
-
-	public void createDeleteSvJob(ISingleValue<?> singleValue) {
-		String ownKey = singleValue.getOwnKey();
-		Job job = new Job("Delete SV: " + ownKey) {
-
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				_svService.deleteValue(singleValue, Type.SEND);
-				return Status.OK_STATUS;
-			}
-
-			@Override
-			public boolean belongsTo(Object family) {
-				return family == InstanzViewLogic.this;
-			}
-		};
-		job.setJobGroup(_jobGroup);
-		_modifySvMap.remove(ownKey);
-		_modifySvNameMap.remove(ownKey);
-		_deleteSvMap.put(ownKey, job);
-
-	}
-
-	public void createSvNameModifyJob(String instanzKey, String newName, ISingleValue<?> sv) {
-		if (_deleteSvMap.containsKey(sv.getOwnKey())) {
-			return;
-		}
-
-		Job job = new Job("Change SV-Name: ") {
-
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				Optional<SingleValueType> svType = SingleValueType.getByClass(sv.getClass());
-				_inService.changeValueName(instanzKey, svType.get(), sv.getOwnKey(), newName, Type.SEND);
-				return Status.OK_STATUS;
-			}
-
-			@Override
-			public boolean belongsTo(Object family) {
-				return family == InstanzViewLogic.this;
-			}
-		};
-		job.setJobGroup(_jobGroup);
-		_modifySvNameMap.put(sv.getOwnKey(), job);
-	}
 	/**
-	 * 
+	 * The list is handed over whole rather than as single elements: the dialog that
+	 * edits one shows the whole list and hands back what it should read afterwards,
+	 * and the service turns that into what came and what went.
+	 */
+	public void createModifyElementsJob(String valueKey, Collection<?> newElements) {
+		if (_deleteValueMap.containsKey(valueKey)) {
+			return;
+		}
+
+		Job job = job("Change elements: " + valueKey,
+				() -> _mvService.changeElements(valueKey, newElements, Type.SEND));
+		_modifyValueMap.put(valueKey, job);
+	}
+
+	public boolean isInDelete(IValue value) {
+		return _deleteValueMap.containsKey(value.getOwnKey());
+	}
+
+	public void createDeleteValueJob(IValue value) {
+		String ownKey = value.getOwnKey();
+		Job job = job("Delete value: " + ownKey, () -> deleteValue(value));
+
+		_modifyValueMap.remove(ownKey);
+		_modifyValueNameMap.remove(ownKey);
+		_deleteValueMap.put(ownKey, job);
+	}
+
+	private void deleteValue(IValue value) {
+		if (value.getType().isMulti()) {
+			_mvService.deleteValue((de.tonsias.basis.model.interfaces.IMultiValue<?>) value, Type.SEND);
+			return;
+		}
+		_svService.deleteValue((de.tonsias.basis.model.interfaces.ISingleValue<?>) value, Type.SEND);
+	}
+
+	public void createValueNameModifyJob(String instanzKey, String newName, IValue value) {
+		if (_deleteValueMap.containsKey(value.getOwnKey())) {
+			return;
+		}
+
+		// the value says which type it is, so there is nothing to look up and nothing
+		// that could answer empty
+		Job job = job("Change value name: ",
+				() -> _inService.changeValueName(instanzKey, value.getType(), value.getOwnKey(), newName, Type.SEND));
+		_modifyValueNameMap.put(value.getOwnKey(), job);
+	}
+
+	private Job job(String name, Runnable work) {
+		Job job = new Job(name) {
+
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				work.run();
+				return Status.OK_STATUS;
+			}
+
+			@Override
+			public boolean belongsTo(Object family) {
+				return family == InstanzViewLogic.this;
+			}
+		};
+		job.setJobGroup(_jobGroup);
+		return job;
+	}
+
+	/**
+	 *
 	 * @param dialogReturn 0=apply, 1=cancel, 2=apply and reselect
 	 * @param broker
 	 * @param shownInstanz
@@ -121,9 +133,9 @@ public class InstanzViewLogic {
 		switch (dialogReturn) {
 		case 0:
 			List<Job> changeJobs = new ArrayList<>();
-			changeJobs.addAll(_modifySvMap.values());
-			changeJobs.addAll(_modifySvNameMap.values());
-			changeJobs.addAll(_deleteSvMap.values());
+			changeJobs.addAll(_modifyValueMap.values());
+			changeJobs.addAll(_modifyValueNameMap.values());
+			changeJobs.addAll(_deleteValueMap.values());
 
 			addConsumerOperation(broker, EventConstants.OPEN_OPERATION, changeJobs::addFirst);
 			addConsumerOperation(broker, EventConstants.CLOSE_OPERATION, changeJobs::addLast);
@@ -143,42 +155,38 @@ public class InstanzViewLogic {
 	}
 
 	/**
-	 * Whether a single value delta concerns the instanz currently shown. As long as
-	 * nothing is selected there is no key to compare against, so no delta concerns
-	 * the view.
+	 * Whether a value delta concerns the instanz currently shown, whichever family
+	 * it came from. As long as nothing is selected there is no key to compare
+	 * against, so no delta concerns the view.
 	 */
-	public boolean affectsShownInstanz(IInstanz shownInstanz, SingleValueEvent event) {
+	public boolean affectsShownInstanz(IInstanz shownInstanz, ValueEvent event) {
 		if (shownInstanz == null) {
 			return false;
 		}
 
-		SingleValueType type = event.getType();
-		return _svService.resolveKey(type.getPath(), event.getKey(), type.getClazz())//
-				.map(sv -> sv.getConnectedInstanzKeys().contains(shownInstanz.getOwnKey()))//
+		return resolve(event.getType(), event.getKey())//
+				.map(value -> value.getConnectedInstanzKeys().contains(shownInstanz.getOwnKey()))//
 				.orElse(false);
 	}
 
+	private Optional<? extends IValue> resolve(IValueType type, String key) {
+		if (type == null) {
+			return Optional.empty();
+		}
+		if (type instanceof MultiValueType multi) {
+			return _mvService.resolveKey(multi.getPath(), key, multi.getClazz());
+		}
+		return _svService.resolveKey(type.getPath(), key, ((SingleValueType) type).getClazz());
+	}
+
 	private void addConsumerOperation(IEventBrokerBridge broker, String openOperation, Consumer<Job> consumer) {
-		Job job = new Job(openOperation) {
-
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				broker.send(openOperation, null);
-				return Status.OK_STATUS;
-			}
-
-			@Override
-			public boolean belongsTo(Object family) {
-				return family == InstanzViewLogic.this;
-			}
-		};
-		job.setJobGroup(_jobGroup);
+		Job job = job(openOperation, () -> broker.send(openOperation, null));
 		consumer.accept(job);
 	}
 
 	private void clear() {
-		_modifySvMap.clear();
-		_modifySvNameMap.clear();
-		_deleteSvMap.clear();
+		_modifyValueMap.clear();
+		_modifyValueNameMap.clear();
+		_deleteValueMap.clear();
 	}
 }
