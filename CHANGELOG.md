@@ -40,6 +40,19 @@ Development towards 0.3.0. The reactor is at `0.3.0-SNAPSHOT`.
 
 ### Fixed
 
+- **A list can be filled while the instanz is being created.** The value column of the
+  create-instanz dialog handed every row that is typed into a text cell, and a list is
+  no text — clicking such a cell ended in an assertion inside JFace instead of an
+  editor. The column now opens the same element list the value dialogs use, for all
+  five list types, and keeps what it collected as the list `createNew` is handed.
+  ([#88](https://github.com/Tobias-Bonsack/Tonsias/issues/88))
+- **The model view no longer hangs one operation behind.** It refreshed when a value
+  was *created*, and an attribute is hung onto its instanz only afterwards, by the
+  propagation running on the event admin's thread — so the tree read the instanz too
+  early, showed nothing, and was not asked again until the next operation. It now
+  follows the change on the instanz itself, which is the same event for all ten types
+  and for an attribute that goes as well as one that comes.
+  ([#89](https://github.com/Tobias-Bonsack/Tonsias/issues/89))
 - **Taking an attribute off an instanz now reaches the attribute.** Both ends of that
   link were kept in step in one direction only — the other ran into a `// TODO` and
   left the value naming an instanz that no longer held it, which the next save wrote
