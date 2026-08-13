@@ -155,6 +155,12 @@ public class ModelViewSystemTest {
 	/**
 	 * A deleted attribute goes the same way it came: the instanz loses the key, and
 	 * the tree loses the row.
+	 * <p>
+	 * Deleted through the service rather than through the context menu the user
+	 * would use - that one casts the selected node to the value itself and throws
+	 * before it deletes anything, see
+	 * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/90">#90</a>.
+	 * </p>
 	 */
 	@Test
 	void testDeletedValue_leavesTheTreeWithoutAFurtherOperation() {
