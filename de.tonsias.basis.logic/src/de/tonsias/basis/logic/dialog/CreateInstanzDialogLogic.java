@@ -125,22 +125,40 @@ public class CreateInstanzDialogLogic {
 	}
 
 	/**
+	 * The elements a value holds, for the rows whose type is a list. Everything the
+	 * value column leaves in a row goes through here, so a row nobody has edited yet
+	 * - or one just switched over from a single value - reads as the empty list
+	 * rather than as the text that stood there.
+	 */
+	public static Collection<?> elementsOf(Object value) {
+		return value instanceof Collection<?> collection ? collection : List.of();
+	}
+
+	public String valueLabel(TableRecord row) {
+		return valueLabel(row.type, row.value);
+	}
+
+	/**
 	 * What the value column shows for a row. A relation stores the key of its
 	 * target, which is no text to put in front of anybody - it reads as the target
 	 * does everywhere else, and a list of them reads as all of its targets.
+	 * <p>
+	 * Takes the two halves of a row rather than the row, because the cell editor of
+	 * a list has to label what it is about to hand back - which is not in the row
+	 * yet at the moment it shows it.
+	 * </p>
 	 *
 	 * @return the label of the target, and an empty string for a relation pointing
 	 *         nowhere or at an instanz the walk did not reach
 	 */
-	public String valueLabel(TableRecord row) {
-		boolean isRelation = row.type.getContentType() == ValueContentType.INSTANZ;
+	public String valueLabel(IValueType type, Object value) {
+		boolean isRelation = type.getContentType() == ValueContentType.INSTANZ;
 
-		if (!row.type.isMulti()) {
-			return isRelation ? instanzChoices().labelOf(String.valueOf(row.value)).orElse("")
-					: String.valueOf(row.value);
+		if (!type.isMulti()) {
+			return isRelation ? instanzChoices().labelOf(String.valueOf(value)).orElse("") : String.valueOf(value);
 		}
 
-		Collection<?> elements = row.value instanceof Collection<?> collection ? collection : List.of();
+		Collection<?> elements = elementsOf(value);
 		if (!isRelation) {
 			return elements.stream().map(String::valueOf).collect(Collectors.joining(", "));
 		}
@@ -186,8 +204,7 @@ public class CreateInstanzDialogLogic {
 	// static Job.create the compiler finds first
 	private void createValue(TableRecord row, String instanzKey) {
 		if (row.type instanceof MultiValueType multi) {
-			Collection<?> elements = row.value instanceof Collection<?> collection ? collection : List.of();
-			_min.createNew(multi.getClazz(), instanzKey, row.parameterName, elements, Type.SEND);
+			_min.createNew(multi.getClazz(), instanzKey, row.parameterName, elementsOf(row.value), Type.SEND);
 			return;
 		}
 		_sin.createNew(((SingleValueType) row.type).getClazz(), instanzKey, row.parameterName, row.value, Type.SEND);
