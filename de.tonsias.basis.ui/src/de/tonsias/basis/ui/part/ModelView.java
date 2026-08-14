@@ -172,12 +172,15 @@ public class ModelView {
 
 		menuItem.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				TreeItem[] selection = tree.getSelection();
-				if (selection.length == 0) {
+				// what a tree item carries is the element of the content provider, and that
+				// is a node of the tree - never the object it stands for. Casting straight to
+				// the value threw before it deleted anything, see
+				// https://github.com/Tobias-Bonsack/Tonsias/issues/90
+				IValue value = selectedValue(tree);
+				if (value == null) {
 					return;
 				}
 
-				IValue value = (IValue) selection[0].getData();
 				Collection<String> connectedInstanzKeys = value.getConnectedInstanzKeys();
 				// the value says which type it is, so there is nothing to look up
 				IValueType type = value.getType();
@@ -191,6 +194,19 @@ public class ModelView {
 				_treeViewer.refresh();
 			};
 		});
+	}
+
+	/**
+	 * The attribute the one selected node stands for, or {@code null} when the
+	 * selection is no attribute - the menu item is only enabled over one, and a
+	 * selection that changed under it is nothing to act on either way.
+	 */
+	private IValue selectedValue(Tree tree) {
+		TreeItem[] selection = tree.getSelection();
+		if (selection.length == 0 || !(selection[0].getData() instanceof TreeNodeWrapper node)) {
+			return null;
+		}
+		return node.getObject() instanceof IValue value ? value : null;
 	}
 
 	private void deleteValue(IValue value) {
@@ -216,8 +232,8 @@ public class ModelView {
 					IInstanz parentObject = (IInstanz) parent.getObject();
 					CreateInstanzOperation newInstanzOperation = new CreateInstanzOperation(parentObject);
 					newInstanzOperation.execute(_broker.getEclipseBroker(), _instanzService, _messages);
-					IInstanz createdInstanz = newInstanzOperation.get_createdInstanz();
-					new TreeNodeWrapper(createdInstanz, parent);
+					// the nodes below are the content provider's to build, so there is nothing
+					// to hang into the tree here - only to ask it again
 					_treeViewer.refresh(parent);
 				}
 			}
@@ -260,7 +276,6 @@ public class ModelView {
 
 		AValueDialogBase<?, ?> dialog = ValueDialogs.create(type, new Shell(), parentObject, _messages);
 		if (dialog.open() == Window.OK) {
-			new TreeNodeWrapper(dialog.getCreatedValue(), parent);
 			_treeViewer.refresh(parent);
 		}
 	}

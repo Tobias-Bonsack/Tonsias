@@ -2,8 +2,13 @@ package de.tonsias.basis.ui.test.system;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayWithSize;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.startsWith;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.e4.core.contexts.ContextInjectionFactory;
@@ -13,8 +18,11 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeItem;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -22,8 +30,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.osgi.service.prefs.BackingStoreException;
 
+import de.tonsias.basis.model.enums.SingleValueType;
 import de.tonsias.basis.model.impl.value.MultiStringValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
+import de.tonsias.basis.model.interfaces.IObject;
 import de.tonsias.basis.osgi.intf.IBasicPreferenceService;
 import de.tonsias.basis.osgi.intf.IBasicPreferenceService.Key;
 import de.tonsias.basis.osgi.intf.IEventBrokerBridge.Type;
@@ -155,12 +165,6 @@ public class ModelViewSystemTest {
 	/**
 	 * A deleted attribute goes the same way it came: the instanz loses the key, and
 	 * the tree loses the row.
-	 * <p>
-	 * Deleted through the service rather than through the context menu the user
-	 * would use - that one casts the selected node to the value itself and throws
-	 * before it deletes anything, see
-	 * <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/90">#90</a>.
-	 * </p>
 	 */
 	@Test
 	void testDeletedValue_leavesTheTreeWithoutAFurtherOperation() {
@@ -172,6 +176,65 @@ public class ModelViewSystemTest {
 		ProductRuntime.singleValueService().deleteValue(value, Type.SEND);
 
 		assertThat(treeOf().getItemCount(), is(before - 1));
+	}
+
+	// ---------- the context menu ----------
+
+	/**
+	 * The way a user deletes an attribute. What a tree item carries is the node of
+	 * the tree, never the object it stands for, and the menu used to cast straight
+	 * to the value - so this threw before it deleted anything.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/90">#90</a>
+	 */
+	@Test
+	void testDeleteMenu_takesTheSelectedAttributeOffItsInstanz() {
+		SingleStringValue value = ProductRuntime.singleValueService().createNew(SingleStringValue.class,
+				ProductRuntime.ROOT, "zu loeschen", "wert", Type.SEND);
+		Tree tree = openViewOn(value);
+
+		press(deleteItem(tree));
+
+		assertThat(ProductRuntime.instanzService().getRoot().getValues(SingleValueType.SINGLE_STRING),
+				not(hasKey(value.getOwnKey())));
+		assertThat(labels(), not(hasItem(startsWith(value.getOwnKey() + " "))));
+	}
+
+	/**
+	 * A selection that is no attribute is nothing to delete - the item is disabled
+	 * over an instanz, and an item that is fired anyway must not act on the wrong
+	 * node either.
+	 */
+	@Test
+	void testDeleteMenu_overAnInstanzDeletesNothing() {
+		SingleStringValue value = ProductRuntime.singleValueService().createNew(SingleStringValue.class,
+				ProductRuntime.ROOT, "bleibt", "wert", Type.SEND);
+		String childKey = ProductRuntime.instanzService().createInstanz(ProductRuntime.ROOT, Type.SEND).getOwnKey();
+		openView();
+		Tree tree = treeOf();
+		tree.setSelection(itemOf(childKey));
+
+		press(deleteItem(tree));
+
+		assertThat(ProductRuntime.instanzService().getRoot().getValues(SingleValueType.SINGLE_STRING),
+				hasKey(value.getOwnKey()));
+		assertThat(ProductRuntime.instanzService().resolveKey(childKey).isPresent(), is(true));
+	}
+
+	/**
+	 * With the preference off an attribute is no child of its instanz, and the tree
+	 * says so from both ends: it is neither counted nor handed out at any index.
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/91">#91</a>
+	 */
+	@Test
+	void testShowValuesOff_anAttributeIsNoRowOfTheTree() throws BackingStoreException {
+		_prefs.saveAsToString(Key.SHOW_VALUES.getKey(), Boolean.FALSE);
+		SingleStringValue value = ProductRuntime.singleValueService().createNew(SingleStringValue.class,
+				ProductRuntime.ROOT, "versteckt", "wert", Type.SEND);
+		openView();
+
+		assertThat(labels(), not(hasItem(startsWith(value.getOwnKey() + " "))));
 	}
 
 	// ---------- helpers ----------
@@ -199,6 +262,54 @@ public class ModelViewSystemTest {
 		Control[] children = _parent.getChildren();
 		assertThat("the view puts exactly one control on its parent", children, arrayWithSize(1));
 		return (Tree) children[0];
+	}
+
+	/** opens the view with the node of {@code object} selected, as a click would */
+	private Tree openViewOn(IObject object) {
+		openView();
+		Tree tree = treeOf();
+		tree.setSelection(itemOf(object.getOwnKey()));
+		return tree;
+	}
+
+	/**
+	 * The row a key stands on. Every label starts with the key of what it shows, so
+	 * there is nothing to reach past the tree for.
+	 */
+	private TreeItem itemOf(String ownKey) {
+		for (TreeItem item : treeOf().getItems()) {
+			if (materialized(item).startsWith(ownKey + " ") || materialized(item).equals(ownKey)) {
+				return item;
+			}
+		}
+		throw new AssertionError("no row for " + ownKey + " in " + labels());
+	}
+
+	private List<String> labels() {
+		return Arrays.stream(treeOf().getItems()).map(this::materialized).toList();
+	}
+
+	/**
+	 * A virtual tree fills an item in when it is drawn, and nothing is drawn on a
+	 * shell nobody opened - asking for the text is what makes SWT ask the viewer for
+	 * the element.
+	 */
+	private String materialized(TreeItem item) {
+		return item.getText();
+	}
+
+	/**
+	 * The "delete value" item of the context menu. The view builds it last, behind
+	 * the create item and the two cascades.
+	 */
+	private MenuItem deleteItem(Tree tree) {
+		MenuItem[] items = tree.getMenu().getItems();
+		assertThat("create instanz, both value cascades and delete", items, arrayWithSize(4));
+		return items[3];
+	}
+
+	private void press(MenuItem item) {
+		item.notifyListeners(SWT.Selection, new Event());
 	}
 
 	/**

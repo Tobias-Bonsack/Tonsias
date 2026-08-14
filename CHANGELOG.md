@@ -53,6 +53,15 @@ Development towards 0.3.0. The reactor is at `0.3.0-SNAPSHOT`.
   follows the change on the instanz itself, which is the same event for all ten types
   and for an attribute that goes as well as one that comes.
   ([#89](https://github.com/Tobias-Bonsack/Tonsias/issues/89))
+- **"Delete value" in the model view deletes the value.** The menu read the selected
+  node as the attribute itself, and a tree item carries the node of the tree — so the
+  only way to delete an attribute from the model view threw a `ClassCastException`
+  every time and left everything standing.
+  ([#90](https://github.com/Tobias-Bonsack/Tonsias/issues/90))
+- The tree of the model view says in one place what a child of a node is, instead of
+  counting children by one rule and handing them out by another — the attributes were
+  counted only while the preference shows them and handed out either way.
+  ([#91](https://github.com/Tobias-Bonsack/Tonsias/issues/91))
 - **Taking an attribute off an instanz now reaches the attribute.** Both ends of that
   link were kept in step in one direction only — the other ran into a `// TODO` and
   left the value naming an instanz that no longer held it, which the next save wrote
