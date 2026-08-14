@@ -136,9 +136,6 @@ public class CreateInstanzDialog extends Dialog {
 						element -> element.parameterName, //
 						element -> new TextCellEditor(_viewer.getTable())));
 
-		// the one column whose editor depends on the row: a relation is chosen from the
-		// tree the value dialog offers, not typed as a raw key, see
-		// https://github.com/Tobias-Bonsack/Tonsias/issues/75
 		createColumn(_messages.constant_value, 200, tRec -> _logic.valueLabel(tRec), //
 				getEditingSupport(//
 						(element, value) -> {
@@ -146,13 +143,59 @@ public class CreateInstanzDialog extends Dialog {
 							_viewer.update(element, null);
 						}, //
 						element -> element.value, //
-						element -> element.type.getContentType() == ValueContentType.INSTANZ && !element.type.isMulti()
-								? instanzCellEditor()
-								: new TextCellEditor(_viewer.getTable())));
+						this::valueCellEditor));
 
 
 		_viewer.setContentProvider(ArrayContentProvider.getInstance());
 		_viewer.setInput(_logic.getInput());
+	}
+
+	/**
+	 * The one column whose editor depends on the row. Two of the ten types are no
+	 * text: a relation is chosen from the tree the value dialog offers rather than
+	 * typed as a raw key, and a list is not one line at all - a cell is.
+	 * <p>
+	 * A {@link TextCellEditor} takes a {@code String} and nothing else, so handing
+	 * one a row holding a list is not a wrong label but an assertion inside JFace,
+	 * thrown the moment the cell is clicked.
+	 * </p>
+	 *
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/75">#75</a>
+	 * @see <a href="https://github.com/Tobias-Bonsack/Tonsias/issues/88">#88</a>
+	 */
+	public CellEditor valueCellEditor(TableRecord row) {
+		if (row.type.isMulti()) {
+			return multiCellEditor(row);
+		}
+		if (row.type.getContentType() == ValueContentType.INSTANZ) {
+			return instanzCellEditor();
+		}
+		return new TextCellEditor(_viewer.getTable());
+	}
+
+	/**
+	 * The cell editor of a list: a cell that opens {@link MultiElementListDialog}.
+	 * What it keeps is the list itself, in the shape the model would hold it, and
+	 * what it shows is the row's own label - the same one the column shows when
+	 * nobody is editing it.
+	 */
+	private CellEditor multiCellEditor(TableRecord row) {
+		return new DialogCellEditor(_viewer.getTable()) {
+
+			@Override
+			protected Object openDialogBox(Control cellEditorWindow) {
+				var dialog = new MultiElementListDialog(cellEditorWindow.getShell(), row.type.getContentType(),
+						CreateInstanzDialogLogic.elementsOf(getValue()), _messages, _logic::instanzChoices);
+				// cancelling keeps what the cell held - the editor writes back whatever comes
+				// out of here, so handing back null would empty the cell
+				return dialog.open() == Window.OK ? dialog.getElements() : getValue();
+			}
+
+			@Override
+			protected void updateContents(Object value) {
+				super.updateContents(_logic.valueLabel(row.type, value));
+			}
+		};
 	}
 
 	/**
@@ -197,6 +240,14 @@ public class CreateInstanzDialog extends Dialog {
 	protected void okPressed() {
 		_logic.okPressed(OsgiUtil.getService(IEventBrokerBridge.class));
 		super.okPressed();
+	}
+
+	/**
+	 * The rows behind the table, so a test can set one up the way the type column
+	 * does rather than reach past the dialog into the viewer.
+	 */
+	public CreateInstanzDialogLogic getLogic() {
+		return _logic;
 	}
 
 	private interface IColumnLabelProvider {

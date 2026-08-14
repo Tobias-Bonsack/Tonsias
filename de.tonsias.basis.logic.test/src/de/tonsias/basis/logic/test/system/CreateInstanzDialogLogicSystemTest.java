@@ -4,6 +4,7 @@ import static de.tonsias.basis.osgi.test.ProductRuntime.ROOT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -18,7 +19,9 @@ import org.osgi.service.prefs.BackingStoreException;
 
 import de.tonsias.basis.logic.dialog.CreateInstanzDialogLogic;
 import de.tonsias.basis.logic.dialog.CreateInstanzDialogLogic.TableRecord;
+import de.tonsias.basis.model.enums.MultiValueType;
 import de.tonsias.basis.model.enums.SingleValueType;
+import de.tonsias.basis.model.impl.value.MultiStringValue;
 import de.tonsias.basis.model.impl.value.SingleInstanzValue;
 import de.tonsias.basis.model.impl.value.SingleStringValue;
 import de.tonsias.basis.model.interfaces.IInstanz;
@@ -232,6 +235,90 @@ public class CreateInstanzDialogLogicSystemTest {
 		row.value = "content";
 
 		assertThat(logic.valueLabel(row), is("content"));
+	}
+
+	// ---------- a row that is a list ----------
+
+	/**
+	 * A list is not one line and a cell is, so the column shows all of its elements
+	 * at once - and a row switched over to a list but never edited shows nothing
+	 * rather than the text that stood there.
+	 */
+	@Test
+	void testValueLabel_aListReadsAsAllOfItsElements() {
+		var logic = newLogic();
+		TableRecord row = logic.getInput().iterator().next();
+		logic.setType(row, MultiValueType.MULTI_STRING);
+
+		assertThat("nothing entered yet", logic.valueLabel(row), is(""));
+
+		row.value = List.of("a", "b");
+		assertThat(logic.valueLabel(row), is("a, b"));
+	}
+
+	/**
+	 * The cell editor of a list labels what it is about to hand back, which is not
+	 * in the row at the moment it shows it - so the two halves go in separately.
+	 */
+	@Test
+	void testValueLabel_takesTheTypeAndTheValueApartFromTheRow() {
+		var logic = newLogic();
+
+		assertThat(logic.valueLabel(MultiValueType.MULTI_STRING, List.of("a", "b")), is("a, b"));
+		assertThat("what no list at all reads as", logic.valueLabel(MultiValueType.MULTI_STRING, "a"), is(""));
+	}
+
+	/**
+	 * A row holding a list travels into {@code createNew} as that list, the way a
+	 * typed row travels as its text.
+	 */
+	@Test
+	void testOkPressed_createsAListHoldingEveryElementOfTheRow() {
+		var logic = newLogic();
+		IInstanz parent = _inse.createInstanz(ROOT, Type.SEND);
+		logic.setInstanzParent(parent);
+		TableRecord row = logic.getInput().iterator().next();
+		row.parameterName = "liste";
+		logic.setType(row, MultiValueType.MULTI_STRING);
+		row.value = List.of("a", "b");
+		_recorder.clear();
+
+		logic.okPressed(_broker);
+		_recorder.awaitTopic(EventConstants.CLOSE_OPERATION);
+
+		IInstanz created = _inse.resolveKey(parent.getChildren().iterator().next()).orElseThrow();
+		String valueKey = created.getValues(MultiValueType.MULTI_STRING).keySet().iterator().next();
+		MultiStringValue value = ProductRuntime.multiValueService()
+				.resolveKey(MultiValueType.MULTI_STRING.getPath(), valueKey, MultiStringValue.class).orElseThrow();
+
+		assertThat(created.getValues(MultiValueType.MULTI_STRING).get(valueKey), is("liste"));
+		assertThat(value.getValues(), contains("a", "b"));
+		assertThat(value.getConnectedInstanzKeys(), contains(created.getOwnKey()));
+	}
+
+	/**
+	 * An empty list is a value, the way {@code ""} is - so a row switched over to a
+	 * list and left alone creates the empty list rather than nothing at all.
+	 */
+	@Test
+	void testOkPressed_aListRowNobodyFilledCreatesTheEmptyList() {
+		var logic = newLogic();
+		IInstanz parent = _inse.createInstanz(ROOT, Type.SEND);
+		logic.setInstanzParent(parent);
+		TableRecord row = logic.getInput().iterator().next();
+		row.parameterName = "leer";
+		logic.setType(row, MultiValueType.MULTI_STRING);
+		_recorder.clear();
+
+		logic.okPressed(_broker);
+		_recorder.awaitTopic(EventConstants.CLOSE_OPERATION);
+
+		IInstanz created = _inse.resolveKey(parent.getChildren().iterator().next()).orElseThrow();
+		String valueKey = created.getValues(MultiValueType.MULTI_STRING).keySet().iterator().next();
+		MultiStringValue value = ProductRuntime.multiValueService()
+				.resolveKey(MultiValueType.MULTI_STRING.getPath(), valueKey, MultiStringValue.class).orElseThrow();
+
+		assertThat(value.getValues(), is(empty()));
 	}
 
 	/**

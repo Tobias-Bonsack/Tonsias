@@ -37,6 +37,9 @@ public final class E4ServiceContext {
 
 	private static boolean _primed;
 
+	/** the primed context, so a test bundle can put its own pieces into it */
+	private static IEclipseContext _context;
+
 	/**
 	 * e4 keeps only a weak reference to an injected object, so a listener nobody
 	 * holds on to can be collected in the middle of a run - and the propagation it
@@ -57,6 +60,7 @@ public final class E4ServiceContext {
 
 		BundleContext bundleContext = FrameworkUtil.getBundle(E4ServiceContext.class).getBundleContext();
 		IEclipseContext context = EclipseContextFactory.getServiceContext(bundleContext);
+		_context = context;
 
 		// asking for the delta service is enough: DeltaServiceContextFunction asks for
 		// the bridge before it builds, so the bridge is registered on the way. Nothing
@@ -70,6 +74,31 @@ public final class E4ServiceContext {
 		// never adds the new key to its parent's child list.
 		_listener = ContextInjectionFactory.make(ChangePropagationListener.class, context);
 
+		// what the e4 application does with its application context, and the only way
+		// an ExtendedObjectSupplier ever gets its own dependencies: the injector hands
+		// this supplier to the one it finds for a qualifier, once, and remembers the
+		// result. Without it @Translation resolves to a TranslationObjectSupplier with
+		// an empty message factory, which throws on the first Messages anybody asks
+		// for - and it stays that way for the rest of the run.
+		ContextInjectionFactory.setDefault(context);
+
 		_primed = true;
+	}
+
+	/**
+	 * The context every extended object supplier is built out of, so a test bundle
+	 * can put into it what only it can supply.
+	 * <p>
+	 * The one such piece is {@code UISynchronize}: without it the supplier behind
+	 * {@code @UIEventTopic} subscribes, hears the event, and then drops it with a
+	 * warning instead of running the method - so a part would never react to
+	 * anything. It is SWT's to provide and belongs in the test bundle that has a
+	 * {@code Display}, and it has to be in here before the first {@code @UIEventTopic}
+	 * is injected: the supplier is built once and remembered.
+	 * </p>
+	 */
+	public static IEclipseContext context() {
+		prime();
+		return _context;
 	}
 }
